@@ -115,7 +115,7 @@ static void (^(^(^touch_handler_init)(UIView *))(UITouch *))(void) = ^ (UIView *
         static unsigned int touch_property;
         return ^{
             touch_point = [touch preciseLocationInView:view];
-            CGFloat touch_angle = atan2(touch_point.y - maxY, touch_point.x - maxX) * (180.0 / M_PI);
+            touch_angle = atan2(touch_point.y - maxY, touch_point.x - maxX) * (180.0 / M_PI);
             if (touch_angle < 0.0) touch_angle += 360.0;
             touch_property = (unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 4.0));
             filter(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
@@ -136,12 +136,8 @@ static void (^(^(^touch_handler_init)(UIView *))(UITouch *))(void) = ^ (UIView *
         
     };
 };
-
 static void (^(^touch_handler)(UITouch *))(void);
 static void (^handle_touch)(void);
-
-
-
 
 
 @implementation GameViewController
