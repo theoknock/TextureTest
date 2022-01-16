@@ -48,6 +48,5 @@ fragment float4 fragmentShader(ColorInOut in [[stage_in]],
                                    min_filter::linear);
 
     half4 colorSample   = colorMap.sample(colorSampler, in.texCoord.xy);
-
     return float4(colorSample);
 }

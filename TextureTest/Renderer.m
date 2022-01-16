@@ -13,6 +13,7 @@
 // Include header shared between C code here, which executes Metal API commands, and .metal files
 #import "ShaderTypes.h"
 
+
 static const NSUInteger MaxBuffersInFlight = 3;
 
 @implementation Renderer
@@ -34,6 +35,8 @@ static const NSUInteger MaxBuffersInFlight = 3;
     float _rotation;
 
     MTKMesh *_mesh;
+    void(^create_texture)(CVPixelBufferRef);
+
 }
 
 -(nonnull instancetype)initWithMetalKitView:(nonnull MTKView *)view;
@@ -45,6 +48,40 @@ static const NSUInteger MaxBuffersInFlight = 3;
         _inFlightSemaphore = dispatch_semaphore_create(MaxBuffersInFlight);
         [self _loadMetalWithView:view];
         [self _loadAssets];
+        
+        create_texture = ^{
+            MTLPixelFormat pixelFormat = view.colorPixelFormat;
+            CFStringRef textureCacheKeys[2] = { kCVMetalTextureCacheMaximumTextureAgeKey, kCVMetalTextureUsage };
+            float maximumTextureAge = (1.0); // / view.preferredFramesPerSecond);
+            CFNumberRef maximumTextureAgeValue = CFNumberCreate(kCFAllocatorDefault, kCFNumberFloatType, &maximumTextureAge);
+            MTLTextureUsage textureUsage = MTLTextureUsageShaderRead;
+            CFNumberRef textureUsageValue = CFNumberCreate(NULL, kCFNumberNSIntegerType, &textureUsage);
+            CFTypeRef textureCacheValues[2] = { maximumTextureAgeValue, textureUsageValue };
+            CFIndex textureCacheAttributesCount = 2;
+            CFDictionaryRef cacheAttributes = CFDictionaryCreate(NULL, (const void **)textureCacheKeys, (const void **)textureCacheValues, textureCacheAttributesCount, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+            
+            CVMetalTextureCacheRef textureCache;
+            CVMetalTextureCacheCreate(NULL, cacheAttributes, self->_device, NULL, &textureCache);
+            CFShow(cacheAttributes);
+            CFRelease(textureUsageValue);
+            CFRelease(cacheAttributes);
+            
+            return ^ (CVPixelBufferRef _Nonnull pixel_buffer) {
+                @autoreleasepool {
+                    __autoreleasing id<MTLTexture> texture = nil;
+                    CVPixelBufferLockBaseAddress(pixel_buffer, kCVPixelBufferLock_ReadOnly);
+                    {
+                        CVMetalTextureRef metalTextureRef = NULL;
+                        CVMetalTextureCacheCreateTextureFromImage(NULL, textureCache, pixel_buffer, cacheAttributes, pixelFormat, CVPixelBufferGetWidth(pixel_buffer), CVPixelBufferGetHeight(pixel_buffer), 0, &metalTextureRef);
+                        _colorMap = CVMetalTextureGetTexture(metalTextureRef);
+                        CFRelease(metalTextureRef);
+                    }
+                    CVPixelBufferUnlockBaseAddress(pixel_buffer, kCVPixelBufferLock_ReadOnly);
+                }
+            };
+        }();
+        
+        [VideoCamera setAVCaptureVideoDataOutputSampleBufferDelegate:(id<AVCaptureVideoDataOutputSampleBufferDelegate>)self];
     }
 
     return self;
@@ -124,10 +161,10 @@ static const NSUInteger MaxBuffersInFlight = 3;
     MTKMeshBufferAllocator *metalAllocator = [[MTKMeshBufferAllocator alloc]
                                               initWithDevice: _device];
 
-    MDLMesh *mdlMesh = [MDLMesh newBoxWithDimensions:(vector_float3){4, 4, 4}
-                                            segments:(vector_uint3){2, 2, 2}
-                                        geometryType:MDLGeometryTypeTriangles
-                                       inwardNormals:NO
+    MDLMesh *mdlMesh = [MDLMesh newBoxWithDimensions:(vector_float3){2, 2, 2}
+                                            segments:(vector_uint3){4, 4, 4}
+                                        geometryType:MDLGeometryTypeQuads
+                                       inwardNormals:YES
                                            allocator:metalAllocator];
 
     MDLVertexDescriptor *mdlVertexDescriptor =
@@ -147,24 +184,24 @@ static const NSUInteger MaxBuffersInFlight = 3;
         NSLog(@"Error creating MetalKit mesh %@", error.localizedDescription);
     }
 
-    MTKTextureLoader* textureLoader = [[MTKTextureLoader alloc] initWithDevice:_device];
+//    MTKTextureLoader* textureLoader = [[MTKTextureLoader alloc] initWithDevice:_device];
 
-    NSDictionary *textureLoaderOptions =
-    @{
-      MTKTextureLoaderOptionTextureUsage       : @(MTLTextureUsageShaderRead),
-      MTKTextureLoaderOptionTextureStorageMode : @(MTLStorageModePrivate)
-      };
-
-    _colorMap = [textureLoader newTextureWithName:@"ColorMap"
-                                      scaleFactor:1.0
-                                           bundle:nil
-                                          options:textureLoaderOptions
-                                            error:&error];
-
-    if(!_colorMap || error)
-    {
-        NSLog(@"Error creating texture %@", error.localizedDescription);
-    }
+//    NSDictionary *textureLoaderOptions =
+//    @{
+//      MTKTextureLoaderOptionTextureUsage       : @(MTLTextureUsageShaderRead),
+//      MTKTextureLoaderOptionTextureStorageMode : @(MTLStorageModePrivate)
+//      };
+//
+//    _colorMap = [textureLoader newTextureWithName:@"ColorMap"
+//                                      scaleFactor:1.0
+//                                           bundle:nil
+//                                          options:textureLoaderOptions
+//                                            error:&error];
+//
+//    if(!_colorMap || error)
+//    {
+//        NSLog(@"Error creating texture %@", error.localizedDescription);
+//    }
 }
 
 - (void)_updateGameState
@@ -175,13 +212,13 @@ static const NSUInteger MaxBuffersInFlight = 3;
 
     uniforms->projectionMatrix = _projectionMatrix;
 
-    vector_float3 rotationAxis = {1, 1, 0};
+    vector_float3 rotationAxis = {1, 1, 1};
     matrix_float4x4 modelMatrix = matrix4x4_rotation(_rotation, rotationAxis);
     matrix_float4x4 viewMatrix = matrix4x4_translation(0.0, 0.0, -8.0);
 
     uniforms->modelViewMatrix = matrix_multiply(viewMatrix, modelMatrix);
 
-    _rotation += .01;
+    _rotation = (_rotation > degreesToRadians(360.0)) ? 0.0 : _rotation + degreesToRadians(2.0);
 }
 
 - (void)drawInMTKView:(nonnull MTKView *)view
@@ -311,6 +348,12 @@ matrix_float4x4 matrix_perspective_right_hand(float fovyRadians, float aspect, f
         {  0,   0,         zs, -1 },
         {  0,   0, nearZ * zs,  0 }
     }};
+}
+
+
+
+- (void)captureOutput:(AVCaptureOutput *)output didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer fromConnection:(AVCaptureConnection *)connection {
+    create_texture(CMSampleBufferGetImageBuffer(sampleBuffer));
 }
 
 @end

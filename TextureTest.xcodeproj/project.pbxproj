@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B90B097D2793070E0052879E /* Kernels.metal in Sources */ = {isa = PBXBuildFile; fileRef = B90B097C2793070E0052879E /* Kernels.metal */; };
 		B9FB8D4A2792DD970088F353 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = B9FB8D492792DD970088F353 /* AppDelegate.m */; };
 		B9FB8D4D2792DD970088F353 /* Renderer.m in Sources */ = {isa = PBXBuildFile; fileRef = B9FB8D4C2792DD970088F353 /* Renderer.m */; };
 		B9FB8D502792DD970088F353 /* GameViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = B9FB8D4F2792DD970088F353 /* GameViewController.m */; };
@@ -15,14 +16,17 @@
 		B9FB8D582792DD990088F353 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B9FB8D572792DD990088F353 /* Assets.xcassets */; };
 		B9FB8D5B2792DD990088F353 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B9FB8D592792DD990088F353 /* LaunchScreen.storyboard */; };
 		B9FB8D5D2792DD990088F353 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = B9FB8D5C2792DD990088F353 /* main.m */; };
+		B9FB8D682792DDD80088F353 /* VideoCamera.m in Sources */ = {isa = PBXBuildFile; fileRef = B9FB8D662792DDD70088F353 /* VideoCamera.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		B90B097C2793070E0052879E /* Kernels.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Kernels.metal; sourceTree = "<group>"; };
+		B90B097E2793074D0052879E /* KernelTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = KernelTypes.h; sourceTree = "<group>"; };
 		B9FB8D452792DD970088F353 /* TextureTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TextureTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B9FB8D482792DD970088F353 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		B9FB8D492792DD970088F353 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
 		B9FB8D4B2792DD970088F353 /* Renderer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Renderer.h; sourceTree = "<group>"; };
-		B9FB8D4C2792DD970088F353 /* Renderer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Renderer.m; sourceTree = "<group>"; };
+		B9FB8D4C2792DD970088F353 /* Renderer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Renderer.m; sourceTree = "<group>"; wrapsLines = 0; };
 		B9FB8D4E2792DD970088F353 /* GameViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GameViewController.h; sourceTree = "<group>"; };
 		B9FB8D4F2792DD970088F353 /* GameViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = GameViewController.m; sourceTree = "<group>"; };
 		B9FB8D512792DD970088F353 /* Shaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Shaders.metal; sourceTree = "<group>"; };
@@ -31,6 +35,8 @@
 		B9FB8D572792DD990088F353 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B9FB8D5A2792DD990088F353 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		B9FB8D5C2792DD990088F353 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		B9FB8D662792DDD70088F353 /* VideoCamera.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VideoCamera.m; sourceTree = "<group>"; };
+		B9FB8D672792DDD70088F353 /* VideoCamera.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VideoCamera.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -67,8 +73,12 @@
 				B9FB8D492792DD970088F353 /* AppDelegate.m */,
 				B9FB8D4B2792DD970088F353 /* Renderer.h */,
 				B9FB8D4C2792DD970088F353 /* Renderer.m */,
+				B9FB8D672792DDD70088F353 /* VideoCamera.h */,
+				B9FB8D662792DDD70088F353 /* VideoCamera.m */,
 				B9FB8D4E2792DD970088F353 /* GameViewController.h */,
 				B9FB8D4F2792DD970088F353 /* GameViewController.m */,
+				B90B097C2793070E0052879E /* Kernels.metal */,
+				B90B097E2793074D0052879E /* KernelTypes.h */,
 				B9FB8D512792DD970088F353 /* Shaders.metal */,
 				B9FB8D532792DD970088F353 /* ShaderTypes.h */,
 				B9FB8D542792DD970088F353 /* Main.storyboard */,
@@ -149,10 +159,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B9FB8D682792DDD80088F353 /* VideoCamera.m in Sources */,
 				B9FB8D5D2792DD990088F353 /* main.m in Sources */,
 				B9FB8D522792DD970088F353 /* Shaders.metal in Sources */,
 				B9FB8D4D2792DD970088F353 /* Renderer.m in Sources */,
 				B9FB8D502792DD970088F353 /* GameViewController.m in Sources */,
+				B90B097D2793070E0052879E /* Kernels.metal in Sources */,
 				B9FB8D4A2792DD970088F353 /* AppDelegate.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -300,6 +312,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = N9987K9442;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
@@ -328,6 +341,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = N9987K9442;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
