@@ -10,6 +10,40 @@
 #import <objc/runtime.h>
 #include <simd/simd.h>
 
+#define MASK_NONE           0b0000
+#define MASK_ALL            0b1111
+
+static unsigned int state_bit_field       = MASK_ALL;
+static unsigned int selected_bit_field    = MASK_NONE;
+static unsigned int highlighted_bit_field = MASK_NONE;
+static unsigned int hidden_bit_field      = MASK_NONE;
+
+static unsigned int * bit_fields[3] =
+{
+    &state_bit_field, &selected_bit_field, &highlighted_bit_field, &hidden_bit_field
+};
+
+static const unsigned int bits[5] =
+{
+    0b00001, 0b00010, 0b00100, 0b01000, 0b10000
+};
+
+//bool nth_is_set = (v & (1 << n)) != 0;
+//bool nth_is_set = (v >> n) & 1;
+
+static unsigned int (^button_state)(unsigned int *, unsigned int) = ^ unsigned int (unsigned int *bit_field, unsigned int bit) {
+    *bit_field = (*bit_field & 0) | bits[bit];
+//    hidden_bit_field   =  state_bit_field;  // becomes what state is now (always the opposite of state)
+//    selected_bit_field = // set selected_bit_field to zero if zero; otherwise, keep 0
+//    state_bit_field    = ~state_bit_field;  // inverts state: 11111 = nothing selected, nothing hidden; 00000 = one selected, one shown (bit)
+//    hidden_bit_field   =  state_bit_field | bits[bit];      //
+//    selected_bit_field = ~state_bit_field  & selected_bit_field;
+//
+//    selected_bit_field |= bits[bit] & (state_bit_field & MASK_ALL);
+    
+    return *bit_field & bit;
+};
+
 static __strong UIButton * _Nonnull buttons[5];
 static void (^(^map)(__strong UIButton * _Nonnull [_Nonnull 5]))(UIButton * (^__strong)(unsigned int)) = ^ (__strong UIButton * _Nonnull button_collection[5]) {
     dispatch_queue_t enumerator_queue  = dispatch_queue_create("enumerator_queue", DISPATCH_QUEUE_SERIAL);
@@ -17,7 +51,7 @@ static void (^(^map)(__strong UIButton * _Nonnull [_Nonnull 5]))(UIButton * (^__
         dispatch_barrier_async(dispatch_get_main_queue(), ^{
             dispatch_apply(5, enumerator_queue, ^(size_t index) {
                 dispatch_barrier_async(dispatch_get_main_queue(), ^{
-                    button_collection[index] = enumeration((unsigned int)index);
+                    button_collection[index] = enumeration((unsigned int)index); // return value
                 });
             });
         });
@@ -30,6 +64,9 @@ static void (^(^filter)(__strong UIButton * _Nonnull [_Nonnull 5]))(void (^__str
         dispatch_barrier_async(dispatch_get_main_queue(), ^{
             dispatch_apply(5, enumerator_queue, ^(size_t index) {
                 dispatch_barrier_async(dispatch_get_main_queue(), ^{
+                    [button_collection[index] setSelected:(selected_bit_field >> index) & 1];
+                    [button_collection[index] setHighlighted:(highlighted_bit_field >> index) & 1];
+//                    [button_collection[index] setHidden:(hidden_bit_field >> index) & 1];
                     enumeration(button_collection[index], (unsigned int)index); // no return value
                 });
             });
@@ -61,39 +98,19 @@ static void (^(^filter)(__strong UIButton * _Nonnull [_Nonnull 5]))(void (^__str
 //};
 
 static float (^rescale)(float old_value, float old_min, float old_max, float new_min, float new_max) = ^(float old_value, float old_min, float old_max, float new_min, float new_max) {
-    return (new_max - new_min) * /*(fmax(old_min, fmin(old_value, old_max))*/ (old_value - old_min) / (old_max - old_min) + new_min;
+    return (new_max - new_min) * (old_value - old_min) / (old_max - old_min) + new_min;
 };
 
-char state_bits    = (0 << 0 | 0 << 1 | 0 << 2 | 0 << 3 | 0 << 4);
-char selected_bits = (0 << 0 | 0 << 1 | 0 << 2 | 0 << 3 | 0 << 4);
-char enabled_bits  = (1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4);
-
-const int torch_level_bit       = (1 << 0);
-const int lens_position_bit     = (1 << 1);
-const int exposure_duration_bit = (1 << 2);
-const int iso_bit               = (1 << 3);
-const int zoom_factor_bit       = (1 << 4);
-
-/*
- state_bits = ~state_bits;
- enabled_bits = state_bits | selected_bits;
- selected_bits = ~state_bits & selected_bits;
- enabled_bits = enabled_bits | selected_bits;
- */
-
-static void (^reduce)(void) = ^{
-    state_bits = ~state_bits;
-    enabled_bits = state_bits | selected_bits;
-    selected_bits = ~state_bits & selected_bits;
-    enabled_bits = enabled_bits | selected_bits;
-    filter(buttons)(^ (UIButton * _Nonnull button, unsigned int property) {
-        printf("\n%lu\tstate\t%s\t\t", button.tag, (state_bits & (1 << property)) ? "TRUE" : "FALSE");
-        printf("%lu\tselected\t%s\t\t", button.tag, (selected_bits & (1 << property)) ? "TRUE" : "FALSE");
-        printf("%lu\tenabled\t%s\n", button.tag, (enabled_bits & (1 << property)) ? "TRUE" : "FALSE");
-        [button setSelected:(selected_bits & (1 << property)) ? TRUE : FALSE];
-//        [button setHidden:(enabled_bits & (1 << property)) ? FALSE : TRUE];
-    });
-};
+//static void (^reduce)(void) = ^{
+//    state();
+//    filter(buttons)(^ (UIButton * _Nonnull button, unsigned int property) {
+//        printf("\n%lu\tstate\t%s\t\t", button.tag, (state_bits & (1 << property)) ? "TRUE" : "FALSE");
+//        printf("%lu\tselected\t%s\t\t", button.tag, (selected_bits & (1 << property)) ? "TRUE" : "FALSE");
+//        printf("%lu\tenabled\t%s\n", button.tag, (enabled_bits & (1 << property)) ? "TRUE" : "FALSE");
+//        [button setSelected:(selected_bits & (1 << property)) ? TRUE : FALSE];
+////        [button setHidden:(enabled_bits & (1 << property)) ? FALSE : TRUE];
+//    });
+//};
 
 static void (^(^(^touch_handler_init)(UIView *))(UITouch *))(void) = ^ (UIView * view) {
     CGRect contextRect = view.bounds;
@@ -118,11 +135,11 @@ static void (^(^(^touch_handler_init)(UIView *))(UITouch *))(void) = ^ (UIView *
             touch_angle = atan2(touch_point.y - maxY, touch_point.x - maxX) * (180.0 / M_PI);
             if (touch_angle < 0.0) touch_angle += 360.0;
             touch_property = (unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 4.0));
+            button_state((UITouchPhaseEnded ^ touch.phase) ? &highlighted_bit_field : &selected_bit_field, touch_property);
             filter(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
-                [button setSelected:!(UITouchPhaseEnded ^ touch.phase) & !(touch_property ^ button.tag)];
                 [button setHighlighted:(UITouchPhaseEnded ^ touch.phase) & !(touch_property ^ button.tag)];
                 [button setCenter:^{
-                    float angle  = rescale(button.tag, 0, 4, 180.0, 270.0);
+                    float angle  = rescale(button.tag, 0.0, 4.0, 180.0, 270.0);
                     float radians = degreesToRadians(angle);
                     float radius = sqrt(pow(touch_point.x - maxX, 2.0) +
                                         pow(touch_point.y - maxY, 2.0));
