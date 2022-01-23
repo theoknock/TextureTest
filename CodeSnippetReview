@@ -1,0 +1,62 @@
+/* Anonymous block pointers (in-progress) */
+
+typedef double (^D)(int);
+D d = ^ double (int m) {
+    return (double)m;
+};
+
+typedef int (^M)(double);
+M m = ^ int (double d) {
+    return (int)d;
+};
+
+typedef void * BlkPtr;
+BlkPtr blk_d_ptr = &d;
+BlkPtr blk_m_ptr = &m;
+
+/* */
+
+/* reduction function */
+
+static void (^(^(^reduce)(UIButton * _Nonnull __strong *))(UIButton *(^__strong)(UIButton *__strong, unsigned int)))(UIButton *(^__strong)(UIButton * _Nonnull __strong, unsigned int)) =
+^ (__strong UIButton * _Nonnull button_collection[5]) {
+    dispatch_queue_t enumerator_queue  = dispatch_queue_create("enumerator_queue", DISPATCH_QUEUE_SERIAL);
+    return ^ (void *(^reduction)(UIButton *, unsigned int)) {
+        return ^ (UIButton * (^reductor)(UIButton * _Nonnull, unsigned int)) {
+            dispatch_barrier_async(dispatch_get_main_queue(), ^{
+                dispatch_apply(5, enumerator_queue, ^(size_t index) {
+                    dispatch_barrier_async(dispatch_get_main_queue(), ^{
+                        reduction(reductor(button_collection[index], (unsigned int)index), (unsigned int)index);
+                    });
+                });
+            });
+        };
+    };
+};
+
+= ^ (__strong UIButton * _Nonnull button_collection[5]) {
+    return ^ (void(^b)(UIButton * _Nonnull)) {
+        return ^ (UIButton *(^c)(unsigned int)) {
+        };
+    };
+};
+
+static void (^reduce)(void) = ^{
+    state();
+    filter(buttons)(^ (UIButton * _Nonnull button, unsigned int property) {
+        printf("\n%lu\tstate\t%s\t\t", button.tag, (state_bits & (1 << property)) ? "TRUE" : "FALSE");
+        printf("%lu\tselected\t%s\t\t", button.tag, (selected_bits & (1 << property)) ? "TRUE" : "FALSE");
+        printf("%lu\tenabled\t%s\n", button.tag, (enabled_bits & (1 << property)) ? "TRUE" : "FALSE");
+        [button setSelected:(selected_bits & (1 << property)) ? TRUE : FALSE];
+        [button setHidden:(enabled_bits & (1 << property)) ? FALSE : TRUE];
+    });
+};
+
+/* */
+
+/* Is nth bit masked */
+
+bool nth_is_set = (v & (1 << n)) != 0;
+bool nth_is_set = (v >> n) & 1;
+
+/* */

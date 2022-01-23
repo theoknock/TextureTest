@@ -1,0 +1,75 @@
+#  MiscBitRelatedCode.exp
+#  
+#
+#  Created by Xcode Developer on 1/23/22.
+#
+
+typedef NS_OPTIONS(uint8_t, CaptureDeviceConfigurationControlPropertyBit) {
+    CaptureDeviceConfigurationControlPropertyBitTorchLevel       = 1 << 0,
+    CaptureDeviceConfigurationControlPropertyBitLensPosition     = 1 << 1,
+    CaptureDeviceConfigurationControlPropertyBitExposureDuration = 1 << 2,
+    CaptureDeviceConfigurationControlPropertyBitISO              = 1 << 3,
+    CaptureDeviceConfigurationControlPropertyBitZoomFactor       = 1 << 4,
+};
+
+typedef CaptureDeviceConfigurationControlPropertyBit               CaptureDeviceConfigurationControlPropertyBitMask;
+typedef CaptureDeviceConfigurationControlPropertyBitMask           CaptureDeviceConfigurationControlPropertyBitVector;
+static  CaptureDeviceConfigurationControlPropertyBitVector         property_bit_vector     = (CaptureDeviceConfigurationControlPropertyBitTorchLevel |
+                                                                                              CaptureDeviceConfigurationControlPropertyBitLensPosition |
+                                                                                              CaptureDeviceConfigurationControlPropertyBitExposureDuration |
+                                                                                              CaptureDeviceConfigurationControlPropertyBitISO |
+                                                                                              CaptureDeviceConfigurationControlPropertyBitZoomFactor);
+static  CaptureDeviceConfigurationControlPropertyBitVector * const property_bit_vector_ptr = &property_bit_vector;
+
+typedef NS_OPTIONS(uint8_t, CaptureDeviceConfigurationControlSelectedPropertyBit) {
+    CaptureDeviceConfigurationControlSelectedPropertyBitTorchLevel       = 1 << 0,
+    CaptureDeviceConfigurationControlSelectedPropertyBitLensPosition     = 1 << 1,
+    CaptureDeviceConfigurationControlSelectedPropertyBitExposureDuration = 1 << 2,
+    CaptureDeviceConfigurationControlSelectedPropertyBitISO              = 1 << 3,
+    CaptureDeviceConfigurationControlSelectedPropertyBitZoomFactor       = 1 << 4,
+};
+typedef CaptureDeviceConfigurationControlSelectedPropertyBit               CaptureDeviceConfigurationControlSelectedPropertyBitMask;
+typedef CaptureDeviceConfigurationControlSelectedPropertyBitMask           CaptureDeviceConfigurationControlSelectedPropertyBitVector;
+static  CaptureDeviceConfigurationControlSelectedPropertyBitVector         selected_property_bit_vector     = (0 << 0 | 0 << 1 | 0 << 2 | 0 << 3 | 0 << 4);
+static  CaptureDeviceConfigurationControlSelectedPropertyBitVector * const selected_property_bit_vector_ptr = &selected_property_bit_vector;
+
+typedef NS_OPTIONS(uint8_t, CaptureDeviceConfigurationControlHiddenPropertyBit) {
+    CaptureDeviceConfigurationControlHiddenPropertyBitTorchLevel       = 1 << 0,
+    CaptureDeviceConfigurationControlHiddenPropertyBitLensPosition     = 1 << 1,
+    CaptureDeviceConfigurationControlHiddenPropertyBitExposureDuration = 1 << 2,
+    CaptureDeviceConfigurationControlHiddenPropertyBitISO              = 1 << 3,
+    CaptureDeviceConfigurationControlHiddenPropertyBitZoomFactor       = 1 << 4,
+};
+typedef CaptureDeviceConfigurationControlHiddenPropertyBit               CaptureDeviceConfigurationControlHiddenPropertyBitMask;
+typedef CaptureDeviceConfigurationControlHiddenPropertyBitMask           CaptureDeviceConfigurationControlHiddenPropertyBitVector;
+static  CaptureDeviceConfigurationControlHiddenPropertyBitVector         hidden_property_bit_vector     = (0 << 0 | 0 << 1 | 0 << 2 | 0 << 3 | 0 << 4);
+static  CaptureDeviceConfigurationControlHiddenPropertyBitVector * const hidden_property_bit_vector_ptr = &hidden_property_bit_vector;
+
+static CaptureDeviceConfigurationControlPropertyBitVector (^mask_property_bit_vector)(CaptureDeviceConfigurationControlPropertyBitMask) = ^ CaptureDeviceConfigurationControlPropertyBitVector (CaptureDeviceConfigurationControlPropertyBitMask property_bit_mask) {
+    property_bit_vector = property_bit_vector | property_bit_mask;
+    return *property_bit_vector_ptr;
+};
+
+static simd_uchar2 selected_hidden_bit_vector_pair;
+
+selected_hidden_bit_vector_pair = simd_make_uchar2(*selected_property_bit_vector_ptr, *hidden_property_bit_vector_ptr);
+selected_hidden_bit_vector_pair[0] &= ~(selected_hidden_bit_vector_pair[0]);
+selected_hidden_bit_vector_pair[0] |= mask[property_tag];
+selected_hidden_bit_vector_pair[1] ^= ~((selected_hidden_bit_vector_pair[0] & getByte(selected_hidden_bit_vector_pair[0], mask[buttons[property_tag]().tag])));
+selected_property_bit_vector = selected_hidden_bit_vector_pair[0];
+hidden_property_bit_vector   = selected_hidden_bit_vector_pair[1];
+for (int property = 0; property < 5; property++) {
+    [buttons[property]() setTitle:[NSString stringWithFormat:@"%d - %d",
+                                   (BOOL)(getByte(selected_hidden_bit_vector_pair[0], property_tag) & mask[buttons[property]().tag]), //(selected_hidden_bit_vector_pair[0] | (CaptureDeviceConfigurationControlSelectedPropertyBit)(property_tag)),
+                                   (BOOL)(getByte(hidden_property_bit_vector,   property_tag) & mask[buttons[property]().tag])] forState:UIControlStateNormal];
+    [buttons[property]() setSelected:(BOOL)(getByte(selected_hidden_bit_vector_pair[0], property_tag) & mask[buttons[property]().tag])]; //(selected_hidden_bit_vector_pair[0] | (CaptureDeviceConfigurationControlSelectedPropertyBit)(property_tag)),
+};
+};
+objc_setAssociatedObject(button, @selector(invoke), eventHandlerBlock, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+[button addTarget:eventHandlerBlock action:@selector(invoke) forControlEvents:UIControlEventTouchUpInside];
+
+return ^ UIButton * (void) {
+    [button setSelected:(BOOL)(getByte(selected_property_bit_vector, property_tag) & mask[button.tag])]; //(selected_property_bit_vector | (CaptureDeviceConfigurationControlSelectedPropertyBit)(property_tag)),
+    [button setHidden:(BOOL)(getByte(hidden_property_bit_vector, property_tag) & mask[button.tag])];
+    return button;
+};
