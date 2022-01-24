@@ -103,6 +103,18 @@ static void (^print_byte)(long long, long long) = ^ (long long bit_field, long l
     printf("\n\t%d\n", ((BOOL)(getByte(bit_field, bit) & mask[bit]) ? 1 : 0));
 };
 
+
+static float (^rescale)(float old_value, float old_min, float old_max, float new_min, float new_max) = ^(float old_value, float old_min, float old_max, float new_min, float new_max) {
+    return (new_max - new_min) * (old_value - old_min) / (old_max - old_min) + new_min;
+};
+
+static  uint8_t         active_component_bit_vector     = (1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4);
+static  uint8_t * const active_component_bit_vector_ptr = &active_component_bit_vector;
+static  uint8_t         selected_property_bit_vector     = (0 << 0 | 0 << 1 | 0 << 2 | 0 << 3 | 0 << 4);
+static  uint8_t * const selected_property_bit_vector_ptr = &selected_property_bit_vector;
+static  uint8_t         hidden_property_bit_vector     = (0 << 0 | 0 << 1 | 0 << 2 | 0 << 3 | 0 << 4);
+static  uint8_t * const hidden_property_bit_vector_ptr = &hidden_property_bit_vector;
+
 static __strong UIButton * _Nonnull buttons[5];
 static void (^(^map)(__strong UIButton * _Nonnull [_Nonnull 5]))(UIButton * (^__strong)(unsigned int)) = ^ (__strong UIButton * _Nonnull button_collection[5]) {
     dispatch_queue_t enumerator_queue  = dispatch_queue_create("enumerator_queue", DISPATCH_QUEUE_SERIAL);
@@ -123,9 +135,9 @@ static void (^(^filter)(__strong UIButton * _Nonnull [_Nonnull 5]))(void (^__str
         dispatch_barrier_async(dispatch_get_main_queue(), ^{
             dispatch_apply(5, enumerator_queue, ^(size_t index) {
                 dispatch_barrier_async(dispatch_get_main_queue(), ^{
-                    //                    [button_collection[index] setSelected:(selected_bit_field >> index) & 1];
+                    [button_collection[index] setSelected:(selected_property_bit_vector >> index) & 1U];
                     //                    [button_collection[index] setHighlighted:(highlighted_bit_field >> index) & 1];
-                    //                    [button_collection[index] setHidden:(hidden_bit_field >> index) & 1];
+                    [button_collection[index] setHidden:(hidden_property_bit_vector >> index) & 1U];
                     enumeration(button_collection[index], (unsigned int)index); // no return value
                 });
             });
@@ -133,16 +145,6 @@ static void (^(^filter)(__strong UIButton * _Nonnull [_Nonnull 5]))(void (^__str
     };
 };
 
-static float (^rescale)(float old_value, float old_min, float old_max, float new_min, float new_max) = ^(float old_value, float old_min, float old_max, float new_min, float new_max) {
-    return (new_max - new_min) * (old_value - old_min) / (old_max - old_min) + new_min;
-};
-
-static  uint8_t         active_component_bit_vector     = (1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4);
-static  uint8_t * const active_component_bit_vector_ptr = &active_component_bit_vector;
-static  uint8_t         selected_property_bit_vector     = (0 << 0 | 0 << 1 | 0 << 2 | 0 << 3 | 0 << 4);
-static  uint8_t * const selected_property_bit_vector_ptr = &selected_property_bit_vector;
-static  uint8_t         hidden_property_bit_vector     = (0 << 0 | 0 << 1 | 0 << 2 | 0 << 3 | 0 << 4);
-static  uint8_t * const hidden_property_bit_vector_ptr = &hidden_property_bit_vector;
 
 static void (^(^(^touch_handler_init)(UIView *))(UITouch *))(void(^)(unsigned int)) = ^ (UIView * view) {
     CGRect contextRect = view.bounds;
@@ -165,6 +167,7 @@ static void (^(^(^touch_handler_init)(UIView *))(UITouch *))(void(^)(unsigned in
         static CGFloat touch_angle;
         //        static unsigned int touch_property;
         static UITouchPhase touch_phase;
+        static float radius;
         return ^ (void(^ _Nullable set_button_state)(unsigned int)) {
             touch_point = [touch preciseLocationInView:view];
             touch_angle = (atan2(touch_point.y - maxY, touch_point.x - maxX) * (180.0 / M_PI)) + 360.0;
@@ -172,26 +175,20 @@ static void (^(^(^touch_handler_init)(UIView *))(UITouch *))(void(^)(unsigned in
             touch_phase = touch.phase;
             if (set_button_state != nil) set_button_state(touch_property);
             filter(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
-                [button setSelected:(selected_property_bit_vector >> index) & 1U]; //(BOOL)(getByte(selected_property_bit_vector, index) & mask[index])];
-                [button setHidden:(hidden_property_bit_vector >> button.tag) & 1U];
+//                [button setSelected:(selected_property_bit_vector >> index) & 1U]; //(BOOL)(getByte(selected_property_bit_vector, index) & mask[index])];
+//                [button setHidden:(hidden_property_bit_vector >> button.tag) & 1U];
                 [button setHighlighted:(UITouchPhaseEnded ^ touch.phase) & !(touch_property ^ button.tag)];
                 [button setCenter:^{
-                    float angle  = rescale(button.tag, 0.0, 4.0, 180.0, 270.0); // float angle  = (((selected_property_bit_vector >> index) & 1) & (UITouchPhaseEnded ^ touch.phase)) ? rescale(index, 0.0, 4.0, 180.0, 270.0) : touch_angle;
+                    // To-Do: Choose between two values: the button's "group" angle and its "tick-wheel" angle
+                    float angle  = ((active_component_bit_vector >> button.tag) & 1U) ? rescale(button.tag, 0.0, 4.0, 180.0, 270.0) : touch_angle;; //(((selected_property_bit_vector >> index) & 1) & (UITouchPhaseEnded ^ touch.phase)) ? rescale(index, 0.0, 4.0, 180.0, 270.0) : touch_angle;
                     float radians = degreesToRadians(angle);
-                    float radius = sqrt(pow(touch_point.x - maxX, 2.0) +
-                                        pow(touch_point.y - maxY, 2.0));
+                    radius = ((active_component_bit_vector >> button.tag) & 1U) ? sqrt(pow(touch_point.x - maxX, 2.0) +
+                                                                                       pow(touch_point.y - maxY, 2.0)) : radius;
                     radius = fmaxf(midX, fminf(radius, maxX));
                     CGFloat x = maxX - radius * -cos(radians);
                     CGFloat y = maxY - radius * -sin(radians);
                     return CGPointMake(x, y);
                 }()];
-                {
-                    [button setTitle:[NSString stringWithFormat:@"%d - %d",
-                                      (BOOL)(getByte(selected_property_bit_vector, index) & mask[index]),
-                                      (BOOL)(getByte(hidden_property_bit_vector, index) & mask[index])] forState:UIControlStateNormal];
-                    [button sizeToFit];
-                    [[button titleLabel] setAdjustsFontSizeToFitWidth:CGRectGetWidth([[button titleLabel] frame])];
-                };
             });
         };
         
@@ -219,12 +216,7 @@ static void (^handle_touch)(void(^ _Nullable)(unsigned int));
         [button setImage:[UIImage systemImageNamed:@"questionmark.circle" withConfiguration:[[UIImageSymbolConfiguration configurationWithPointSize:42] configurationByApplyingConfiguration:[UIImageSymbolConfiguration configurationPreferringMulticolor]]] forState:UIControlStateNormal];
         [button setImage:[UIImage systemImageNamed:@"questionmark.circle.fill" withConfiguration:[[UIImageSymbolConfiguration configurationWithPointSize:42] configurationByApplyingConfiguration:[UIImageSymbolConfiguration configurationPreferringMulticolor]]] forState:UIControlStateHighlighted];
         [button setImage:[UIImage systemImageNamed:@"exclamationmark.circle.fill" withConfiguration:[[UIImageSymbolConfiguration configurationWithPointSize:42] configurationByApplyingConfiguration:[UIImageSymbolConfiguration configurationPreferringMulticolor]]] forState:UIControlStateSelected];
-        
-        [button setTitle:[NSString stringWithFormat:@"%d - %d",
-                          (BOOL)(getByte(selected_property_bit_vector, index) & mask[index]),
-                          (BOOL)(getByte(hidden_property_bit_vector, index) & mask[index])] forState:UIControlStateNormal];
         [button sizeToFit];
-        [[button titleLabel] setAdjustsFontSizeToFitWidth:CGRectGetWidth([[button titleLabel] frame])];
         
         [button setUserInteractionEnabled:FALSE];
         void (^eventHandlerBlockTouchUpInside)(void) = ^{
