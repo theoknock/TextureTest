@@ -137,7 +137,7 @@ static float (^rescale)(float old_value, float old_min, float old_max, float new
     return (new_max - new_min) * (old_value - old_min) / (old_max - old_min) + new_min;
 };
 
-static  uint8_t         active_component_bit_vector     = (0 << 0 | 0 << 1 | 0 << 2 | 0 << 3 | 0 << 4);
+static  uint8_t         active_component_bit_vector     = (1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4);
 static  uint8_t * const active_component_bit_vector_ptr = &active_component_bit_vector;
 static  uint8_t         selected_property_bit_vector     = (0 << 0 | 0 << 1 | 0 << 2 | 0 << 3 | 0 << 4);
 static  uint8_t * const selected_property_bit_vector_ptr = &selected_property_bit_vector;
@@ -173,7 +173,7 @@ static void (^(^(^touch_handler_init)(UIView *))(UITouch *))(void(^)(unsigned in
             if (set_button_state != nil) set_button_state(touch_property);
             filter(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
                 [button setSelected:(selected_property_bit_vector >> index) & 1U]; //(BOOL)(getByte(selected_property_bit_vector, index) & mask[index])];
-                [button setHidden:(BOOL)((hidden_property_bit_vector >> index)) & 0xff];
+//                [button setHidden:(BOOL)((hidden_property_bit_vector >> index)) & 0xff];
                 [button setHighlighted:(UITouchPhaseEnded ^ touch.phase) & !(touch_property ^ button.tag)];
                 [button setCenter:^{
                     float angle  = rescale(button.tag, 0.0, 4.0, 180.0, 270.0); // float angle  = (((selected_property_bit_vector >> index) & 1) & (UITouchPhaseEnded ^ touch.phase)) ? rescale(index, 0.0, 4.0, 180.0, 270.0) : touch_angle;
@@ -270,6 +270,8 @@ static void (^handle_touch)(void(^ _Nullable)(unsigned int));
 - (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
     dispatch_barrier_async(dispatch_get_main_queue(), ^{
         handle_touch(^ (unsigned int touch_property) {
+            // Converse nonimplication: determines the selection state of the buttons
+            
             // state
             for (int i = 0; i < 5; i++) *active_component_bit_vector_ptr ^= 1UL << i;
             NSUInteger label_idx_0 = [self.labels indexOfObjectPassingTest:^BOOL(UILabel * label, NSUInteger tag, BOOL * _Nonnull stop) {
@@ -297,8 +299,9 @@ static void (^handle_touch)(void(^ _Nullable)(unsigned int));
             [(UILabel *)[self.labels objectAtIndex:label_idx_2] setText:[NSString stringWithFormat:@"%u%u%u%u%u", ((*hidden_property_bit_vector_ptr >> 0) & 1U), ((*hidden_property_bit_vector_ptr >> 1) & 1U), ((*hidden_property_bit_vector_ptr >> 2) & 1U),  ((*hidden_property_bit_vector_ptr >> 3) & 1U), ((*hidden_property_bit_vector_ptr >> 4) & 1U)]];
             
             // sel end
+            // Factor in the current state before setting any property to one
             uint8_t selected_property_bit_mask = (0 << 0 | 0 << 1 | 0 << 2 | 0 << 3 | 0 << 4);
-            selected_property_bit_mask ^= 1UL << touch_property;
+            selected_property_bit_mask ^= (1UL << touch_property) & ~*active_component_bit_vector_ptr;
             *selected_property_bit_vector_ptr = (*selected_property_bit_vector_ptr | selected_property_bit_mask) & ~*selected_property_bit_vector_ptr;
             NSUInteger label_idx_3 = [self.labels indexOfObjectPassingTest:^BOOL(UILabel * label, NSUInteger tag, BOOL * _Nonnull stop) {
                 BOOL objTagged = ([label tag] == 3);
@@ -308,7 +311,10 @@ static void (^handle_touch)(void(^ _Nullable)(unsigned int));
             [(UILabel *)[self.labels objectAtIndex:label_idx_3] setText:[NSString stringWithFormat:@"%u%u%u%u%u", ((*selected_property_bit_vector_ptr >> 0) & 1U), ((*selected_property_bit_vector_ptr >> 1) & 1U), ((*selected_property_bit_vector_ptr >> 2) & 1U),  ((*selected_property_bit_vector_ptr >> 3) & 1U), ((*selected_property_bit_vector_ptr >> 4) & 1U)]];
         
             // hid end
-            *hidden_property_bit_vector_ptr = *selected_property_bit_vector_ptr ^ *active_component_bit_vector_ptr;
+            *hidden_property_bit_vector_ptr = selected_property_bit_mask & ~*active_component_bit_vector_ptr;
+            for (int i = 0; i < 5; i++) *hidden_property_bit_vector_ptr ^= 1UL << i;
+            *hidden_property_bit_vector_ptr ^= *active_component_bit_vector_ptr;
+            // factor in the state bit field to get correct hidden bit field for unmasked selected bit field
             NSUInteger label_idx_4 = [self.labels indexOfObjectPassingTest:^BOOL(UILabel * label, NSUInteger tag, BOOL * _Nonnull stop) {
                 BOOL objTagged = ([label tag] == 4);
                 *stop = objTagged;
@@ -322,6 +328,25 @@ static void (^handle_touch)(void(^ _Nullable)(unsigned int));
 //
 //            00100
 //            11011 00000
+            
+            // Exclusive Disjunction (are the two operands different, i.e., not equal?): determines the hidden state of the buttons
+            
+            /*
+             
+             0000 state bit mask (not bit field)
+             0000 selected
+             ———
+             00000
+
+             11111 state bit mask (not bit field)
+             01000 selected
+             ——-
+             10111
+
+             */
+            
+            
+            
         });
     });
 }
