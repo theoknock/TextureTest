@@ -173,7 +173,7 @@ static void (^(^(^touch_handler_init)(UIView *))(UITouch *))(void(^)(unsigned in
             if (set_button_state != nil) set_button_state(touch_property);
             filter(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
                 [button setSelected:(selected_property_bit_vector >> index) & 1U]; //(BOOL)(getByte(selected_property_bit_vector, index) & mask[index])];
-                [button setHidden:(BOOL)!((hidden_property_bit_vector >> (index<<5)) & 0xff)];
+                [button setHidden:(BOOL)((hidden_property_bit_vector >> index)) & 0xff];
                 [button setHighlighted:(UITouchPhaseEnded ^ touch.phase) & !(touch_property ^ button.tag)];
                 [button setCenter:^{
                     float angle  = rescale(button.tag, 0.0, 4.0, 180.0, 270.0); // float angle  = (((selected_property_bit_vector >> index) & 1) & (UITouchPhaseEnded ^ touch.phase)) ? rescale(index, 0.0, 4.0, 180.0, 270.0) : touch_angle;
@@ -268,43 +268,29 @@ static void (^handle_touch)(void(^ _Nullable)(unsigned int));
 }
 
 - (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
-    static int exec_count;
     dispatch_barrier_async(dispatch_get_main_queue(), ^{
         handle_touch(^ (unsigned int touch_property) {
+            for (int i = 0; i < 5; i++) *active_component_bit_vector_ptr ^= 1UL << i;
             
-            
-            // Converse Nonimplication
-            printf("\n----------------------\n");
-            for (int i = 0; i < 5; i++) {
-                *active_component_bit_vector_ptr ^= 1UL << i;
-//                printf("%d\t\t%u\n", exec_count++, (*active_component_bit_vector_ptr >> i) & 1U);
-            }
-            
-            for (int i = 0; i < 5; i++) {
-                printf("\t%u", (*selected_property_bit_vector_ptr >> i) & 1U);
-            }
-            printf("\t\tselected start\n");
-            *hidden_property_bit_vector_ptr = *active_component_bit_vector_ptr;
-            for (int i = 0; i < 5; i++) {
-                printf("\t%u", (*hidden_property_bit_vector_ptr >> i) & 1U);
-            }
-            printf("\t\thidden start\n");
+            [(UILabel *)self.labels[0] setText:[NSString stringWithFormat:@"\t%u%u%u%u%u", ((*selected_property_bit_vector_ptr >> 0) & 1U), ((*selected_property_bit_vector_ptr >> 1) & 1U), ((*selected_property_bit_vector_ptr >> 2) & 1U),  ((*selected_property_bit_vector_ptr >> 3) & 1U), ((*selected_property_bit_vector_ptr >> 4) & 1U)]];
+        
+            *hidden_property_bit_vector_ptr ^= *active_component_bit_vector_ptr; // how is this setting the inverse of the active..?
+            [(UILabel *)self.labels[1] setText:[NSString stringWithFormat:@"\t%u%u%u%u%u", ((*hidden_property_bit_vector_ptr >> 0) & 1U), ((*hidden_property_bit_vector_ptr >> 1) & 1U), ((*hidden_property_bit_vector_ptr >> 2) & 1U),  ((*hidden_property_bit_vector_ptr >> 3) & 1U), ((*hidden_property_bit_vector_ptr >> 4) & 1U)]];
             
             uint8_t selected_property_bit_mask = (0 << 0 | 0 << 1 | 0 << 2 | 0 << 3 | 0 << 4);
             selected_property_bit_mask ^= 1UL << touch_property;
             *selected_property_bit_vector_ptr = (*selected_property_bit_vector_ptr | selected_property_bit_mask) & ~*selected_property_bit_vector_ptr;
-            for (int i = 0; i < 5; i++) {
-                printf("\t%u", (*selected_property_bit_vector_ptr >> i) & 1U);
-            }
-            printf("\t\tselected end\n");
+            [(UILabel *)self.labels[2] setText:[NSString stringWithFormat:@"\t%u%u%u%u%u", ((*selected_property_bit_vector_ptr >> 0) & 1U), ((*selected_property_bit_vector_ptr >> 1) & 1U), ((*selected_property_bit_vector_ptr >> 2) & 1U),  ((*selected_property_bit_vector_ptr >> 3) & 1U), ((*selected_property_bit_vector_ptr >> 4) & 1U)]];
+        
+            *hidden_property_bit_vector_ptr = *selected_property_bit_vector_ptr ^ *active_component_bit_vector_ptr;
+            [(UILabel *)self.labels[3] setText:[NSString stringWithFormat:@"\t%u%u%u%u%u", ((*hidden_property_bit_vector_ptr >> 0) & 1U), ((*hidden_property_bit_vector_ptr >> 1) & 1U), ((*hidden_property_bit_vector_ptr >> 2) & 1U),  ((*hidden_property_bit_vector_ptr >> 3) & 1U), ((*hidden_property_bit_vector_ptr >> 4) & 1U)]];
             
-            *hidden_property_bit_vector_ptr &= *selected_property_bit_vector_ptr;
-            for (int i = 0; i < 5; i++) {
-                printf("\t%u", (*hidden_property_bit_vector_ptr >> i) & 1U);
-            }
-            printf("\t\thidden end\n");
-            
-            printf("\n----------------------\n");
+            // Use the state bit field and the selected bit field to create the hidden bitfield (answers: are they the same?)
+//            00000
+//            00000 11111
+//
+//            00100
+//            11011 00000
         });
     });
 }
