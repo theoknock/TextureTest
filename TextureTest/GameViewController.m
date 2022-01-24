@@ -12,25 +12,89 @@
 #include <stdio.h>
 #include <math.h>
 
+static NSArray<NSString *> * const CaptureDeviceConfigurationControlPropertyImageKeys = @[@"CaptureDeviceConfigurationControlPropertyTorchLevel",
+                                                                                          @"CaptureDeviceConfigurationControlPropertyLensPosition",
+                                                                                          @"CaptureDeviceConfigurationControlPropertyExposureDuration",
+                                                                                          @"CaptureDeviceConfigurationControlPropertyISO",
+                                                                                          @"CaptureDeviceConfigurationControlPropertyZoomFactor"];
+
+
+static NSArray<NSArray<NSString *> *> * const CaptureDeviceConfigurationControlPropertyImageValues = @[@[@"bolt.circle",
+                                                                                                         @"viewfinder.circle",
+                                                                                                         @"timer",
+                                                                                                         @"camera.aperture",
+                                                                                                         @"magnifyingglass.circle"],@[@"bolt.circle.fill",
+                                                                                                                                      @"viewfinder.circle.fill",
+                                                                                                                                      @"timer",
+                                                                                                                                      @"camera.aperture",
+                                                                                                                                      @"magnifyingglass.circle.fill"]];
+
+typedef enum : NSUInteger {
+    CaptureDeviceConfigurationControlPropertyTorchLevel,
+    CaptureDeviceConfigurationControlPropertyLensPosition,
+    CaptureDeviceConfigurationControlPropertyExposureDuration,
+    CaptureDeviceConfigurationControlPropertyISO,
+    CaptureDeviceConfigurationControlPropertyZoomFactor
+} CaptureDeviceConfigurationControlProperty;
+
+typedef enum : NSUInteger {
+    CaptureDeviceConfigurationControlStateDeselected,
+    CaptureDeviceConfigurationControlStateSelected,
+    CaptureDeviceConfigurationControlStateHighlighted
+} CaptureDeviceConfigurationControlState;
+
+static UIImageSymbolConfiguration * (^CaptureDeviceConfigurationControlPropertySymbolImageConfiguration)(CaptureDeviceConfigurationControlState) = ^ UIImageSymbolConfiguration * (CaptureDeviceConfigurationControlState state) {
+    switch (state) {
+        case CaptureDeviceConfigurationControlStateDeselected: {
+            UIImageSymbolConfiguration * symbol_palette_colors = [UIImageSymbolConfiguration configurationWithPaletteColors:@[[UIColor yellowColor], [UIColor systemBlueColor], [UIColor clearColor]]]; // configurationWithHierarchicalColor:[UIColor colorWithRed:4/255 green:51/255 blue:255/255 alpha:1.0]];
+            UIImageSymbolConfiguration * symbol_font_weight    = [UIImageSymbolConfiguration configurationWithWeight:UIImageSymbolWeightLight];
+            UIImageSymbolConfiguration * symbol_font_size      = [UIImageSymbolConfiguration configurationWithPointSize:42.0 weight:UIImageSymbolWeightUltraLight];
+            UIImageSymbolConfiguration * symbol_configuration  = [symbol_font_size configurationByApplyingConfiguration:[symbol_palette_colors configurationByApplyingConfiguration:symbol_font_weight]];
+            return symbol_configuration;
+        }
+            break;
+            
+        case CaptureDeviceConfigurationControlStateSelected: {
+            UIImageSymbolConfiguration * symbol_palette_colors_selected = [UIImageSymbolConfiguration configurationWithPaletteColors:@[[UIColor yellowColor], [UIColor systemBlueColor], [UIColor systemBlueColor]]]; //configurationWithHierarchicalColor:[UIColor colorWithRed:255/255 green:252/255 blue:121/255 alpha:1.0]];
+            UIImageSymbolConfiguration * symbol_font_weight_selected    = [UIImageSymbolConfiguration configurationWithWeight:UIImageSymbolWeightRegular];
+            UIImageSymbolConfiguration * symbol_font_size_selected      = [UIImageSymbolConfiguration configurationWithPointSize:42.0 weight:UIImageSymbolWeightLight];
+            UIImageSymbolConfiguration * symbol_configuration_selected  = [symbol_font_size_selected configurationByApplyingConfiguration:[symbol_palette_colors_selected configurationByApplyingConfiguration:symbol_font_weight_selected]];
+            
+            return symbol_configuration_selected;
+        }
+            
+        case CaptureDeviceConfigurationControlStateHighlighted: {
+            UIImageSymbolConfiguration * symbol_palette_colors_highlighted = [UIImageSymbolConfiguration configurationWithPaletteColors:@[[UIColor yellowColor], [UIColor clearColor], [UIColor yellowColor]]];
+            UIImageSymbolConfiguration * symbol_font_weight_highlighted    = [UIImageSymbolConfiguration configurationWithWeight:UIImageSymbolWeightRegular];
+            UIImageSymbolConfiguration * symbol_font_size_highlighted      = [UIImageSymbolConfiguration configurationWithPointSize:42.0 weight:UIImageSymbolWeightLight];
+            UIImageSymbolConfiguration * symbol_configuration_highlighted  = [symbol_font_size_highlighted configurationByApplyingConfiguration:[symbol_palette_colors_highlighted configurationByApplyingConfiguration:symbol_font_weight_highlighted]];
+            
+            return symbol_configuration_highlighted;
+        }
+            break;
+        default:
+            return nil;
+            break;
+    }
+};
+
+
+static NSString * (^CaptureDeviceConfigurationControlPropertySymbol)(CaptureDeviceConfigurationControlProperty, CaptureDeviceConfigurationControlState) = ^ NSString * (CaptureDeviceConfigurationControlProperty property, CaptureDeviceConfigurationControlState state) {
+    return CaptureDeviceConfigurationControlPropertyImageValues[state][property];
+};
+
+static NSString * (^CaptureDeviceConfigurationControlPropertyString)(CaptureDeviceConfigurationControlProperty) = ^ NSString * (CaptureDeviceConfigurationControlProperty property) {
+    return CaptureDeviceConfigurationControlPropertyImageKeys[property];
+};
+
+static UIImage * (^CaptureDeviceConfigurationControlPropertySymbolImage)(CaptureDeviceConfigurationControlProperty, CaptureDeviceConfigurationControlState) = ^ UIImage * (CaptureDeviceConfigurationControlProperty property, CaptureDeviceConfigurationControlState state) {
+    return [UIImage systemImageNamed:CaptureDeviceConfigurationControlPropertySymbol(property, state) withConfiguration:CaptureDeviceConfigurationControlPropertySymbolImageConfiguration(state)];
+};
+
+
+
 int decimalFromBinary(long long n);
 long long binaryFromDecimal(int n);
-
-//int main() {
-//    int dec = 0;
-//    long long bin = 0;
-//
-//    printf("Enter a binary number: ");
-//    scanf("%lld", &bin);
-//    dec = decimalFromBinary(bin);
-//    printf("%lld in binary = %d in decimal", bin, dec);
-//
-//    printf("Enter a decimal number: ");
-//    scanf("%d", &dec);
-//    bin = binaryFromDecimal(dec);
-//    printf("%d in decimal = %lld to binary", dec, bin);
-//
-//    return 0;
-//}
 
 int decimalFromBinary(long long n) {
     int decimalNumber = 0, i = 0, remainder;
@@ -74,23 +138,6 @@ static long long * bit_fields[4] =
 static const long long bits[5] =
 {
     0b00001, 0b00010, 0b00100, 0b01000, 0b10000
-};
-
-static long long (^button_state)(long long *, long long) = ^ long long (long long *bit_field, long long bit) {
-    //    printf("%lld to binary\n", binaryFromDecimal(state_bit_field));
-    // flip the state here
-    state_bit_field = ~state_bit_field;
-    // flip the selected button here
-    *bit_field = (*bit_field & MASK_NONE);// | (state_bit_field | bits[bit]);
-    hidden_bit_field   =  state_bit_field;  // becomes what state is now (always the opposite of state)
-    selected_bit_field = // set selected_bit_field to zero if zero; otherwise, keep 0
-    state_bit_field    = ~state_bit_field;  // inverts state: 11111 = nothing selected, nothing hidden; 00000 = one selected, one shown (bit)
-    hidden_bit_field   =  state_bit_field | bits[bit];      //
-    selected_bit_field = ~state_bit_field  & selected_bit_field;
-    
-    selected_bit_field |= bits[bit] & (state_bit_field & MASK_ALL);
-    
-    return *bit_field & bit;
 };
 
 uint8_t mask[8] = {1 << 0, 1 << 1, 1 << 2, 1 << 3, 1 << 4, 1 << 5};
@@ -175,8 +222,6 @@ static void (^(^(^touch_handler_init)(UIView *))(UITouch *))(void(^)(unsigned in
             touch_phase = touch.phase;
             if (set_button_state != nil) set_button_state(touch_property);
             filter(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
-//                [button setSelected:(selected_property_bit_vector >> index) & 1U]; //(BOOL)(getByte(selected_property_bit_vector, index) & mask[index])];
-//                [button setHidden:(hidden_property_bit_vector >> button.tag) & 1U];
                 [button setHighlighted:(UITouchPhaseEnded ^ touch.phase) & !(touch_property ^ button.tag)];
                 [button setCenter:^{
                     // To-Do: Choose between two values: the button's "group" angle and its "tick-wheel" angle
@@ -213,9 +258,13 @@ static void (^handle_touch)(void(^ _Nullable)(unsigned int));
     map(buttons)(^ UIButton * (unsigned int index) {
         UIButton * button;
         [button = [UIButton new] setTag:index];
-        [button setImage:[UIImage systemImageNamed:@"questionmark.circle" withConfiguration:[[UIImageSymbolConfiguration configurationWithPointSize:42] configurationByApplyingConfiguration:[UIImageSymbolConfiguration configurationPreferringMulticolor]]] forState:UIControlStateNormal];
-        [button setImage:[UIImage systemImageNamed:@"questionmark.circle.fill" withConfiguration:[[UIImageSymbolConfiguration configurationWithPointSize:42] configurationByApplyingConfiguration:[UIImageSymbolConfiguration configurationPreferringMulticolor]]] forState:UIControlStateHighlighted];
-        [button setImage:[UIImage systemImageNamed:@"exclamationmark.circle.fill" withConfiguration:[[UIImageSymbolConfiguration configurationWithPointSize:42] configurationByApplyingConfiguration:[UIImageSymbolConfiguration configurationPreferringMulticolor]]] forState:UIControlStateSelected];
+        [button setImage:[UIImage systemImageNamed:CaptureDeviceConfigurationControlPropertyImageValues[0][index] withConfiguration:CaptureDeviceConfigurationControlPropertySymbolImageConfiguration(CaptureDeviceConfigurationControlStateDeselected)] forState:UIControlStateNormal];
+        [button setImage:[UIImage systemImageNamed:CaptureDeviceConfigurationControlPropertyImageValues[1][index] withConfiguration:CaptureDeviceConfigurationControlPropertySymbolImageConfiguration(CaptureDeviceConfigurationControlStateSelected)] forState:UIControlStateSelected];
+        [button setImage:[UIImage systemImageNamed:CaptureDeviceConfigurationControlPropertyImageValues[1][index] withConfiguration:CaptureDeviceConfigurationControlPropertySymbolImageConfiguration(CaptureDeviceConfigurationControlStateHighlighted)] forState:UIControlStateHighlighted];
+
+//        [button setImage:[UIImage systemImageNamed:@"questionmark.circle" withConfiguration:[[UIImageSymbolConfiguration configurationWithPointSize:42] configurationByApplyingConfiguration:[UIImageSymbolConfiguration configurationPreferringMulticolor]]] forState:UIControlStateNormal];
+//        [button setImage:[UIImage systemImageNamed:@"questionmark.circle.fill" withConfiguration:[[UIImageSymbolConfiguration configurationWithPointSize:42] configurationByApplyingConfiguration:[UIImageSymbolConfiguration configurationPreferringMulticolor]]] forState:UIControlStateHighlighted];
+//        [button setImage:[UIImage systemImageNamed:@"exclamationmark.circle.fill" withConfiguration:[[UIImageSymbolConfiguration configurationWithPointSize:42] configurationByApplyingConfiguration:[UIImageSymbolConfiguration configurationPreferringMulticolor]]] forState:UIControlStateSelected];
         [button sizeToFit];
         
         [button setUserInteractionEnabled:FALSE];
