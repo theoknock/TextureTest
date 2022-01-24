@@ -173,7 +173,7 @@ static void (^(^(^touch_handler_init)(UIView *))(UITouch *))(void(^)(unsigned in
             if (set_button_state != nil) set_button_state(touch_property);
             filter(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
                 [button setSelected:(selected_property_bit_vector >> index) & 1U]; //(BOOL)(getByte(selected_property_bit_vector, index) & mask[index])];
-//                [button setHidden:(BOOL)((hidden_property_bit_vector >> index)) & 0xff];
+                [button setHidden:(hidden_property_bit_vector >> button.tag) & 1U];
                 [button setHighlighted:(UITouchPhaseEnded ^ touch.phase) & !(touch_property ^ button.tag)];
                 [button setCenter:^{
                     float angle  = rescale(button.tag, 0.0, 4.0, 180.0, 270.0); // float angle  = (((selected_property_bit_vector >> index) & 1) & (UITouchPhaseEnded ^ touch.phase)) ? rescale(index, 0.0, 4.0, 180.0, 270.0) : touch_angle;
