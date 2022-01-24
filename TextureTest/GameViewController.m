@@ -131,8 +131,7 @@ static void (^(^filter)(__strong UIButton * _Nonnull [_Nonnull 5]))(void (^__str
     };
 };
 
-
-static void (^(^(^touch_handler_init)(UIView *))(UITouch *))(void(^)(unsigned int)) = ^ (UIView * view) {
+static void (^(^(^touch_handler_init_button_arc)(UIView *))(UITouch *))(void(^)(unsigned int)) = ^ (UIView * view) {
     CGRect contextRect = view.bounds;
     float minX = (float)CGRectGetMinX(contextRect);
     float midX = (float)CGRectGetMidX(contextRect);
@@ -145,16 +144,7 @@ static void (^(^(^touch_handler_init)(UIView *))(UITouch *))(void(^)(unsigned in
     float mdnY = (float)(((int)midY & (int)minY) + (((int)midY ^ (int)minY) >> 1));
     float maxY = (float)CGRectGetMaxY(contextRect);
     float mdxY = (float)(((int)maxY & (int)midY) + (((int)maxY ^ (int)midY) >> 1));
-
-    const long (^ const block_b)(void) = ^ long (void) {
-        printf("block_b\n");
-        return 1;
-    };
-    const long (^ const block_c)(void) = ^ long (void) {
-        printf("\t\t\tblock_c\n");
-        return 2;
-    };
-    // Create separate touch handlers for each state; swap generic touch-handler property value with a pointer to the handler that corresponds to a given state
+    
     return ^ (UITouch * touch) {
         static CGPoint touch_point;
         static CGFloat touch_angle;
@@ -165,7 +155,6 @@ static void (^(^(^touch_handler_init)(UIView *))(UITouch *))(void(^)(unsigned in
             unsigned int touch_property = (unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 4.0));
             if (set_button_state != nil) set_button_state(touch_property);
             filter(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
-                ((touch_property ^ button.tag) & block_b()) | (~(touch_property ^ button.tag) & block_c());
                 [button setHighlighted:(UITouchPhaseEnded ^ touch.phase) & !(touch_property ^ button.tag)];
                 [button setCenter:^{
                     // To-Do: Choose between two values: the button's "group" angle and its "tick-wheel" angle
@@ -183,9 +172,53 @@ static void (^(^(^touch_handler_init)(UIView *))(UITouch *))(void(^)(unsigned in
     };
 };
 
+
+
+static void (^(^(^touch_handler_init_tick_wheel)(UIView *))(UITouch *))(void(^)(unsigned int)) = ^ (UIView * view) {
+    printf("%s\n", __PRETTY_FUNCTION__);
+    CGRect contextRect = view.bounds;
+    float minX = (float)CGRectGetMinX(contextRect);
+    float midX = (float)CGRectGetMidX(contextRect);
+    float mdnX = (float)(((int)midX & (int)minX) + (((int)midX ^ (int)minX) >> 1));
+    float maxX = (float)CGRectGetMaxX(contextRect);
+    float mdxX = (float)(((int)maxX & (int)midX) + (((int)maxX ^ (int)midX) >> 1));
+    
+    float minY = (float)CGRectGetMinY(contextRect);
+    float midY = (float)CGRectGetMidY(contextRect);
+    float mdnY = (float)(((int)midY & (int)minY) + (((int)midY ^ (int)minY) >> 1));
+    float maxY = (float)CGRectGetMaxY(contextRect);
+    float mdxY = (float)(((int)maxY & (int)midY) + (((int)maxY ^ (int)midY) >> 1));
+    
+    static float radius; // TO-DO: get the last computed radius from the previous touch handler
+    return ^ (UITouch * touch) {
+        printf("%s\n", __PRETTY_FUNCTION__);
+        static CGPoint touch_point;
+        static CGFloat touch_angle;
+        return ^ (void(^ _Nullable set_button_state)(unsigned int)) {
+            touch_point = [touch preciseLocationInView:view];
+            touch_angle = (atan2(touch_point.y - maxY, touch_point.x - maxX) * (180.0 / M_PI)) + 360.0;
+            unsigned int button_index = log2(*selected_property_bit_vector_ptr &(~(*selected_property_bit_vector_ptr-1)));
+            if (set_button_state != nil) set_button_state(button_index);
+            printf("%d\t\t%s\n", button_index, __PRETTY_FUNCTION__);
+            dispatch_barrier_async(dispatch_get_main_queue(), ^{
+                [buttons[button_index] setCenter:^{
+                    radius = ((active_component_bit_vector >> button_index) & 1U) ? sqrt(pow(touch_point.x - maxX, 2.0) +
+                                                                                       pow(touch_point.y - maxY, 2.0)) : radius;
+                    radius = fmaxf(midX, fminf(radius, maxX));
+                    float radians = degreesToRadians(touch_angle);
+                    CGFloat x = maxX - radius * -cos(radians);
+                    CGFloat y = maxY - radius * -sin(radians);
+                    return CGPointMake(x, y);
+                }()];
+            });
+            
+        };
+    };
+};
+
+static void (^(^(^touch_handler_init)(UIView *))(UITouch *))(void(^)(unsigned int));
 static void (^(^touch_handler)(UITouch *))(void(^ _Nullable)(unsigned int));
 static void (^handle_touch)(void(^ _Nullable)(unsigned int));
-
 
 @implementation GameViewController
 {
@@ -234,7 +267,7 @@ static void (^handle_touch)(void(^ _Nullable)(unsigned int));
     
     _view.delegate = _renderer;
     
-    touch_handler = touch_handler_init(self.view);
+    touch_handler = touch_handler_init_button_arc(self.view);
 }
 
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
@@ -326,6 +359,10 @@ static void (^handle_touch)(void(^ _Nullable)(unsigned int));
             
             
         });
+        touch_handler_init = ((active_component_bit_vector >> 0) & 1U) ? touch_handler_init_button_arc : touch_handler_init_tick_wheel;
+        touch_handler = touch_handler_init(self.view);
+        (handle_touch = touch_handler(touches.anyObject))(nil);
+        handle_touch(nil);
     });
 }
 
