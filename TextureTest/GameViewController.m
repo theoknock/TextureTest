@@ -270,20 +270,51 @@ static void (^handle_touch)(void(^ _Nullable)(unsigned int));
 - (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
     dispatch_barrier_async(dispatch_get_main_queue(), ^{
         handle_touch(^ (unsigned int touch_property) {
+            // state
             for (int i = 0; i < 5; i++) *active_component_bit_vector_ptr ^= 1UL << i;
+            NSUInteger label_idx_0 = [self.labels indexOfObjectPassingTest:^BOOL(UILabel * label, NSUInteger tag, BOOL * _Nonnull stop) {
+                BOOL objTagged = ([label tag] == 0);
+                *stop = objTagged;
+                return objTagged;
+            }];
+            [(UILabel *)[self.labels objectAtIndex:label_idx_0] setText:[NSString stringWithFormat:@"%u%u%u%u%u", ((*active_component_bit_vector_ptr >> 0) & 1U), ((*active_component_bit_vector_ptr >> 1) & 1U), ((*active_component_bit_vector_ptr >> 2) & 1U),  ((*active_component_bit_vector_ptr >> 3) & 1U), ((*active_component_bit_vector_ptr >> 4) & 1U)]];
             
-            [(UILabel *)self.labels[0] setText:[NSString stringWithFormat:@"\t%u%u%u%u%u", ((*selected_property_bit_vector_ptr >> 0) & 1U), ((*selected_property_bit_vector_ptr >> 1) & 1U), ((*selected_property_bit_vector_ptr >> 2) & 1U),  ((*selected_property_bit_vector_ptr >> 3) & 1U), ((*selected_property_bit_vector_ptr >> 4) & 1U)]];
-        
+            // sel init
+            NSUInteger label_idx_1 = [self.labels indexOfObjectPassingTest:^BOOL(UILabel * label, NSUInteger tag, BOOL * _Nonnull stop) {
+                BOOL objTagged = ([label tag] == 1);
+                *stop = objTagged;
+                return objTagged;
+            }];
+            [(UILabel *)[self.labels objectAtIndex:label_idx_1] setText:[NSString stringWithFormat:@"%u%u%u%u%u", ((*selected_property_bit_vector_ptr >> 0) & 1U), ((*selected_property_bit_vector_ptr >> 1) & 1U), ((*selected_property_bit_vector_ptr >> 2) & 1U),  ((*selected_property_bit_vector_ptr >> 3) & 1U), ((*selected_property_bit_vector_ptr >> 4) & 1U)]];
+            
+            // hid init
             *hidden_property_bit_vector_ptr ^= *active_component_bit_vector_ptr; // how is this setting the inverse of the active..?
-            [(UILabel *)self.labels[1] setText:[NSString stringWithFormat:@"\t%u%u%u%u%u", ((*hidden_property_bit_vector_ptr >> 0) & 1U), ((*hidden_property_bit_vector_ptr >> 1) & 1U), ((*hidden_property_bit_vector_ptr >> 2) & 1U),  ((*hidden_property_bit_vector_ptr >> 3) & 1U), ((*hidden_property_bit_vector_ptr >> 4) & 1U)]];
+            NSUInteger label_idx_2 = [self.labels indexOfObjectPassingTest:^BOOL(UILabel * label, NSUInteger tag, BOOL * _Nonnull stop) {
+                BOOL objTagged = ([label tag] == 2);
+                *stop = objTagged;
+                return objTagged;
+            }];
+            [(UILabel *)[self.labels objectAtIndex:label_idx_2] setText:[NSString stringWithFormat:@"%u%u%u%u%u", ((*hidden_property_bit_vector_ptr >> 0) & 1U), ((*hidden_property_bit_vector_ptr >> 1) & 1U), ((*hidden_property_bit_vector_ptr >> 2) & 1U),  ((*hidden_property_bit_vector_ptr >> 3) & 1U), ((*hidden_property_bit_vector_ptr >> 4) & 1U)]];
             
+            // sel end
             uint8_t selected_property_bit_mask = (0 << 0 | 0 << 1 | 0 << 2 | 0 << 3 | 0 << 4);
             selected_property_bit_mask ^= 1UL << touch_property;
             *selected_property_bit_vector_ptr = (*selected_property_bit_vector_ptr | selected_property_bit_mask) & ~*selected_property_bit_vector_ptr;
-            [(UILabel *)self.labels[2] setText:[NSString stringWithFormat:@"\t%u%u%u%u%u", ((*selected_property_bit_vector_ptr >> 0) & 1U), ((*selected_property_bit_vector_ptr >> 1) & 1U), ((*selected_property_bit_vector_ptr >> 2) & 1U),  ((*selected_property_bit_vector_ptr >> 3) & 1U), ((*selected_property_bit_vector_ptr >> 4) & 1U)]];
+            NSUInteger label_idx_3 = [self.labels indexOfObjectPassingTest:^BOOL(UILabel * label, NSUInteger tag, BOOL * _Nonnull stop) {
+                BOOL objTagged = ([label tag] == 3);
+                *stop = objTagged;
+                return objTagged;
+            }];
+            [(UILabel *)[self.labels objectAtIndex:label_idx_3] setText:[NSString stringWithFormat:@"%u%u%u%u%u", ((*selected_property_bit_vector_ptr >> 0) & 1U), ((*selected_property_bit_vector_ptr >> 1) & 1U), ((*selected_property_bit_vector_ptr >> 2) & 1U),  ((*selected_property_bit_vector_ptr >> 3) & 1U), ((*selected_property_bit_vector_ptr >> 4) & 1U)]];
         
+            // hid end
             *hidden_property_bit_vector_ptr = *selected_property_bit_vector_ptr ^ *active_component_bit_vector_ptr;
-            [(UILabel *)self.labels[3] setText:[NSString stringWithFormat:@"\t%u%u%u%u%u", ((*hidden_property_bit_vector_ptr >> 0) & 1U), ((*hidden_property_bit_vector_ptr >> 1) & 1U), ((*hidden_property_bit_vector_ptr >> 2) & 1U),  ((*hidden_property_bit_vector_ptr >> 3) & 1U), ((*hidden_property_bit_vector_ptr >> 4) & 1U)]];
+            NSUInteger label_idx_4 = [self.labels indexOfObjectPassingTest:^BOOL(UILabel * label, NSUInteger tag, BOOL * _Nonnull stop) {
+                BOOL objTagged = ([label tag] == 4);
+                *stop = objTagged;
+                return objTagged;
+            }];
+            [(UILabel *)[self.labels objectAtIndex:label_idx_4] setText:[NSString stringWithFormat:@"%u%u%u%u%u", ((*hidden_property_bit_vector_ptr >> 0) & 1U), ((*hidden_property_bit_vector_ptr >> 1) & 1U), ((*hidden_property_bit_vector_ptr >> 2) & 1U),  ((*hidden_property_bit_vector_ptr >> 3) & 1U), ((*hidden_property_bit_vector_ptr >> 4) & 1U)]];
             
             // Use the state bit field and the selected bit field to create the hidden bitfield (answers: are they the same?)
 //            00000
