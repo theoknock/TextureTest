@@ -48,7 +48,7 @@ static UIImageSymbolConfiguration * (^CaptureDeviceConfigurationControlPropertyS
         case CaptureDeviceConfigurationControlStateDeselected: {
             UIImageSymbolConfiguration * symbol_palette_colors = [UIImageSymbolConfiguration configurationWithPaletteColors:@[[UIColor yellowColor], [UIColor systemBlueColor], [UIColor clearColor]]]; // configurationWithHierarchicalColor:[UIColor colorWithRed:4/255 green:51/255 blue:255/255 alpha:1.0]];
             UIImageSymbolConfiguration * symbol_font_weight    = [UIImageSymbolConfiguration configurationWithWeight:UIImageSymbolWeightLight];
-            UIImageSymbolConfiguration * symbol_font_size      = [UIImageSymbolConfiguration configurationWithPointSize:42.0 weight:UIImageSymbolWeightUltraLight];
+            UIImageSymbolConfiguration * symbol_font_size      = [UIImageSymbolConfiguration configurationWithPointSize:42.0 weight:UIImageSymbolWeightLight];
             UIImageSymbolConfiguration * symbol_configuration  = [symbol_font_size configurationByApplyingConfiguration:[symbol_palette_colors configurationByApplyingConfiguration:symbol_font_weight]];
             return symbol_configuration;
         }
@@ -91,76 +91,16 @@ static UIImage * (^CaptureDeviceConfigurationControlPropertySymbolImage)(Capture
     return [UIImage systemImageNamed:CaptureDeviceConfigurationControlPropertySymbol(property, state) withConfiguration:CaptureDeviceConfigurationControlPropertySymbolImageConfiguration(state)];
 };
 
-
-
-int decimalFromBinary(long long n);
-long long binaryFromDecimal(int n);
-
-int decimalFromBinary(long long n) {
-    int decimalNumber = 0, i = 0, remainder;
-    while (n!=0)    {
-        remainder = n%10;
-        n /= 10;
-        decimalNumber += remainder*pow(2,i);
-        ++i;
-    }
-    return decimalNumber;
-}
-
-long long binaryFromDecimal(int n){
-    long long binaryNumber = 0;
-    int remainder, i=1;
-    
-    while(n != 0) {
-        remainder = n%2;
-        n = n / 2;
-        binaryNumber += remainder * i;
-        i = i * 10;
-    }
-    
-    return binaryNumber;
-}
-
-
-#define MASK_NONE           0b00000
-#define MASK_ALL            0b11111
-
-static long long state_bit_field       = MASK_ALL;
-static long long selected_bit_field    = MASK_NONE;
-static long long highlighted_bit_field = MASK_NONE;
-static long long hidden_bit_field      = MASK_NONE;
-
-static long long * bit_fields[4] =
-{
-    &state_bit_field, &selected_bit_field, &highlighted_bit_field, &hidden_bit_field
-};
-
-static const long long bits[5] =
-{
-    0b00001, 0b00010, 0b00100, 0b01000, 0b10000
-};
-
-uint8_t mask[8] = {1 << 0, 1 << 1, 1 << 2, 1 << 3, 1 << 4, 1 << 5};
-
-int getByte(int x, int n) {
-    return (x >> (n<<5)) & 0xff;
-}
-
-static void (^print_byte)(long long, long long) = ^ (long long bit_field, long long bit) {
-    printf("\n\t%d\n", ((BOOL)(getByte(bit_field, bit) & mask[bit]) ? 1 : 0));
-};
-
-
 static float (^rescale)(float old_value, float old_min, float old_max, float new_min, float new_max) = ^(float old_value, float old_min, float old_max, float new_min, float new_max) {
     return (new_max - new_min) * (old_value - old_min) / (old_max - old_min) + new_min;
 };
 
-static  uint8_t         active_component_bit_vector     = (1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4);
-static  uint8_t * const active_component_bit_vector_ptr = &active_component_bit_vector;
+static  uint8_t         active_component_bit_vector      = (1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4);
+static  uint8_t * const active_component_bit_vector_ptr  = &active_component_bit_vector;
 static  uint8_t         selected_property_bit_vector     = (0 << 0 | 0 << 1 | 0 << 2 | 0 << 3 | 0 << 4);
 static  uint8_t * const selected_property_bit_vector_ptr = &selected_property_bit_vector;
-static  uint8_t         hidden_property_bit_vector     = (0 << 0 | 0 << 1 | 0 << 2 | 0 << 3 | 0 << 4);
-static  uint8_t * const hidden_property_bit_vector_ptr = &hidden_property_bit_vector;
+static  uint8_t         hidden_property_bit_vector       = (0 << 0 | 0 << 1 | 0 << 2 | 0 << 3 | 0 << 4);
+static  uint8_t * const hidden_property_bit_vector_ptr   = &hidden_property_bit_vector;
 
 static __strong UIButton * _Nonnull buttons[5];
 static void (^(^map)(__strong UIButton * _Nonnull [_Nonnull 5]))(UIButton * (^__strong)(unsigned int)) = ^ (__strong UIButton * _Nonnull button_collection[5]) {
@@ -183,7 +123,6 @@ static void (^(^filter)(__strong UIButton * _Nonnull [_Nonnull 5]))(void (^__str
             dispatch_apply(5, enumerator_queue, ^(size_t index) {
                 dispatch_barrier_async(dispatch_get_main_queue(), ^{
                     [button_collection[index] setSelected:(selected_property_bit_vector >> index) & 1U];
-                    //                    [button_collection[index] setHighlighted:(highlighted_bit_field >> index) & 1];
                     [button_collection[index] setHidden:(hidden_property_bit_vector >> index) & 1U];
                     enumeration(button_collection[index], (unsigned int)index); // no return value
                 });
@@ -206,22 +145,27 @@ static void (^(^(^touch_handler_init)(UIView *))(UITouch *))(void(^)(unsigned in
     float mdnY = (float)(((int)midY & (int)minY) + (((int)midY ^ (int)minY) >> 1));
     float maxY = (float)CGRectGetMaxY(contextRect);
     float mdxY = (float)(((int)maxY & (int)midY) + (((int)maxY ^ (int)midY) >> 1));
-    
-    static int exec_count;
-    
+
+    const long (^ const block_b)(void) = ^ long (void) {
+        printf("block_b\n");
+        return 1;
+    };
+    const long (^ const block_c)(void) = ^ long (void) {
+        printf("\t\t\tblock_c\n");
+        return 2;
+    };
+    // Create separate touch handlers for each state; swap generic touch-handler property value with a pointer to the handler that corresponds to a given state
     return ^ (UITouch * touch) {
         static CGPoint touch_point;
         static CGFloat touch_angle;
-        //        static unsigned int touch_property;
-        static UITouchPhase touch_phase;
         static float radius;
         return ^ (void(^ _Nullable set_button_state)(unsigned int)) {
             touch_point = [touch preciseLocationInView:view];
             touch_angle = (atan2(touch_point.y - maxY, touch_point.x - maxX) * (180.0 / M_PI)) + 360.0;
             unsigned int touch_property = (unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 4.0));
-            touch_phase = touch.phase;
             if (set_button_state != nil) set_button_state(touch_property);
             filter(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
+                ((touch_property ^ button.tag) & block_b()) | (~(touch_property ^ button.tag) & block_c());
                 [button setHighlighted:(UITouchPhaseEnded ^ touch.phase) & !(touch_property ^ button.tag)];
                 [button setCenter:^{
                     // To-Do: Choose between two values: the button's "group" angle and its "tick-wheel" angle
@@ -236,7 +180,6 @@ static void (^(^(^touch_handler_init)(UIView *))(UITouch *))(void(^)(unsigned in
                 }()];
             });
         };
-        
     };
 };
 
@@ -254,19 +197,13 @@ static void (^handle_touch)(void(^ _Nullable)(unsigned int));
 {
     [super viewDidLoad];
     
-    
     map(buttons)(^ UIButton * (unsigned int index) {
         UIButton * button;
         [button = [UIButton new] setTag:index];
         [button setImage:[UIImage systemImageNamed:CaptureDeviceConfigurationControlPropertyImageValues[0][index] withConfiguration:CaptureDeviceConfigurationControlPropertySymbolImageConfiguration(CaptureDeviceConfigurationControlStateDeselected)] forState:UIControlStateNormal];
         [button setImage:[UIImage systemImageNamed:CaptureDeviceConfigurationControlPropertyImageValues[1][index] withConfiguration:CaptureDeviceConfigurationControlPropertySymbolImageConfiguration(CaptureDeviceConfigurationControlStateSelected)] forState:UIControlStateSelected];
         [button setImage:[UIImage systemImageNamed:CaptureDeviceConfigurationControlPropertyImageValues[1][index] withConfiguration:CaptureDeviceConfigurationControlPropertySymbolImageConfiguration(CaptureDeviceConfigurationControlStateHighlighted)] forState:UIControlStateHighlighted];
-
-//        [button setImage:[UIImage systemImageNamed:@"questionmark.circle" withConfiguration:[[UIImageSymbolConfiguration configurationWithPointSize:42] configurationByApplyingConfiguration:[UIImageSymbolConfiguration configurationPreferringMulticolor]]] forState:UIControlStateNormal];
-//        [button setImage:[UIImage systemImageNamed:@"questionmark.circle.fill" withConfiguration:[[UIImageSymbolConfiguration configurationWithPointSize:42] configurationByApplyingConfiguration:[UIImageSymbolConfiguration configurationPreferringMulticolor]]] forState:UIControlStateHighlighted];
-//        [button setImage:[UIImage systemImageNamed:@"exclamationmark.circle.fill" withConfiguration:[[UIImageSymbolConfiguration configurationWithPointSize:42] configurationByApplyingConfiguration:[UIImageSymbolConfiguration configurationPreferringMulticolor]]] forState:UIControlStateSelected];
         [button sizeToFit];
-        
         [button setUserInteractionEnabled:FALSE];
         void (^eventHandlerBlockTouchUpInside)(void) = ^{
             
