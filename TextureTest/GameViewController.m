@@ -137,7 +137,7 @@ static float (^rescale)(float old_value, float old_min, float old_max, float new
     return (new_max - new_min) * (old_value - old_min) / (old_max - old_min) + new_min;
 };
 
-static  uint8_t         active_component_bit_vector     = (1 << 0);
+static  uint8_t         active_component_bit_vector     = (0 << 0 | 0 << 1 | 0 << 2 | 0 << 3 | 0 << 4);
 static  uint8_t * const active_component_bit_vector_ptr = &active_component_bit_vector;
 static  uint8_t         selected_property_bit_vector     = (0 << 0 | 0 << 1 | 0 << 2 | 0 << 3 | 0 << 4);
 static  uint8_t * const selected_property_bit_vector_ptr = &selected_property_bit_vector;
@@ -163,7 +163,7 @@ static void (^(^(^touch_handler_init)(UIView *))(UITouch *))(void(^)(unsigned in
     return ^ (UITouch * touch) {
         static CGPoint touch_point;
         static CGFloat touch_angle;
-//        static unsigned int touch_property;
+        //        static unsigned int touch_property;
         static UITouchPhase touch_phase;
         return ^ (void(^ _Nullable set_button_state)(unsigned int)) {
             touch_point = [touch preciseLocationInView:view];
@@ -172,8 +172,8 @@ static void (^(^(^touch_handler_init)(UIView *))(UITouch *))(void(^)(unsigned in
             touch_phase = touch.phase;
             if (set_button_state != nil) set_button_state(touch_property);
             filter(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
-                [button setSelected:(BOOL)(getByte(selected_property_bit_vector, index) & mask[index])];
-                                [button setHidden:!(UITouchPhaseEnded ^ touch.phase) & (hidden_property_bit_vector | index) & !(touch_property ^ button.tag)];
+                [button setSelected:(selected_property_bit_vector >> index) & 1U]; //(BOOL)(getByte(selected_property_bit_vector, index) & mask[index])];
+                [button setHidden:(BOOL)!((hidden_property_bit_vector >> (index<<5)) & 0xff)];
                 [button setHighlighted:(UITouchPhaseEnded ^ touch.phase) & !(touch_property ^ button.tag)];
                 [button setCenter:^{
                     float angle  = rescale(button.tag, 0.0, 4.0, 180.0, 270.0); // float angle  = (((selected_property_bit_vector >> index) & 1) & (UITouchPhaseEnded ^ touch.phase)) ? rescale(index, 0.0, 4.0, 180.0, 270.0) : touch_angle;
@@ -271,30 +271,40 @@ static void (^handle_touch)(void(^ _Nullable)(unsigned int));
     static int exec_count;
     dispatch_barrier_async(dispatch_get_main_queue(), ^{
         handle_touch(^ (unsigned int touch_property) {
-            *active_component_bit_vector_ptr ^= 1UL << 0;
-            printf("%d\t\t%u\n", exec_count++, (*active_component_bit_vector_ptr >> 0) & 1U);
+            
             
             // Converse Nonimplication
-            printf("\n*selected_property_bit_vector_ptr\t----------------------\n");
+            printf("\n----------------------\n");
             for (int i = 0; i < 5; i++) {
-                printf("%d\t%u\n", i, (*selected_property_bit_vector_ptr >> i) & 1U);
+                *active_component_bit_vector_ptr ^= 1UL << i;
+//                printf("%d\t\t%u\n", exec_count++, (*active_component_bit_vector_ptr >> i) & 1U);
             }
-            printf("\ntouch_property\t----------------------\n");
-            uint8_t         selected_property_bit_mask     = (0 << 0 | 0 << 1 | 0 << 2 | 0 << 3 | 0 << 4);
+            
+            for (int i = 0; i < 5; i++) {
+                printf("\t%u", (*selected_property_bit_vector_ptr >> i) & 1U);
+            }
+            printf("\t\tselected start\n");
+            *hidden_property_bit_vector_ptr = *active_component_bit_vector_ptr;
+            for (int i = 0; i < 5; i++) {
+                printf("\t%u", (*hidden_property_bit_vector_ptr >> i) & 1U);
+            }
+            printf("\t\thidden start\n");
+            
+            uint8_t selected_property_bit_mask = (0 << 0 | 0 << 1 | 0 << 2 | 0 << 3 | 0 << 4);
             selected_property_bit_mask ^= 1UL << touch_property;
-            for (int i = 0; i < 5; i++) {
-                printf("%d\t%u\n", i, (selected_property_bit_mask >> i) & 1U);
-            }
-            printf("\n*selected_property_bit_vector_ptr\t----------------------\n");
-        
             *selected_property_bit_vector_ptr = (*selected_property_bit_vector_ptr | selected_property_bit_mask) & ~*selected_property_bit_vector_ptr;
             for (int i = 0; i < 5; i++) {
-                printf("%d\t%u\n", i, (*selected_property_bit_vector_ptr >> i) & 1U);
+                printf("\t%u", (*selected_property_bit_vector_ptr >> i) & 1U);
             }
-            printf("\n----------------------\n");
+            printf("\t\tselected end\n");
             
-            // TO-DO: Toggle hidden property of buttons based on selected property and control state
-//            *hidden_property_bit_vector_ptr ^= ~((*selected_property_bit_vector_ptr & getByte(*selected_property_bit_vector_ptr, mask[touch_property]))); // unmask all hidden except the selected bit });
+            *hidden_property_bit_vector_ptr &= *selected_property_bit_vector_ptr;
+            for (int i = 0; i < 5; i++) {
+                printf("\t%u", (*hidden_property_bit_vector_ptr >> i) & 1U);
+            }
+            printf("\t\thidden end\n");
+            
+            printf("\n----------------------\n");
         });
     });
 }
