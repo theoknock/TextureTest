@@ -10,7 +10,6 @@
 #import <MetalKit/MetalKit.h>
 #import "Renderer.h"
 
-// Our iOS view controller
 @interface GameViewController : UIViewController
 
 @property (strong, nonatomic) IBOutlet UILabel *labelStackView;

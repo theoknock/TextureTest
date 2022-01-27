@@ -7,41 +7,32 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		B90B097D2793070E0052879E /* Kernels.metal in Sources */ = {isa = PBXBuildFile; fileRef = B90B097C2793070E0052879E /* Kernels.metal */; };
-		B9FB8D4A2792DD970088F353 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = B9FB8D492792DD970088F353 /* AppDelegate.m */; };
-		B9FB8D4D2792DD970088F353 /* Renderer.m in Sources */ = {isa = PBXBuildFile; fileRef = B9FB8D4C2792DD970088F353 /* Renderer.m */; };
-		B9FB8D502792DD970088F353 /* GameViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = B9FB8D4F2792DD970088F353 /* GameViewController.m */; };
-		B9FB8D522792DD970088F353 /* Shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = B9FB8D512792DD970088F353 /* Shaders.metal */; };
-		B9FB8D562792DD970088F353 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B9FB8D542792DD970088F353 /* Main.storyboard */; };
-		B9FB8D582792DD990088F353 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B9FB8D572792DD990088F353 /* Assets.xcassets */; };
-		B9FB8D5B2792DD990088F353 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B9FB8D592792DD990088F353 /* LaunchScreen.storyboard */; };
-		B9FB8D5D2792DD990088F353 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = B9FB8D5C2792DD990088F353 /* main.m */; };
-		B9FB8D682792DDD80088F353 /* VideoCamera.m in Sources */ = {isa = PBXBuildFile; fileRef = B9FB8D662792DDD70088F353 /* VideoCamera.m */; };
+		B9E92A6227A03A8D00EA26DE /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = B9E92A6127A03A8D00EA26DE /* AppDelegate.m */; };
+		B9E92A6527A03A8D00EA26DE /* SceneDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = B9E92A6427A03A8D00EA26DE /* SceneDelegate.m */; };
+		B9E92A6827A03A8D00EA26DE /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = B9E92A6727A03A8D00EA26DE /* ViewController.m */; };
+		B9E92A6B27A03A8D00EA26DE /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B9E92A6927A03A8D00EA26DE /* Main.storyboard */; };
+		B9E92A6D27A03A8F00EA26DE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B9E92A6C27A03A8F00EA26DE /* Assets.xcassets */; };
+		B9E92A7027A03A8F00EA26DE /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B9E92A6E27A03A8F00EA26DE /* LaunchScreen.storyboard */; };
+		B9E92A7327A03A8F00EA26DE /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = B9E92A7227A03A8F00EA26DE /* main.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		B90B097C2793070E0052879E /* Kernels.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Kernels.metal; sourceTree = "<group>"; };
-		B90B097E2793074D0052879E /* KernelTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = KernelTypes.h; sourceTree = "<group>"; };
-		B9D264C827987C38004776B5 /* CodeSnippetReview */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = CodeSnippetReview; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
-		B9FB8D452792DD970088F353 /* TextureTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TextureTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		B9FB8D482792DD970088F353 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
-		B9FB8D492792DD970088F353 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
-		B9FB8D4B2792DD970088F353 /* Renderer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Renderer.h; sourceTree = "<group>"; };
-		B9FB8D4C2792DD970088F353 /* Renderer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Renderer.m; sourceTree = "<group>"; wrapsLines = 0; };
-		B9FB8D4E2792DD970088F353 /* GameViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GameViewController.h; sourceTree = "<group>"; };
-		B9FB8D4F2792DD970088F353 /* GameViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = GameViewController.m; sourceTree = "<group>"; wrapsLines = 0; };
-		B9FB8D512792DD970088F353 /* Shaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Shaders.metal; sourceTree = "<group>"; };
-		B9FB8D532792DD970088F353 /* ShaderTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ShaderTypes.h; sourceTree = "<group>"; };
-		B9FB8D552792DD970088F353 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
-		B9FB8D572792DD990088F353 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		B9FB8D5A2792DD990088F353 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
-		B9FB8D5C2792DD990088F353 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
-		B9FB8D662792DDD70088F353 /* VideoCamera.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VideoCamera.m; sourceTree = "<group>"; };
-		B9FB8D672792DDD70088F353 /* VideoCamera.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VideoCamera.h; sourceTree = "<group>"; };
+		B9E92A5D27A03A8D00EA26DE /* ComputedPropertiesTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ComputedPropertiesTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B9E92A6027A03A8D00EA26DE /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
+		B9E92A6127A03A8D00EA26DE /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
+		B9E92A6327A03A8D00EA26DE /* SceneDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SceneDelegate.h; sourceTree = "<group>"; };
+		B9E92A6427A03A8D00EA26DE /* SceneDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SceneDelegate.m; sourceTree = "<group>"; };
+		B9E92A6627A03A8D00EA26DE /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
+		B9E92A6727A03A8D00EA26DE /* ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; wrapsLines = 0; };
+		B9E92A6A27A03A8D00EA26DE /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		B9E92A6C27A03A8F00EA26DE /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		B9E92A6F27A03A8F00EA26DE /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		B9E92A7127A03A8F00EA26DE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		B9E92A7227A03A8F00EA26DE /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		B9FB8D422792DD970088F353 /* Frameworks */ = {
+		B9E92A5A27A03A8D00EA26DE /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -51,81 +42,75 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		B9FB8D3C2792DD970088F353 = {
+		B9E92A5427A03A8D00EA26DE = {
 			isa = PBXGroup;
 			children = (
-				B9D264C827987C38004776B5 /* CodeSnippetReview */,
-				B9FB8D472792DD970088F353 /* TextureTest */,
-				B9FB8D462792DD970088F353 /* Products */,
+				B9E92A5F27A03A8D00EA26DE /* ComputedPropertiesTest */,
+				B9E92A5E27A03A8D00EA26DE /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		B9FB8D462792DD970088F353 /* Products */ = {
+		B9E92A5E27A03A8D00EA26DE /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				B9FB8D452792DD970088F353 /* TextureTest.app */,
+				B9E92A5D27A03A8D00EA26DE /* ComputedPropertiesTest.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		B9FB8D472792DD970088F353 /* TextureTest */ = {
+		B9E92A5F27A03A8D00EA26DE /* ComputedPropertiesTest */ = {
 			isa = PBXGroup;
 			children = (
-				B9FB8D482792DD970088F353 /* AppDelegate.h */,
-				B9FB8D492792DD970088F353 /* AppDelegate.m */,
-				B9FB8D4B2792DD970088F353 /* Renderer.h */,
-				B9FB8D4C2792DD970088F353 /* Renderer.m */,
-				B9FB8D672792DDD70088F353 /* VideoCamera.h */,
-				B9FB8D662792DDD70088F353 /* VideoCamera.m */,
-				B9FB8D4E2792DD970088F353 /* GameViewController.h */,
-				B9FB8D4F2792DD970088F353 /* GameViewController.m */,
-				B90B097C2793070E0052879E /* Kernels.metal */,
-				B90B097E2793074D0052879E /* KernelTypes.h */,
-				B9FB8D512792DD970088F353 /* Shaders.metal */,
-				B9FB8D532792DD970088F353 /* ShaderTypes.h */,
-				B9FB8D542792DD970088F353 /* Main.storyboard */,
-				B9FB8D572792DD990088F353 /* Assets.xcassets */,
-				B9FB8D592792DD990088F353 /* LaunchScreen.storyboard */,
-				B9FB8D5C2792DD990088F353 /* main.m */,
+				B9E92A6027A03A8D00EA26DE /* AppDelegate.h */,
+				B9E92A6127A03A8D00EA26DE /* AppDelegate.m */,
+				B9E92A6327A03A8D00EA26DE /* SceneDelegate.h */,
+				B9E92A6427A03A8D00EA26DE /* SceneDelegate.m */,
+				B9E92A6627A03A8D00EA26DE /* ViewController.h */,
+				B9E92A6727A03A8D00EA26DE /* ViewController.m */,
+				B9E92A6927A03A8D00EA26DE /* Main.storyboard */,
+				B9E92A6C27A03A8F00EA26DE /* Assets.xcassets */,
+				B9E92A6E27A03A8F00EA26DE /* LaunchScreen.storyboard */,
+				B9E92A7127A03A8F00EA26DE /* Info.plist */,
+				B9E92A7227A03A8F00EA26DE /* main.m */,
 			);
-			path = TextureTest;
+			path = ComputedPropertiesTest;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		B9FB8D442792DD970088F353 /* TextureTest */ = {
+		B9E92A5C27A03A8D00EA26DE /* ComputedPropertiesTest */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = B9FB8D602792DD990088F353 /* Build configuration list for PBXNativeTarget "TextureTest" */;
+			buildConfigurationList = B9E92A7627A03A8F00EA26DE /* Build configuration list for PBXNativeTarget "ComputedPropertiesTest" */;
 			buildPhases = (
-				B9FB8D412792DD970088F353 /* Sources */,
-				B9FB8D422792DD970088F353 /* Frameworks */,
-				B9FB8D432792DD970088F353 /* Resources */,
+				B9E92A5927A03A8D00EA26DE /* Sources */,
+				B9E92A5A27A03A8D00EA26DE /* Frameworks */,
+				B9E92A5B27A03A8D00EA26DE /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
-			name = TextureTest;
-			productName = TextureTest;
-			productReference = B9FB8D452792DD970088F353 /* TextureTest.app */;
+			name = ComputedPropertiesTest;
+			productName = ComputedPropertiesTest;
+			productReference = B9E92A5D27A03A8D00EA26DE /* ComputedPropertiesTest.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		B9FB8D3D2792DD970088F353 /* Project object */ = {
+		B9E92A5527A03A8D00EA26DE /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastUpgradeCheck = 1320;
 				TargetAttributes = {
-					B9FB8D442792DD970088F353 = {
+					B9E92A5C27A03A8D00EA26DE = {
 						CreatedOnToolsVersion = 13.2.1;
 					};
 				};
 			};
-			buildConfigurationList = B9FB8D402792DD970088F353 /* Build configuration list for PBXProject "TextureTest" */;
+			buildConfigurationList = B9E92A5827A03A8D00EA26DE /* Build configuration list for PBXProject "ComputedPropertiesTest" */;
 			compatibilityVersion = "Xcode 13.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -133,59 +118,56 @@
 				en,
 				Base,
 			);
-			mainGroup = B9FB8D3C2792DD970088F353;
-			productRefGroup = B9FB8D462792DD970088F353 /* Products */;
+			mainGroup = B9E92A5427A03A8D00EA26DE;
+			productRefGroup = B9E92A5E27A03A8D00EA26DE /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				B9FB8D442792DD970088F353 /* TextureTest */,
+				B9E92A5C27A03A8D00EA26DE /* ComputedPropertiesTest */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		B9FB8D432792DD970088F353 /* Resources */ = {
+		B9E92A5B27A03A8D00EA26DE /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B9FB8D5B2792DD990088F353 /* LaunchScreen.storyboard in Resources */,
-				B9FB8D582792DD990088F353 /* Assets.xcassets in Resources */,
-				B9FB8D562792DD970088F353 /* Main.storyboard in Resources */,
+				B9E92A7027A03A8F00EA26DE /* LaunchScreen.storyboard in Resources */,
+				B9E92A6D27A03A8F00EA26DE /* Assets.xcassets in Resources */,
+				B9E92A6B27A03A8D00EA26DE /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		B9FB8D412792DD970088F353 /* Sources */ = {
+		B9E92A5927A03A8D00EA26DE /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B9FB8D682792DDD80088F353 /* VideoCamera.m in Sources */,
-				B9FB8D5D2792DD990088F353 /* main.m in Sources */,
-				B9FB8D522792DD970088F353 /* Shaders.metal in Sources */,
-				B9FB8D4D2792DD970088F353 /* Renderer.m in Sources */,
-				B9FB8D502792DD970088F353 /* GameViewController.m in Sources */,
-				B90B097D2793070E0052879E /* Kernels.metal in Sources */,
-				B9FB8D4A2792DD970088F353 /* AppDelegate.m in Sources */,
+				B9E92A6827A03A8D00EA26DE /* ViewController.m in Sources */,
+				B9E92A6227A03A8D00EA26DE /* AppDelegate.m in Sources */,
+				B9E92A7327A03A8F00EA26DE /* main.m in Sources */,
+				B9E92A6527A03A8D00EA26DE /* SceneDelegate.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXVariantGroup section */
-		B9FB8D542792DD970088F353 /* Main.storyboard */ = {
+		B9E92A6927A03A8D00EA26DE /* Main.storyboard */ = {
 			isa = PBXVariantGroup;
 			children = (
-				B9FB8D552792DD970088F353 /* Base */,
+				B9E92A6A27A03A8D00EA26DE /* Base */,
 			);
 			name = Main.storyboard;
 			sourceTree = "<group>";
 		};
-		B9FB8D592792DD990088F353 /* LaunchScreen.storyboard */ = {
+		B9E92A6E27A03A8F00EA26DE /* LaunchScreen.storyboard */ = {
 			isa = PBXVariantGroup;
 			children = (
-				B9FB8D5A2792DD990088F353 /* Base */,
+				B9E92A6F27A03A8F00EA26DE /* Base */,
 			);
 			name = LaunchScreen.storyboard;
 			sourceTree = "<group>";
@@ -193,7 +175,7 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
-		B9FB8D5E2792DD990088F353 /* Debug */ = {
+		B9E92A7427A03A8F00EA26DE /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -252,7 +234,7 @@
 			};
 			name = Debug;
 		};
-		B9FB8D5F2792DD990088F353 /* Release */ = {
+		B9E92A7527A03A8F00EA26DE /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -305,7 +287,7 @@
 			};
 			name = Release;
 		};
-		B9FB8D612792DD990088F353 /* Debug */ = {
+		B9E92A7727A03A8F00EA26DE /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -314,13 +296,10 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = N9987K9442;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSCameraUsageDescription = "";
+				INFOPLIST_FILE = ComputedPropertiesTest/Info.plist;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
-				INFOPLIST_KEY_UIRequiredDeviceCapabilities = metal;
-				INFOPLIST_KEY_UIStatusBarHidden = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -328,14 +307,14 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.blogspot.demonicactivity.bush.alan.james.TextureTest;
+				PRODUCT_BUNDLE_IDENTIFIER = com.blogspot.demonicactivity.bush.alan.james.ComputedPropertiesTest;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
-		B9FB8D622792DD990088F353 /* Release */ = {
+		B9E92A7827A03A8F00EA26DE /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -344,13 +323,10 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = N9987K9442;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSCameraUsageDescription = "";
+				INFOPLIST_FILE = ComputedPropertiesTest/Info.plist;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
-				INFOPLIST_KEY_UIRequiredDeviceCapabilities = metal;
-				INFOPLIST_KEY_UIStatusBarHidden = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -358,7 +334,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.blogspot.demonicactivity.bush.alan.james.TextureTest;
+				PRODUCT_BUNDLE_IDENTIFIER = com.blogspot.demonicactivity.bush.alan.james.ComputedPropertiesTest;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -368,25 +344,25 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		B9FB8D402792DD970088F353 /* Build configuration list for PBXProject "TextureTest" */ = {
+		B9E92A5827A03A8D00EA26DE /* Build configuration list for PBXProject "ComputedPropertiesTest" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				B9FB8D5E2792DD990088F353 /* Debug */,
-				B9FB8D5F2792DD990088F353 /* Release */,
+				B9E92A7427A03A8F00EA26DE /* Debug */,
+				B9E92A7527A03A8F00EA26DE /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		B9FB8D602792DD990088F353 /* Build configuration list for PBXNativeTarget "TextureTest" */ = {
+		B9E92A7627A03A8F00EA26DE /* Build configuration list for PBXNativeTarget "ComputedPropertiesTest" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				B9FB8D612792DD990088F353 /* Debug */,
-				B9FB8D622792DD990088F353 /* Release */,
+				B9E92A7727A03A8F00EA26DE /* Debug */,
+				B9E92A7827A03A8F00EA26DE /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
-	rootObject = B9FB8D3D2792DD970088F353 /* Project object */;
+	rootObject = B9E92A5527A03A8D00EA26DE /* Project object */;
 }
