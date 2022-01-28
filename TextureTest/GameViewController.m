@@ -11,6 +11,7 @@
 #include <simd/simd.h>
 #include <stdio.h>
 #include <math.h>
+@import Accelerate;
 
 static NSArray<NSString *> * const CaptureDeviceConfigurationControlPropertyImageKeys = @[@"CaptureDeviceConfigurationControlPropertyTorchLevel",
                                                                                           @"CaptureDeviceConfigurationControlPropertyLensPosition",
@@ -86,7 +87,7 @@ static float (^rescale)(float, float, float, float, float) = ^ (float old_value,
 };
 
 #define MASK_ALL  (1UL << 0 | 1UL << 1 | 1UL << 2 | 1UL << 3 | 1UL << 4)
-#define MASK_NONE (0 << 0 | 0 << 1 | 0 << 2 | 0 << 3 | 0 << 4)
+#define MASK_NONE (  0 << 0 |   0 << 1 |   0 << 2 |   0 << 3 |   0 << 4)
 static  uint8_t active_component_bit_vector  = MASK_ALL;
 static  uint8_t selected_property_bit_vector = MASK_NONE;
 static  uint8_t hidden_property_bit_vector   = MASK_NONE;
@@ -111,7 +112,7 @@ static void (^(^map)(__strong UIButton * _Nonnull [_Nonnull 5]))(UIButton * (^__
         dispatch_barrier_async(dispatch_get_main_queue(), ^{
             dispatch_apply(5, enumerator_queue, ^(size_t index) {
                 dispatch_barrier_async(dispatch_get_main_queue(), ^{
-                    button_collection[index] = enumeration((unsigned int)index); // return value
+                    button_collection[index] = enumeration((unsigned int)index);
                 });
             });
         });
@@ -126,17 +127,15 @@ static void (^(^filter)(__strong UIButton * _Nonnull [_Nonnull 5]))(void (^__str
                 dispatch_barrier_async(dispatch_get_main_queue(), ^{
                     [button_collection[index] setSelected:(selected_property_bit_vector >> index) & 1UL];
                     [button_collection[index] setHidden:(hidden_property_bit_vector >> index) & 1UL];
-                    enumeration(button_collection[index], (unsigned int)index); // no return value
+                    enumeration(button_collection[index], (unsigned int)index);
                 });
             });
         });
     };
 };
 
-static void (^(^(^touch_handler_init)(UIView *))(UITouch *))(void(^ _Nullable)(unsigned int));
 static void (^(^touch_handler)(UITouch *))(void(^ _Nullable)(unsigned int));
 static void (^handle_touch)(void(^ _Nullable)(unsigned int));
-
 static void (^(^(^touch_handler_init)(UIView *))(UITouch *))(void(^ _Nullable)(unsigned int)) =  ^ (UIView * view) {
     CGRect contextRect = view.bounds;
     float midX = (float)CGRectGetMidX(contextRect);
@@ -152,18 +151,32 @@ static void (^(^(^touch_handler_init)(UIView *))(UITouch *))(void(^ _Nullable)(u
             unsigned int touch_property = (unsigned int)round(rescale(touch_angle, 270.0, 180.0, 0.0, 4.0));
             if (set_button_state != nil) set_button_state(touch_property);
             filter(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
-                [button setHighlighted:(UITouchPhaseEnded ^ touch.phase) & !(touch_property ^ button.tag)];
+                [button setHighlighted:((active_component_bit_vector >> button.tag) & 1UL) & (UITouchPhaseEnded ^ touch.phase) & !(touch_property ^ button.tag)];
                 [button setCenter:^ (CGFloat radius, CGFloat radians) {
                     return CGPointMake(maxX - radius * -cos(radians), maxY - radius * -sin(radians));
                 }(^ CGFloat (CGPoint endpoint) {
                     return fmaxf(midX, fminf(sqrt(pow(endpoint.x - maxX, 2.0) + pow(endpoint.y - maxY, 2.0)), maxX));
-                }((((active_component_bit_vector >> button.tag) & 1U) ? touch_point : button.center)),
-                   ((active_component_bit_vector >> button.tag) & 1U) ? ((NSNumber *)(objc_getAssociatedObject(button, (void *)button.tag))).floatValue : degreesToRadians(touch_angle))];
+                }((((active_component_bit_vector >> button.tag) & 1UL) ? touch_point : button.center)),
+                   ((active_component_bit_vector >> button.tag) & 1UL ) ? ((NSNumber *)(objc_getAssociatedObject(button, (void *)button.tag))).floatValue : degreesToRadians(touch_angle))];
             });
         };
     };
 };
 
+static void (^add_float_arrays)(CGPoint, CGSize) = ^ (CGPoint touch_point, CGSize control_size) {
+    float x[] = {[0 ... 4] = touch_point.x};
+    float y[] = {[0 ... 4] = touch_point.y};
+    float w[] = {[0 ... 4] = control_size.width};
+    float h[] = {[0 ... 4] = control_size.height};
+    float i[] = {0, 1, 2, 3, 4};
+    
+    float b[] = {10, 20, 30, 40, 50, 60, 70, 80, 90, 100};
+    float c[] = {[0 ... 9] = NAN};
+
+//    vDSP_vadd(a, 1, b, 1, c, 1, 10);
+//
+//    for (int i = 0; i < 10; i++) printf("%f\n", c[i]);
+};
 
 
 @implementation GameViewController
@@ -175,6 +188,8 @@ static void (^(^(^touch_handler_init)(UIView *))(UITouch *))(void(^ _Nullable)(u
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    
+//    add_float_arrays();
     
     _view = (MTKView *)self.view;
     _view.device = MTLCreateSystemDefaultDevice();
@@ -235,19 +250,11 @@ static void (^(^(^touch_handler_init)(UIView *))(UITouch *))(void(^ _Nullable)(u
 }
 
 - (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
-    dispatch_barrier_async(dispatch_get_main_queue(), ^{
-        handle_touch(set_state);
-    });
+    dispatch_barrier_async(dispatch_get_main_queue(), ^{ handle_touch(set_state); });
 }
 
 - (void)touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
-    dispatch_barrier_async(dispatch_get_main_queue(), ^{
-        handle_touch(set_state);
-    });
-}
-
-- (void)touchesEstimatedPropertiesUpdated:(NSSet<UITouch *> *)touches {
-    NSLog(@"%s", __PRETTY_FUNCTION__);
+    dispatch_barrier_async(dispatch_get_main_queue(), ^{ handle_touch(set_state); });
 }
 
 @end
