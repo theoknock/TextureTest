@@ -22,6 +22,7 @@
 /* Begin PBXFileReference section */
 		B90B097C2793070E0052879E /* Kernels.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Kernels.metal; sourceTree = "<group>"; };
 		B90B097E2793074D0052879E /* KernelTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = KernelTypes.h; sourceTree = "<group>"; };
+		B94F5B4F27A58AAF00DA42A4 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 		B9D264C827987C38004776B5 /* CodeSnippetReview */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = CodeSnippetReview; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		B9FB8D452792DD970088F353 /* TextureTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TextureTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B9FB8D482792DD970088F353 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -51,12 +52,21 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		B94F5B4E27A58AAF00DA42A4 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				B94F5B4F27A58AAF00DA42A4 /* Accelerate.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		B9FB8D3C2792DD970088F353 = {
 			isa = PBXGroup;
 			children = (
 				B9D264C827987C38004776B5 /* CodeSnippetReview */,
 				B9FB8D472792DD970088F353 /* TextureTest */,
 				B9FB8D462792DD970088F353 /* Products */,
+				B94F5B4E27A58AAF00DA42A4 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};

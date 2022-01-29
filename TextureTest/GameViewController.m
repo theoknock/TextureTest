@@ -155,9 +155,12 @@ static void (^(^(^touch_handler_init)(UIView *))(UITouch *))(void(^ _Nullable)(u
                 [button setCenter:^ (CGFloat radius, CGFloat radians) {
                     return CGPointMake(maxX - radius * -cos(radians), maxY - radius * -sin(radians));
                 }(^ CGFloat (CGPoint endpoint) {
-                    return fmaxf(midX, fminf(sqrt(pow(endpoint.x - maxX, 2.0) + pow(endpoint.y - maxY, 2.0)), maxX));
+                    simd_float2 touch_point_simd = simd_make_float2(touch_point.x, touch_point.y);
+                    simd_float2 center_point_simd = simd_make_float2(maxX, maxY);
+                    return fmaxf(midX, fminf(simd_distance(touch_point_simd, center_point_simd), maxX));
+                    // fmaxf(midX, fminf(sqrt(pow(endpoint.x - maxX, 2.0) + pow(endpoint.y - maxY, 2.0)), maxX)); //
                 }((((active_component_bit_vector >> button.tag) & 1UL) ? touch_point : button.center)),
-                   ((active_component_bit_vector >> button.tag) & 1UL ) ? ((NSNumber *)(objc_getAssociatedObject(button, (void *)button.tag))).floatValue : degreesToRadians(touch_angle))];
+                   ((active_component_bit_vector >> button.tag) & 1UL) ? ((NSNumber *)(objc_getAssociatedObject(button, (void *)button.tag))).floatValue : degreesToRadians(touch_angle))];
             });
         };
     };
@@ -169,13 +172,15 @@ static void (^add_float_arrays)(CGPoint, CGSize) = ^ (CGPoint touch_point, CGSiz
     float w[] = {[0 ... 4] = control_size.width};
     float h[] = {[0 ... 4] = control_size.height};
     float i[] = {0, 1, 2, 3, 4};
+    float r[] = {[0 ... 4] = NAN};
     
-    float b[] = {10, 20, 30, 40, 50, 60, 70, 80, 90, 100};
-    float c[] = {[0 ... 9] = NAN};
+    vDSP_vadd(x, 1, y, 1, r, 1, 10);
 
-//    vDSP_vadd(a, 1, b, 1, c, 1, 10);
-//
+    simd_float2 touch_point_simd = simd_make_float2(touch_point.x, touch_point.y);
+    simd_float2 center_point_simd = simd_make_float2((float)CGRectGetMaxX(UIScreen.mainScreen.bounds), (float)CGRectGetMaxY(UIScreen.mainScreen.bounds));
+    float distance = simd_distance(touch_point_simd, center_point_simd);
 //    for (int i = 0; i < 10; i++) printf("%f\n", c[i]);
+
 };
 
 
