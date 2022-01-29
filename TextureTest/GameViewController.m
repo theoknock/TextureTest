@@ -144,11 +144,13 @@ static void (^(^(^touch_handler_init)(UIView *))(UITouch *))(void(^ _Nullable)(u
     
     return ^ (UITouch * touch) {
         static CGPoint touch_point;
-        static CGFloat touch_angle;
+//        static CGFloat touch_angle;
         return ^ (void(^ _Nullable set_button_state)(unsigned int)) {
             touch_point = [touch preciseLocationInView:view];
-            touch_angle = (atan2(touch_point.y - maxY, touch_point.x - maxX) * (180.0 / M_PI)) + 360.0;
-            unsigned int touch_property = (unsigned int)round(rescale(touch_angle, 270.0, 180.0, 0.0, 4.0));
+//            touch_angle = (atan2(touch_point.y - maxY, touch_point.x - maxX) * (180.0 / M_PI)) + 360.0;
+            simd_double2 touch_angle = _simd_atan2_d2(touch_point.y - (float)CGRectGetMaxY(UIScreen.mainScreen.bounds), touch_point.x - (float)CGRectGetMaxX(UIScreen.mainScreen.bounds))* (180.0 / M_PI) + 360.0;
+//            printf("touch_angle == %f\t\tangle == %f\n", touch_angle, angle.x);
+            unsigned int touch_property = (unsigned int)round(rescale(touch_angle.x, 270.0, 180.0, 0.0, 4.0));
             if (set_button_state != nil) set_button_state(touch_property);
             filter(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
                 [button setHighlighted:((active_component_bit_vector >> button.tag) & 1UL) & (UITouchPhaseEnded ^ touch.phase) & !(touch_property ^ button.tag)];
@@ -160,7 +162,7 @@ static void (^(^(^touch_handler_init)(UIView *))(UITouch *))(void(^ _Nullable)(u
                     return fmaxf(midX, fminf(simd_distance(touch_point_simd, center_point_simd), maxX));
                     // fmaxf(midX, fminf(sqrt(pow(endpoint.x - maxX, 2.0) + pow(endpoint.y - maxY, 2.0)), maxX)); //
                 }((((active_component_bit_vector >> button.tag) & 1UL) ? touch_point : button.center)),
-                   ((active_component_bit_vector >> button.tag) & 1UL) ? ((NSNumber *)(objc_getAssociatedObject(button, (void *)button.tag))).floatValue : degreesToRadians(touch_angle))];
+                   ((active_component_bit_vector >> button.tag) & 1UL) ? ((NSNumber *)(objc_getAssociatedObject(button, (void *)button.tag))).floatValue : degreesToRadians(touch_angle.x))];
             });
         };
     };
@@ -179,6 +181,7 @@ static void (^add_float_arrays)(CGPoint, CGSize) = ^ (CGPoint touch_point, CGSiz
     simd_float2 touch_point_simd = simd_make_float2(touch_point.x, touch_point.y);
     simd_float2 center_point_simd = simd_make_float2((float)CGRectGetMaxX(UIScreen.mainScreen.bounds), (float)CGRectGetMaxY(UIScreen.mainScreen.bounds));
     float distance = simd_distance(touch_point_simd, center_point_simd);
+    simd_double2 angle    = _simd_atan2_d2(touch_point.y - (float)CGRectGetMaxY(UIScreen.mainScreen.bounds), touch_point.x - (float)CGRectGetMaxX(UIScreen.mainScreen.bounds));
 //    for (int i = 0; i < 10; i++) printf("%f\n", c[i]);
 
 };
