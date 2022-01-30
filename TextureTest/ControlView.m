@@ -9,7 +9,9 @@
 #import "Renderer.h"
 #include <simd/simd.h>
 
-@implementation ControlView
+@implementation ControlView {
+    UISelectionFeedbackGenerator * haptic_feedback;
+}
 
 @synthesize radius, propertyValue;
 
@@ -27,14 +29,12 @@
 }
 
 - (CGFloat)propertyValue {
-    return 225.0; //propertyValue;
+    return self->propertyValue;
 }
-
-static int degreeCount;
 
 - (void)awakeFromNib {
     [super awakeFromNib];
-    degreeCount = 180;
+    haptic_feedback = [[UISelectionFeedbackGenerator alloc] init];
 }
 
 - (void)drawRect:(CGRect)rect {
@@ -60,7 +60,9 @@ static int degreeCount;
 
         CGContextStrokePath(ctx);
     }
-    
+    [haptic_feedback prepare];
+    [haptic_feedback selectionChanged];
+    [haptic_feedback prepare];
 }
 
 @end
