@@ -13,8 +13,6 @@
 
 @interface GameViewController : UIViewController
 
-@property (strong, nonatomic) IBOutlet UILabel *labelStackView;
-@property (strong, nonatomic) IBOutletCollection(UILabel) NSArray * labels;
 @property (strong, nonatomic) IBOutlet ControlView *controlView;
 
 @end

@@ -7,13 +7,6 @@
 
 #import "GameViewController.h"
 #import "Renderer.h"
-#import <objc/runtime.h>
-#include <simd/simd.h>
-#include <stdio.h>
-#include <math.h>
-@import Accelerate;
-
-
 
 @implementation GameViewController
 {

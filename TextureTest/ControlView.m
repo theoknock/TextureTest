@@ -162,7 +162,7 @@ static void (^(^(^touch_handler_init)(ControlView *))(UITouch *))(void(^ _Nullab
                 }(^ CGFloat (CGPoint endpoint) {
                     return fmaxf(midX, fminf(simd_distance(touch_point_simd, center_point_simd), maxX));
                     //
-                }(touch_point),//(((active_component_bit_vector >> button.tag) & 1UL) ? touch_point : button.center)),
+                }((((active_component_bit_vector >> button.tag) & 1UL) ? touch_point : button.center)),
                   ((active_component_bit_vector >> button.tag) & 1UL) ? ((NSNumber *)(objc_getAssociatedObject(button, (void *)button.tag))).floatValue : degreesToRadians(touch_angle.x))];
             });
             
