@@ -23,12 +23,19 @@
 }
 
 - (CGFloat)radius {
+//    [haptic_feedback selectionChanged];
+//    [haptic_feedback prepare];
     return (self->radius < CGRectGetMidX(self.frame) ? CGRectGetMidX(self.frame) : self->radius);
 }
 
 - (void)setPropertyValue:(CGFloat)propertyValue {
-    printf("property_value_angle = %f\n", self->propertyValue);
-    self->propertyValue = (propertyValue != 0.0) ? propertyValue : self->propertyValue;
+    if (round(propertyValue) != round(self->propertyValue)) {
+        [haptic_feedback selectionChanged];
+        [haptic_feedback prepare];
+        printf("property_value_angle = %f\n", self->propertyValue);
+        self->propertyValue = (propertyValue != 0.0) ? propertyValue : self->propertyValue;
+    }
+    
 }
 
 - (CGFloat)propertyValue {
@@ -124,7 +131,8 @@
     }];
     
 
-//    haptic_feedback = [[UISelectionFeedbackGenerator alloc] init];
+    haptic_feedback = [[UISelectionFeedbackGenerator alloc] init];
+    [haptic_feedback prepare];
 }
 
 - (void)drawRect:(CGRect)rect {
@@ -150,12 +158,6 @@
 
         CGContextStrokePath(ctx);
     }
-
-    
-    
-//    [haptic_feedback prepare];
-//    [haptic_feedback  selectionChanged];
-//    [haptic_feedback prepare];
 }
 
 @end
