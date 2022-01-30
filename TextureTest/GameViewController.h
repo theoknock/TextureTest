@@ -9,10 +9,12 @@
 #import <Metal/Metal.h>
 #import <MetalKit/MetalKit.h>
 #import "Renderer.h"
+#import "ControlView.h"
 
 @interface GameViewController : UIViewController
 
 @property (strong, nonatomic) IBOutlet UILabel *labelStackView;
 @property (strong, nonatomic) IBOutletCollection(UILabel) NSArray * labels;
+@property (strong, nonatomic) IBOutlet ControlView *controlView;
 
 @end
