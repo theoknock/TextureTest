@@ -23,8 +23,6 @@
 }
 
 - (CGFloat)radius {
-//    [haptic_feedback selectionChanged];
-//    [haptic_feedback prepare];
     return (self->radius < CGRectGetMidX(self.frame) ? CGRectGetMidX(self.frame) : self->radius);
 }
 
