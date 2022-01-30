@@ -9,8 +9,11 @@
 #import "Renderer.h"
 #include <simd/simd.h>
 
+@import CoreHaptics;
+
 @implementation ControlView {
     UISelectionFeedbackGenerator * haptic_feedback;
+    NSDictionary* hapticDict;
 }
 
 @synthesize radius, propertyValue;
@@ -32,9 +35,96 @@
     return self->propertyValue;
 }
 
+
+
 - (void)awakeFromNib {
     [super awakeFromNib];
-    haptic_feedback = [[UISelectionFeedbackGenerator alloc] init];
+    
+    self.supportsHaptics = CHHapticEngine.capabilitiesForHardware.supportsHaptics;
+    printf("CHHapticEngine %s\n", (self.supportsHaptics) ? "supported" : "not supported");
+    __autoreleasing NSError* error = nil;
+    _engine = [[CHHapticEngine alloc] initAndReturnError:&error];
+    printf("%s\n", (error) ? [error.localizedDescription UTF8String] : "Initialized CHHapticEngine");
+    hapticDict =
+        @{
+         CHHapticPatternKeyPattern:
+               @[ // Start of array
+                 @{  // Start of first dictionary entry in the array
+                     CHHapticPatternKeyEvent: @{ // Start of first item
+                             CHHapticPatternKeyEventType:CHHapticEventTypeHapticTransient,
+                             CHHapticPatternKeyTime:@0.5,
+                             CHHapticPatternKeyEventDuration:@1.0
+                             },  // End of first item
+                   }, // End of first dictionary entry in the array
+                ], // End of array
+         }; // End of haptic dictionary
+
+    CHHapticPattern* pattern = [[CHHapticPattern alloc] initWithDictionary:hapticDict error:&error];
+    _player = [_engine createPlayerWithPattern:pattern error:&error];
+    __weak ControlView * w_control_view = self;
+    [_engine setResetHandler:^{
+        NSLog(@"Engine RESET!");
+        // Try restarting the engine again.
+        __autoreleasing NSError* error = nil;
+        [w_control_view.engine startAndReturnError:&error];
+        if (error) {
+            NSLog(@"ERROR: Engine couldn't restart!");
+        }
+        _player = [_engine createPlayerWithPattern:pattern error:&error];
+    }];
+    [_engine setStoppedHandler:^(CHHapticEngineStoppedReason reason){
+        NSLog(@"Engine STOPPED!");
+        switch (reason)
+        {
+            case CHHapticEngineStoppedReasonAudioSessionInterrupt: {
+                NSLog(@"REASON: Audio Session Interrupt");
+                // A phone call or notification could have come in, so take note to restart the haptic engine after the call ends. Wait for user-initiated playback.
+                break;
+            }
+            case CHHapticEngineStoppedReasonApplicationSuspended: {
+                NSLog(@"REASON: Application Suspended");
+                // The user could have backgrounded your app, so take note to restart the haptic engine when the app reenters the foreground. Wait for user-initiated playback.
+                break;
+            }
+            case CHHapticEngineStoppedReasonIdleTimeout: {
+                NSLog(@"REASON: Idle Timeout");
+                // The system stopped an idle haptic engine to conserve power, so restart it before your app must play the next haptic pattern.
+                break;
+            }
+            case CHHapticEngineStoppedReasonNotifyWhenFinished: {
+                printf("CHHapticEngineStoppedReasonNotifyWhenFinished\n");
+                break;
+            }
+            case CHHapticEngineStoppedReasonEngineDestroyed: {
+                printf("CHHapticEngineStoppedReasonEngineDestroyed\n");
+                break;
+            }
+            case CHHapticEngineStoppedReasonGameControllerDisconnect: {
+                printf("CHHapticEngineStoppedReasonGameControllerDisconnect\n");
+                break;
+            }
+            case CHHapticEngineStoppedReasonSystemError: {
+                NSLog(@"REASON: System Error");
+                // The system faulted, so either continue without haptics or terminate the app.
+                break;
+            }
+        }
+    }];
+
+    [_engine startWithCompletionHandler:^(NSError* returnedError) {
+        if (returnedError)
+            NSLog(@"--- Error starting haptic engine: %@", returnedError.debugDescription);
+    }];
+        
+    [_player startAtTime:CHHapticTimeImmediate error:&error];
+    
+    [_engine stopWithCompletionHandler:^(NSError* _Nullable error) {
+        if (error)
+            NSLog(@"--- Error stopping haptic engine: %@", error.debugDescription);
+    }];
+    
+
+//    haptic_feedback = [[UISelectionFeedbackGenerator alloc] init];
 }
 
 - (void)drawRect:(CGRect)rect {
@@ -60,9 +150,12 @@
 
         CGContextStrokePath(ctx);
     }
-    [haptic_feedback prepare];
-    [haptic_feedback selectionChanged];
-    [haptic_feedback prepare];
+
+    
+    
+//    [haptic_feedback prepare];
+//    [haptic_feedback  selectionChanged];
+//    [haptic_feedback prepare];
 }
 
 @end

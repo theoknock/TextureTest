@@ -6,6 +6,7 @@
 //
 
 #import <UIKit/UIKit.h>
+@import CoreHaptics;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -13,6 +14,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, setter = setRadius:, getter = radius) CGFloat radius;
 @property (nonatomic, setter = setPropertyValue:, getter = propertyValue) CGFloat propertyValue;
+@property (nonatomic, assign) BOOL supportsHaptics;
+@property (nonatomic, strong) CHHapticEngine* engine;
+@property (nonatomic, strong) id<CHHapticPatternPlayer> player;
 
 @end
 
