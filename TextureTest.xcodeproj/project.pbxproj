@@ -24,7 +24,7 @@
 		B90B097C2793070E0052879E /* Kernels.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Kernels.metal; sourceTree = "<group>"; };
 		B90B097E2793074D0052879E /* KernelTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = KernelTypes.h; sourceTree = "<group>"; };
 		B90E67D427A5C6B8004B935F /* ControlView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ControlView.h; sourceTree = "<group>"; };
-		B90E67D527A5C6B8004B935F /* ControlView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ControlView.m; sourceTree = "<group>"; };
+		B90E67D527A5C6B8004B935F /* ControlView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ControlView.m; sourceTree = "<group>"; wrapsLines = 0; };
 		B94F5B4F27A58AAF00DA42A4 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 		B9D264C827987C38004776B5 /* CodeSnippetReview */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = CodeSnippetReview; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		B9FB8D452792DD970088F353 /* TextureTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TextureTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -88,7 +88,6 @@
 				B9FB8D492792DD970088F353 /* AppDelegate.m */,
 				B9FB8D4B2792DD970088F353 /* Renderer.h */,
 				B9FB8D4C2792DD970088F353 /* Renderer.m */,
-				B9FB8D672792DDD70088F353 /* VideoCamera.h */,
 				B9FB8D4E2792DD970088F353 /* GameViewController.h */,
 				B9FB8D4F2792DD970088F353 /* GameViewController.m */,
 				B90E67D427A5C6B8004B935F /* ControlView.h */,
@@ -100,6 +99,7 @@
 				B9FB8D542792DD970088F353 /* Main.storyboard */,
 				B9FB8D572792DD990088F353 /* Assets.xcassets */,
 				B9FB8D592792DD990088F353 /* LaunchScreen.storyboard */,
+				B9FB8D672792DDD70088F353 /* VideoCamera.h */,
 				B9FB8D662792DDD70088F353 /* VideoCamera.m */,
 				B9FB8D5C2792DD990088F353 /* main.m */,
 			);

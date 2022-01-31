@@ -122,4 +122,12 @@ dispatch_queue_t video_data_output_sample_buffer_delegate_queue;
     return self;
 }
 
+- (CGFloat)videoZoomFactor {
+    return captureDevice.videoZoomFactor;
+}
+
+- (void)setVideoZoomFactor:(CGFloat)videoZoomFactor {
+    (videoZoomFactor != captureDevice.videoZoomFactor) ?: [captureDevice setVideoZoomFactor:videoZoomFactor];
+}
+
 @end

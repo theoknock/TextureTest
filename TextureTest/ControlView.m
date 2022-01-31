@@ -33,14 +33,6 @@ static NSArray<NSArray<NSString *> *> * const CaptureDeviceConfigurationControlP
                                                                                                                                       @"magnifyingglass.circle.fill"]];
 
 typedef enum : NSUInteger {
-    CaptureDeviceConfigurationControlPropertyTorchLevel,
-    CaptureDeviceConfigurationControlPropertyLensPosition,
-    CaptureDeviceConfigurationControlPropertyExposureDuration,
-    CaptureDeviceConfigurationControlPropertyISO,
-    CaptureDeviceConfigurationControlPropertyZoomFactor
-} CaptureDeviceConfigurationControlProperty;
-
-typedef enum : NSUInteger {
     CaptureDeviceConfigurationControlStateDeselected,
     CaptureDeviceConfigurationControlStateSelected,
     CaptureDeviceConfigurationControlStateHighlighted
@@ -170,19 +162,21 @@ static void (^(^(^touch_handler_init)(ControlView *))(UITouch *))(void(^ _Nullab
             simd_double2 touch_angle = _simd_atan2_d2(touch_point.y - maxY, touch_point.x - maxX)* (180.0 / M_PI) + 360.0;
             unsigned int touch_property = (unsigned int)round(rescale(touch_angle.x, 270.0, 180.0, 0.0, 4.0));
             if (set_button_state != nil) set_button_state(touch_property);
-            // To-Do: Return only one button in tick-wheel mode
+            // To-Do: Set tick wheel to actual selected camera property
             (((active_component_bit_vector >> 0) & 1UL) & reduce(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
                 printf("Reduce...\n");
+                // To-Do: If touch phase is UITouchPhaseBegan, then set the selected button center to the normalized_video_zoom_factor
                 [UIView animateWithDuration:(!(UITouchPhaseEnded ^ touch.phase) & 1UL) animations:^{
                     [button setCenter:^ (CGFloat radius, CGFloat angle) {
-                        ((active_component_bit_vector >> 1) & 0) ?: [(ControlView *)view setPropertyValue:touch_angle.x];
+                        printf("angle == %f\n", angle);
+                        ((active_component_bit_vector >> 1) & 0) ?: [(ControlView *)view setPropertyValue:angle];
                         CGFloat radians = degreesToRadians(angle);
                         return CGPointMake(maxX - radius * -cos(radians), maxY - radius * -sin(radians));
                     }(^ CGFloat (CGPoint endpoint) {
                         ((active_component_bit_vector >> 1) & 0) ?: [(ControlView *)view setRadius:fmaxf(midX, fminf(simd_distance(touch_point_simd, center_point_simd), maxX))];
                         return fmaxf(midX, fminf(simd_distance(touch_point_simd, center_point_simd), maxX));
-                    }(button.center),
-                      (touch_angle.x))];
+                    }(button.center),  // find the center coordinate for the current video zoom factor
+                      (((UITouchPhaseBegan ^ touch.phase) & 1UL) ? 0.0 /*rescale([[(ControlView *)view captureDeviceConfigurationControlPropertyDelegate] videoZoomFactor], 0.0, 1.0, 180.0, 270.0)*/ : 0.0 /*touch_angle.x*/))];
                 }];
             })) | (~((active_component_bit_vector >> 0) & 1UL) & filter(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
                 [UIView animateWithDuration:(!(UITouchPhaseEnded ^ touch.phase) & 1UL) animations:^{

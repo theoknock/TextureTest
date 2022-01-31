@@ -10,8 +10,25 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+typedef enum : NSUInteger {
+    CaptureDeviceConfigurationControlPropertyTorchLevel,
+    CaptureDeviceConfigurationControlPropertyLensPosition,
+    CaptureDeviceConfigurationControlPropertyExposureDuration,
+    CaptureDeviceConfigurationControlPropertyISO,
+    CaptureDeviceConfigurationControlPropertyVideoZoomFactor
+} CaptureDeviceConfigurationControlProperty;
+
+@protocol CaptureDeviceConfigurationControlPropertyDelegate <NSObject>
+
+@property (nonatomic) CGFloat videoZoomFactor;
+- (void)setVideoZoomFactor:(CGFloat)videoZoomFactor;
+
+
+@end
+
 @interface ControlView : UIView
 
+@property (weak) IBOutlet id<CaptureDeviceConfigurationControlPropertyDelegate> captureDeviceConfigurationControlPropertyDelegate;
 @property (nonatomic, setter = setRadius:, getter = radius) CGFloat radius;
 @property (nonatomic, setter = setPropertyValue:, getter = propertyValue) CGFloat propertyValue;
 @property (nonatomic, assign) BOOL supportsHaptics;
