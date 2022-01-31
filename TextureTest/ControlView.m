@@ -13,7 +13,6 @@
 #include <stdio.h>
 #include <math.h>
 @import Accelerate;
-
 @import CoreHaptics;
 
 static NSArray<NSString *> * const CaptureDeviceConfigurationControlPropertyImageKeys = @[@"CaptureDeviceConfigurationControlPropertyTorchLevel",
@@ -118,7 +117,22 @@ static void (^(^map)(__strong UIButton * _Nonnull [_Nonnull 5]))(UIButton * (^__
     };
 };
 
-static void (^(^filter)(__strong UIButton * _Nonnull [_Nonnull 5]))(void (^__strong)(UIButton * _Nonnull, unsigned int)) = ^ (__strong UIButton * _Nonnull button_collection[5]) {
+static long (^(^reduce)(__strong UIButton * _Nonnull [_Nonnull 5]))(void (^__strong)(UIButton * _Nonnull, unsigned int)) = ^ (__strong UIButton * _Nonnull button_collection[5]) {
+    dispatch_queue_t enumerator_queue  = dispatch_queue_create("enumerator_queue", DISPATCH_QUEUE_SERIAL);
+    return ^ (void(^enumeration)(UIButton * _Nonnull, unsigned int)) {
+        dispatch_barrier_async(dispatch_get_main_queue(), ^{
+            dispatch_apply(5, enumerator_queue, ^(size_t index) {
+                dispatch_barrier_async(dispatch_get_main_queue(), ^{
+                    ((selected_property_bit_vector >> index) & 1UL) ?: enumeration(button_collection[index], (unsigned int)index);
+                });
+            });
+        });
+        return (long)1;
+    };
+};
+
+
+static long (^(^filter)(__strong UIButton * _Nonnull [_Nonnull 5]))(void (^__strong)(UIButton * _Nonnull, unsigned int)) = ^ (__strong UIButton * _Nonnull button_collection[5]) {
     dispatch_queue_t enumerator_queue  = dispatch_queue_create("enumerator_queue", DISPATCH_QUEUE_SERIAL);
     return ^ (void(^enumeration)(UIButton * _Nonnull, unsigned int)) {
         dispatch_barrier_async(dispatch_get_main_queue(), ^{
@@ -130,6 +144,7 @@ static void (^(^filter)(__strong UIButton * _Nonnull [_Nonnull 5]))(void (^__str
                 });
             });
         });
+        return (long)1;
     };
 };
 
@@ -137,9 +152,9 @@ static void (^(^touch_handler)(UITouch *))(void(^ _Nullable)(unsigned int));
 static void (^handle_touch)(void(^ _Nullable)(unsigned int));
 static void (^(^(^touch_handler_init)(ControlView *))(UITouch *))(void(^ _Nullable)(unsigned int)) =  ^ (ControlView * view) {
     CGRect contextRect = view.bounds;
-    float midX = (float)CGRectGetMidX(contextRect);
-    float maxX = (float)CGRectGetMaxX(contextRect);
-    float maxY = (float)CGRectGetMaxY(contextRect);
+    float midX = (float)CGRectGetMidX(contextRect) + [buttons[2] frame].size.width;
+    float maxX = (float)CGRectGetMaxX(contextRect) - [buttons[4] frame].size.width;
+    float maxY = (float)CGRectGetMaxY(contextRect) - [buttons[0] frame].size.width;
     simd_float2 center_point_simd = simd_make_float2(maxX, maxY);
     
     return ^ (UITouch * touch) {
@@ -155,23 +170,52 @@ static void (^(^(^touch_handler_init)(ControlView *))(UITouch *))(void(^ _Nullab
             simd_double2 touch_angle = _simd_atan2_d2(touch_point.y - maxY, touch_point.x - maxX)* (180.0 / M_PI) + 360.0;
             unsigned int touch_property = (unsigned int)round(rescale(touch_angle.x, 270.0, 180.0, 0.0, 4.0));
             if (set_button_state != nil) set_button_state(touch_property);
+            // To-Do: Return only one button in tick-wheel mode
+            (((active_component_bit_vector >> 0) & 1UL) & reduce(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
+                printf("Reduce...\n");
+                [UIView animateWithDuration:(!(UITouchPhaseEnded ^ touch.phase) & 1UL) animations:^{
+                    [button setCenter:^ (CGFloat radius, CGFloat angle) {
+                        ((active_component_bit_vector >> 1) & 0) ?: [(ControlView *)view setPropertyValue:touch_angle.x];
+                        CGFloat radians = degreesToRadians(angle);
+                        return CGPointMake(maxX - radius * -cos(radians), maxY - radius * -sin(radians));
+                    }(^ CGFloat (CGPoint endpoint) {
+                        ((active_component_bit_vector >> 1) & 0) ?: [(ControlView *)view setRadius:fmaxf(midX, fminf(simd_distance(touch_point_simd, center_point_simd), maxX))];
+                        return fmaxf(midX, fminf(simd_distance(touch_point_simd, center_point_simd), maxX));
+                    }(button.center),
+                      (touch_angle.x))];
+                }];
+            })) | (~((active_component_bit_vector >> 0) & 1UL) & filter(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
+                [UIView animateWithDuration:(!(UITouchPhaseEnded ^ touch.phase) & 1UL) animations:^{
+                    printf("Filter...\n");
+                    [button setHighlighted:((active_component_bit_vector >> button.tag) & 1UL) & (UITouchPhaseEnded ^ touch.phase) & !(touch_property ^ button.tag)];
+                    [button setCenter:^ (CGFloat radius, CGFloat angle) {
+                        ((active_component_bit_vector >> 1) & 0) ?: [(ControlView *)view setPropertyValue:touch_angle.x];
+                        CGFloat radians = degreesToRadians(angle);
+                        return CGPointMake(maxX - radius * -cos(radians), maxY - radius * -sin(radians));
+                    }(^ CGFloat (CGPoint endpoint) {
+                        ((active_component_bit_vector >> 1) & 0) ?: [(ControlView *)view setRadius:fmaxf(midX, fminf(simd_distance(touch_point_simd, center_point_simd), maxX))];
+                        return fmaxf(midX, fminf(simd_distance(touch_point_simd, center_point_simd), maxX));
+                    }((((active_component_bit_vector >> button.tag) & 1UL) ? touch_point : button.center)),
+                      ((active_component_bit_vector >> button.tag) & 1UL) ? ((NSNumber *)(objc_getAssociatedObject(button, (void *)button.tag))).floatValue : touch_angle.x)];
+                }];
+            }));
+            
             filter(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
-                [button setHighlighted:((active_component_bit_vector >> button.tag) & 1UL) & (UITouchPhaseEnded ^ touch.phase) & !(touch_property ^ button.tag)];
-                [button setCenter:^ (CGFloat radius, CGFloat radians) {
-                    return CGPointMake(maxX - radius * -cos(radians), maxY - radius * -sin(radians));
-                }(^ CGFloat (CGPoint endpoint) {
-                    return fmaxf(midX, fminf(simd_distance(touch_point_simd, center_point_simd), maxX));
-                    //
-                }((((active_component_bit_vector >> button.tag) & 1UL) ? touch_point : button.center)),
-                  ((active_component_bit_vector >> button.tag) & 1UL) ? ((NSNumber *)(objc_getAssociatedObject(button, (void *)button.tag))).floatValue : degreesToRadians(touch_angle.x))];
+                [UIView animateWithDuration:(!(UITouchPhaseEnded ^ touch.phase) & 1UL) animations:^{
+                    [button setHighlighted:((active_component_bit_vector >> button.tag) & 1UL) & (UITouchPhaseEnded ^ touch.phase) & !(touch_property ^ button.tag)];
+                    [button setCenter:^ (CGFloat radius, CGFloat angle) {
+                        ((active_component_bit_vector >> 1) & 0) ?: [(ControlView *)view setPropertyValue:touch_angle.x];
+                        CGFloat radians = degreesToRadians(angle);
+                        return CGPointMake(maxX - radius * -cos(radians), maxY - radius * -sin(radians));
+                    }(^ CGFloat (CGPoint endpoint) {
+                        ((active_component_bit_vector >> 1) & 0) ?: [(ControlView *)view setRadius:fmaxf(midX, fminf(simd_distance(touch_point_simd, center_point_simd), maxX))];
+                        return fmaxf(midX, fminf(simd_distance(touch_point_simd, center_point_simd), maxX));
+                    }((((active_component_bit_vector >> button.tag) & 1UL) ? touch_point : button.center)),
+                      ((active_component_bit_vector >> button.tag) & 1UL) ? ((NSNumber *)(objc_getAssociatedObject(button, (void *)button.tag))).floatValue : touch_angle.x)];
+                }];
             });
             
-            ((active_component_bit_vector >> 1) & 0) ?:
-            dispatch_barrier_async(dispatch_get_main_queue(), ^{
-                [(ControlView *)view setPropertyValue:touch_angle.x];
-                [(ControlView *)view setRadius:fmaxf(midX, fminf(simd_distance(touch_point_simd, center_point_simd), maxX))];
-                [(ControlView *)view setNeedsDisplay];
-            });
+            [(ControlView *)view setNeedsDisplay];
         };
     };
 };
@@ -209,6 +253,7 @@ static void (^(^(^touch_handler_init)(ControlView *))(UITouch *))(void(^ _Nullab
 
 - (void)awakeFromNib {
     [super awakeFromNib];
+
     
 //    self.supportsHaptics = CHHapticEngine.capabilitiesForHardware.supportsHaptics;
 //    printf("CHHapticEngine %s\n", (self.supportsHaptics) ? "supported" : "not supported");
@@ -310,7 +355,7 @@ static void (^(^(^touch_handler_init)(ControlView *))(UITouch *))(void(^ _Nullab
         [button setUserInteractionEnabled:FALSE];
         
         float angle = 270.0 - ((90.0 / 4.0) * index);
-        angle = degreesToRadians(angle);
+//        angle = degreesToRadians(angle);
         NSNumber * button_angle = [NSNumber numberWithFloat:angle];
         objc_setAssociatedObject (
             button,
