@@ -109,20 +109,26 @@ static void (^(^map)(__strong UIButton * _Nonnull [_Nonnull 5]))(UIButton * (^__
     };
 };
 
+static unsigned int (^Log2n)(unsigned int) = ^ unsigned int (unsigned int bit_field) {
+    return (bit_field > 1) ? 1 + Log2n(bit_field / 2) : 0;
+};
+
+
 static long (^(^reduce)(__strong UIButton * _Nonnull [_Nonnull 5]))(void (^__strong)(UIButton * _Nonnull, unsigned int)) = ^ (__strong UIButton * _Nonnull button_collection[5]) {
     dispatch_queue_t enumerator_queue  = dispatch_queue_create("enumerator_queue", DISPATCH_QUEUE_SERIAL);
     return ^ (void(^enumeration)(UIButton * _Nonnull, unsigned int)) {
-        dispatch_barrier_async(dispatch_get_main_queue(), ^{
-            dispatch_apply(5, enumerator_queue, ^(size_t index) {
+//        dispatch_barrier_async(dispatch_get_main_queue(), ^{
+//            dispatch_apply(5, enumerator_queue, ^(size_t index) {
                 dispatch_barrier_async(dispatch_get_main_queue(), ^{
-                    ((selected_property_bit_vector >> index) & 1UL) ?: enumeration(button_collection[index], (unsigned int)index);
+                    // To-Do: Just get the selected property
+                    unsigned int selected_property_bit_position = (Log2n(selected_property_bit_vector) + 1);
+                    enumeration(button_collection[selected_property_bit_position], (unsigned int)selected_property_bit_position);
                 });
-            });
-        });
+//            });
+//        });
         return (long)1;
     };
 };
-
 
 static long (^(^filter)(__strong UIButton * _Nonnull [_Nonnull 5]))(void (^__strong)(UIButton * _Nonnull, unsigned int)) = ^ (__strong UIButton * _Nonnull button_collection[5]) {
     dispatch_queue_t enumerator_queue  = dispatch_queue_create("enumerator_queue", DISPATCH_QUEUE_SERIAL);
@@ -165,18 +171,16 @@ static void (^(^(^touch_handler_init)(ControlView *))(UITouch *))(void(^ _Nullab
             // To-Do: Set tick wheel to actual selected camera property
             (((active_component_bit_vector >> 0) & 1UL) & reduce(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
                 printf("Reduce...\n");
-                // To-Do: If touch phase is UITouchPhaseBegan, then set the selected button center to the normalized_video_zoom_factor
                 [UIView animateWithDuration:(!(UITouchPhaseEnded ^ touch.phase) & 1UL) animations:^{
                     [button setCenter:^ (CGFloat radius, CGFloat angle) {
-                        printf("angle == %f\n", angle);
-                        ((active_component_bit_vector >> 1) & 0) ?: [(ControlView *)view setPropertyValue:angle];
+                        ((active_component_bit_vector >> 1) & 0) ?: [(ControlView *)view setPropertyValue:touch_angle.x];
                         CGFloat radians = degreesToRadians(angle);
                         return CGPointMake(maxX - radius * -cos(radians), maxY - radius * -sin(radians));
                     }(^ CGFloat (CGPoint endpoint) {
                         ((active_component_bit_vector >> 1) & 0) ?: [(ControlView *)view setRadius:fmaxf(midX, fminf(simd_distance(touch_point_simd, center_point_simd), maxX))];
                         return fmaxf(midX, fminf(simd_distance(touch_point_simd, center_point_simd), maxX));
                     }(button.center),  // find the center coordinate for the current video zoom factor
-                      (((UITouchPhaseBegan ^ touch.phase) & 1UL) ? 0.0 /*rescale([[(ControlView *)view captureDeviceConfigurationControlPropertyDelegate] videoZoomFactor], 0.0, 1.0, 180.0, 270.0)*/ : 0.0 /*touch_angle.x*/))];
+                      (touch_angle.x))];
                 }];
             })) | (~((active_component_bit_vector >> 0) & 1UL) & filter(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
                 [UIView animateWithDuration:(!(UITouchPhaseEnded ^ touch.phase) & 1UL) animations:^{
@@ -210,6 +214,7 @@ static void (^(^(^touch_handler_init)(ControlView *))(UITouch *))(void(^ _Nullab
             });
             
             [(ControlView *)view setNeedsDisplay];
+
         };
     };
 };
