@@ -163,17 +163,18 @@ static void (^(^(^touch_handler_init)(ControlView *, UILabel *))(UITouch *))(voi
             touch_property = (unsigned int)round(fmaxf(0.0,
                                                        fminf((unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 4.0)),
                                                              4.0)));
+            
             if (set_button_state != nil) set_button_state(touch_property);
 
-//            ((active_component_bit_vector & MASK_ALL) && printf("filter\t%f\n", touch_angle)) || printf("reduce\t%f\n", touch_angle);
-            
+//            ((active_component_bit_vector & MASK_ALL) && printf("filter\t%f\n", touch_angle)) || ((active_component_bit_vector & ~MASK_ALL) && printf("reduce\t%f\n", touch_angle));
             ((active_component_bit_vector & MASK_ALL) &&
              filter(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
                 [button setHighlighted:((active_component_bit_vector >> button.tag) & 1UL) & (UITouchPhaseEnded ^ touch.phase) & !(touch_property ^ button.tag)];
                 [button setCenter:^ (CGFloat radians) {
                     return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
                 }(degreesToRadians(rescale(button.tag, 0.0, 4.0, 180.0, 270.0)))];
-            })) || reduce(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
+            })) ||
+            ((active_component_bit_vector & ~MASK_ALL) && reduce(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
                 [button setCenter:^ (CGFloat radians) {
                     UIGraphicsBeginImageContextWithOptions(((ControlView *)view).bounds.size, FALSE, 1.0);
                     {
@@ -201,7 +202,7 @@ static void (^(^(^touch_handler_init)(ControlView *, UILabel *))(UITouch *))(voi
                     return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
                 }(degreesToRadians(touch_angle))];
                 
-            });
+            }));
         };
     };
 };
