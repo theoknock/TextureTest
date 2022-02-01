@@ -10,7 +10,9 @@
 
 #import "VideoCamera.h"
 
-#define degreesToRadians(angleDegrees) (angleDegrees * M_PI / 180.0)
+static float (^degreesToRadians)(float) = ^ float (float degrees) {
+    return (degrees * M_PI / 180.0);
+};
 
 static float (^ _Nonnull rescale)(float, float, float, float, float) = ^ (float old_value, float old_min, float old_max, float new_min, float new_max) {
     return (new_max - new_min) * (old_value - old_min) / (old_max - old_min) + new_min;

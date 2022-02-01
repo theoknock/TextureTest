@@ -84,11 +84,13 @@ static  uint8_t hidden_property_bit_vector   = MASK_NONE;
 
 void(^set_state)(unsigned int) = ^ (unsigned int touch_property) {
     active_component_bit_vector = ~active_component_bit_vector;
-    // Converse nonimplication: determines the selection state of the buttons
+    
+    // converse nonimplication
     uint8_t selected_property_bit_mask = MASK_NONE;
     selected_property_bit_mask ^= (1UL << touch_property) & ~active_component_bit_vector;
     selected_property_bit_vector = (selected_property_bit_vector | selected_property_bit_mask) & ~selected_property_bit_vector;
-    // : determines the hidden state of the buttons
+    
+    // exclusive disjunction
     hidden_property_bit_vector = ~active_component_bit_vector;
     hidden_property_bit_vector = selected_property_bit_mask & ~active_component_bit_vector;
     hidden_property_bit_vector ^= MASK_ALL;
@@ -143,37 +145,63 @@ static long (^(^filter)(__strong UIButton * _Nonnull [_Nonnull 5]))(void (^__str
 static void (^(^touch_handler)(UITouch *))(void(^ _Nullable)(unsigned int));
 static void (^handle_touch)(void(^ _Nullable)(unsigned int));
 static void (^(^(^touch_handler_init)(ControlView *, UILabel *))(UITouch *))(void(^ _Nullable)(unsigned int)) =  ^ (ControlView * view, UILabel * property_value_label) {
-    simd_float2 center_point_simd = simd_make_float2((float)CGRectGetMaxX(view.bounds), (float)CGRectGetMaxY(view.bounds));
+    CGPoint center_point = CGPointMake(CGRectGetMaxX(((ControlView *)view).bounds), CGRectGetMaxY(((ControlView *)view).bounds));
     return ^ (UITouch * touch) {
         
         return ^ (void(^ _Nullable set_button_state)(unsigned int)) {
-            CGPoint touch_point = [touch preciseLocationInView:(ControlView *)view];
-            simd_float2 touch_point_simd = simd_make_float2(touch_point.x, touch_point.y);
-            CGFloat radius = fmaxf((float)CGRectGetMidX(view.bounds), fminf(simd_distance(touch_point_simd, center_point_simd), center_point_simd.x)); // only change this when the touch phase is NOT UITouchPhaseBegan
-            CGFloat touch_angle = (_simd_atan2_d2(touch_point_simd.y - center_point_simd.y, touch_point_simd.x - center_point_simd.x) * (180.0 / M_PI) + 360.0).x;
-            [(ControlView *)view setPropertyValue:touch_angle];
-            [(ControlView *)view setRadius:radius];
-            [(ControlView *)view setNeedsDisplay];
-            unsigned int touch_property = (unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 4.0));
+            static CGFloat touch_angle;
+            static CGPoint touch_point;
+            static CGFloat radius; // calculated as the square root of the sum of the squares of its two values
+            static unsigned int touch_property;
+            touch_point = [touch preciseLocationInView:(ControlView *)view];
+            radius = fmaxf(CGRectGetMidX(((ControlView *)view).bounds),
+                           fminf((sqrt(pow(touch_point.x - center_point.x, 2.0) + pow(touch_point.y - center_point.y, 2.0))),
+                                 CGRectGetMaxX(((ControlView *)view).bounds)));
+            touch_angle = fmaxf(180.0,
+                                fminf(atan2(touch_point.y - center_point.y, touch_point.x - center_point.x) * (180.0 / M_PI) + 360.0,
+                                      270.0));
+            touch_property = (unsigned int)round(fmaxf(0.0,
+                                                       fminf((unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 4.0)),
+                                                             4.0)));
             if (set_button_state != nil) set_button_state(touch_property);
-            ((touch_property ^ Log2n(selected_property_bit_vector)) &
+
+//            ((active_component_bit_vector & MASK_ALL) && printf("filter\t%f\n", touch_angle)) || printf("reduce\t%f\n", touch_angle);
+            
+            ((active_component_bit_vector & MASK_ALL) &&
              filter(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
-                [UIView animateWithDuration:(!(UITouchPhaseEnded ^ touch.phase) / 4.0) animations:^{
-                    [button setHighlighted:((active_component_bit_vector >> button.tag) & 1UL) & (UITouchPhaseEnded ^ touch.phase) & !(touch_property ^ button.tag)];
-                    [button setCenter:^ (CGFloat angle) {
-                        CGFloat radians = degreesToRadians(angle);
-                        return CGPointMake(center_point_simd.x - radius * -cos(radians), center_point_simd.y - radius * -sin(radians));
-                    }(((NSNumber *)(objc_getAssociatedObject(button, (void *)button.tag))).floatValue)];
-                }];
-            })) | 
-             reduce(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
-                 [UIView animateWithDuration:(!(UITouchPhaseEnded ^ touch.phase) / 4.0) animations:^{
-                     [button setCenter:^ (CGFloat angle) {
-                         CGFloat radians = degreesToRadians(angle);
-                         return CGPointMake(center_point_simd.x - radius * -cos(radians), center_point_simd.y - radius * -sin(radians));
-                     }(touch_angle)];
-                 }];
-             });
+                [button setHighlighted:((active_component_bit_vector >> button.tag) & 1UL) & (UITouchPhaseEnded ^ touch.phase) & !(touch_property ^ button.tag)];
+                [button setCenter:^ (CGFloat radians) {
+                    return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
+                }(degreesToRadians(rescale(button.tag, 0.0, 4.0, 180.0, 270.0)))];
+            })) || reduce(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
+                [button setCenter:^ (CGFloat radians) {
+                    UIGraphicsBeginImageContextWithOptions(((ControlView *)view).bounds.size, FALSE, 1.0);
+                    {
+                        CGContextRef ctx = UIGraphicsGetCurrentContext();
+                        CGContextTranslateCTM(ctx, CGRectGetMinX(((ControlView *)view).bounds), CGRectGetMinY(((ControlView *)view).bounds));
+                        
+                        for (unsigned int t = 180; t <= 270; t++) {
+                            CGFloat angle = degreesToRadians(t);
+                            CGFloat tick_height = (t == 180 || t == 270) ? 10.0 : (t % (unsigned int)round((270 - 180) / 10) == 0) ? 6.0 : 3.0;
+                            {
+                                CGPoint xy_outer = CGPointMake(((radius + tick_height) * cosf(angle)),
+                                                               ((radius + tick_height) * sinf(angle)));
+                                CGPoint xy_inner = CGPointMake(((radius - tick_height) * cosf(angle)),
+                                                               ((radius - tick_height) * sinf(angle)));
+                                CGContextSetStrokeColorWithColor(ctx, (t <= angle) ? [[UIColor systemGreenColor] CGColor] : [[UIColor systemRedColor] CGColor]);
+                                CGContextSetLineWidth(ctx, (t == 180 || t == 270) ? 2.0 : (t % 10 == 0) ? 1.0 : 0.625);
+                                CGContextMoveToPoint(ctx, xy_outer.x + CGRectGetMaxX(((ControlView *)view).bounds), xy_outer.y + CGRectGetMaxY(((ControlView *)view).bounds));
+                                CGContextAddLineToPoint(ctx, xy_inner.x + CGRectGetMaxX(((ControlView *)view).bounds), xy_inner.y + CGRectGetMaxY(((ControlView *)view).bounds));
+                            }
+                            CGContextStrokePath(ctx);
+                        }
+                    } UIGraphicsEndImageContext();
+                    [view setNeedsDisplay];
+                    
+                    return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
+                }(degreesToRadians(touch_angle))];
+                
+            });
         };
     };
 };
@@ -182,32 +210,6 @@ static void (^(^(^touch_handler_init)(ControlView *, UILabel *))(UITouch *))(voi
     UISelectionFeedbackGenerator * haptic_feedback;
     NSDictionary* hapticDict;
     UILabel * property_value_label;
-}
-
-@synthesize radius, propertyValue;
-
-- (void)setRadius:(CGFloat)radius {
-    self->radius = radius;
-}
-
-- (CGFloat)radius {
-    return (self->radius < CGRectGetMidX(self.bounds) ? CGRectGetMidX(self.bounds) : self->radius);
-}
-
-- (void)setPropertyValue:(CGFloat)propertyValue {
-    if (round(propertyValue) != round(self->propertyValue)) {
-        [haptic_feedback selectionChanged];
-        [haptic_feedback prepare];
-//        printf("property_value_angle = %f\n", self->propertyValue);
-        self->propertyValue = (propertyValue != 0.0) ? propertyValue : self->propertyValue;
-//        CGFloat normalized_property_value = rescale(angle, 180.0, 270.0, 0.0, 90.0);
-        property_value_label.text = [NSString stringWithFormat:@"%d°", (int)round(self->propertyValue)];
-    }
-    
-}
-
-- (CGFloat)propertyValue {
-    return self->propertyValue;
 }
 
 - (void)awakeFromNib {
@@ -220,90 +222,6 @@ static void (^(^(^touch_handler_init)(ControlView *, UILabel *))(UITouch *))(voi
     property_value_label.font = [UIFont boldSystemFontOfSize:20];
     
     [self addSubview:property_value_label];
-    
-//    self.supportsHaptics = CHHapticEngine.capabilitiesForHardware.supportsHaptics;
-//    printf("CHHapticEngine %s\n", (self.supportsHaptics) ? "supported" : "not supported");
-//    __autoreleasing NSError* error = nil;
-//    _engine = [[CHHapticEngine alloc] initAndReturnError:&error];
-//    printf("%s\n", (error) ? [error.localizedDescription UTF8String] : "Initialized CHHapticEngine");
-//    hapticDict =
-//        @{
-//         CHHapticPatternKeyPattern:
-//               @[ // Start of array
-//                 @{  // Start of first dictionary entry in the array
-//                     CHHapticPatternKeyEvent: @{ // Start of first item
-//                             CHHapticPatternKeyEventType:CHHapticEventTypeHapticTransient,
-//                             CHHapticPatternKeyTime:@0.5,
-//                             CHHapticPatternKeyEventDuration:@1.0
-//                             },  // End of first item
-//                   }, // End of first dictionary entry in the array
-//                ], // End of array
-//         }; // End of haptic dictionary
-//
-//    CHHapticPattern* pattern = [[CHHapticPattern alloc] initWithDictionary:hapticDict error:&error];
-//    _player = [_engine createPlayerWithPattern:pattern error:&error];
-//    __weak ControlView * w_control_view = self;
-//    [_engine setResetHandler:^{
-//        NSLog(@"Engine RESET!");
-//        // Try restarting the engine again.
-//        __autoreleasing NSError* error = nil;
-//        [w_control_view.engine startAndReturnError:&error];
-//        if (error) {
-//            NSLog(@"ERROR: Engine couldn't restart!");
-//        }
-//        _player = [_engine createPlayerWithPattern:pattern error:&error];
-//    }];
-//    [_engine setStoppedHandler:^(CHHapticEngineStoppedReason reason){
-//        NSLog(@"Engine STOPPED!");
-//        switch (reason)
-//        {
-//            case CHHapticEngineStoppedReasonAudioSessionInterrupt: {
-//                NSLog(@"REASON: Audio Session Interrupt");
-//                // A phone call or notification could have come in, so take note to restart the haptic engine after the call ends. Wait for user-initiated playback.
-//                break;
-//            }
-//            case CHHapticEngineStoppedReasonApplicationSuspended: {
-//                NSLog(@"REASON: Application Suspended");
-//                // The user could have backgrounded your app, so take note to restart the haptic engine when the app reenters the foreground. Wait for user-initiated playback.
-//                break;
-//            }
-//            case CHHapticEngineStoppedReasonIdleTimeout: {
-//                NSLog(@"REASON: Idle Timeout");
-//                // The system stopped an idle haptic engine to conserve power, so restart it before your app must play the next haptic pattern.
-//                break;
-//            }
-//            case CHHapticEngineStoppedReasonNotifyWhenFinished: {
-//                printf("CHHapticEngineStoppedReasonNotifyWhenFinished\n");
-//                break;
-//            }
-//            case CHHapticEngineStoppedReasonEngineDestroyed: {
-//                printf("CHHapticEngineStoppedReasonEngineDestroyed\n");
-//                break;
-//            }
-//            case CHHapticEngineStoppedReasonGameControllerDisconnect: {
-//                printf("CHHapticEngineStoppedReasonGameControllerDisconnect\n");
-//                break;
-//            }
-//            case CHHapticEngineStoppedReasonSystemError: {
-//                NSLog(@"REASON: System Error");
-//                // The system faulted, so either continue without haptics or terminate the app.
-//                break;
-//            }
-//        }
-//    }];
-//
-//    [_engine startWithCompletionHandler:^(NSError* returnedError) {
-//        if (returnedError)
-//            NSLog(@"--- Error starting haptic engine: %@", returnedError.debugDescription);
-//    }];
-//        
-//    [_player startAtTime:CHHapticTimeImmediate error:&error];
-//    
-//    [_engine stopWithCompletionHandler:^(NSError* _Nullable error) {
-//        if (error)
-//            NSLog(@"--- Error stopping haptic engine: %@", error.debugDescription);
-//    }];
-    
 
     haptic_feedback = [[UISelectionFeedbackGenerator alloc] init];
     [haptic_feedback prepare];
@@ -359,31 +277,6 @@ static void (^(^(^touch_handler_init)(ControlView *, UILabel *))(UITouch *))(voi
 
 - (void)touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
     dispatch_barrier_async(dispatch_get_main_queue(), ^{ handle_touch(set_state); });
-}
-
-- (void)drawRect:(CGRect)rect {
-    CGContextRef ctx = UIGraphicsGetCurrentContext();
-
-    CGContextTranslateCTM(ctx, CGRectGetMinX(rect), CGRectGetMinY(rect));
-
-    for (NSUInteger t = (NSUInteger)180; t <= (NSUInteger)270; t++) {
-        CGFloat angle = degreesToRadians(t);
-//        NSUInteger property_value_angle = rescale(self->propertyValue, 0.0, 100.0, 180.0, 270.0);
-//        printf("property_value_angle = %f\n", property_value_angle);
-        CGFloat tick_height = (t == (NSUInteger)180 || t == (NSUInteger)270) ? 10.0 : (t % 10 == 0) ? 6.0 : 3.0;
-        {
-            CGPoint xy_outer = CGPointMake(((self.radius + tick_height) * cosf(angle)),
-                                           ((self.radius + tick_height) * sinf(angle)));
-            CGPoint xy_inner = CGPointMake(((self.radius - tick_height) * cosf(angle)),
-                                           ((self.radius - tick_height) * sinf(angle)));
-            CGContextSetStrokeColorWithColor(ctx, (t <= self->propertyValue) ? [[UIColor systemGreenColor] CGColor] : [[UIColor systemRedColor] CGColor]);
-            CGContextSetLineWidth(ctx, (t == 180 || t == 270) ? 2.0 : (t % 10 == 0) ? 1.0 : 0.625);
-            CGContextMoveToPoint(ctx, xy_outer.x + CGRectGetMaxX(rect), xy_outer.y + CGRectGetMaxY(rect));
-            CGContextAddLineToPoint(ctx, xy_inner.x + CGRectGetMaxX(rect), xy_inner.y + CGRectGetMaxY(rect));
-        }
-
-        CGContextStrokePath(ctx);
-    }
 }
 
 @end
