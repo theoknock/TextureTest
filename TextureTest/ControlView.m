@@ -142,16 +142,52 @@ static uint8_t (^(^filter)(__strong UIButton * _Nonnull [_Nonnull 5]))(void (^__
     };
 };
 
+static void (^draw_tick_wheel)(CGContextRef, CGRect);
+static void (^(^draw_tick_wheel_init)(ControlView *, CGFloat *, CGFloat *))(CGContextRef, CGRect) = ^ (ControlView * view, CGFloat * touch_angle, CGFloat * radius) {
+    return ^ (CGContextRef ctx, CGRect rect) {
+        UIGraphicsBeginImageContextWithOptions(rect.size, FALSE, 1.0);
+//            CGContextRef ctx = UIGraphicsGetCurrentContext();
+            CGContextTranslateCTM(ctx, CGRectGetMinX(rect), CGRectGetMinY(rect));
+            
+            for (unsigned int t = 180; t <= 270; t++) {
+                CGFloat angle = degreesToRadians(t);
+                CGFloat tick_height = (t == 180 || t == 270) ? 10.0 : (t % (unsigned int)round((270 - 180) / 10) == 0) ? 6.0 : 3.0;
+                {
+                    CGPoint xy_outer = CGPointMake(((*radius + tick_height) * cosf(angle)),
+                                                   ((*radius + tick_height) * sinf(angle)));
+                    CGPoint xy_inner = CGPointMake(((*radius - tick_height) * cosf(angle)),
+                                                   ((*radius - tick_height) * sinf(angle)));
+                    CGContextSetStrokeColorWithColor(ctx, (t <= *touch_angle) ? [[UIColor systemGreenColor] CGColor] : [[UIColor systemRedColor] CGColor]);
+                    CGContextSetLineWidth(ctx, (t == 180 || t == 270) ? 2.0 : (t % 10 == 0) ? 1.0 : 0.625);
+                    CGContextMoveToPoint(ctx, xy_outer.x + CGRectGetMaxX(rect), xy_outer.y + CGRectGetMaxY(rect));
+                    CGContextAddLineToPoint(ctx, xy_inner.x + CGRectGetMaxX(rect), xy_inner.y + CGRectGetMaxY(rect));
+                }
+                CGContextStrokePath(ctx);
+            }
+//                    CGContextClip(ctx);
+        UIGraphicsEndImageContext();
+//        UIGraphicsPushContext(ctx);
+//        [(ControlView *)view drawRect:rect]; UIGraphicsPopContext();
+//
+//        [(ControlView *)view setNeedsDisplay];
+    };
+    
+};
+
 static void (^(^touch_handler)(UITouch *))(void(^ _Nullable)(unsigned int));
 static void (^handle_touch)(void(^ _Nullable)(unsigned int));
 static void (^(^(^touch_handler_init)(ControlView *, UILabel *))(UITouch *))(void(^ _Nullable)(unsigned int)) =  ^ (ControlView * view, UILabel * property_value_label) {
     CGPoint center_point = CGPointMake(CGRectGetMaxX(((ControlView *)view).bounds), CGRectGetMaxY(((ControlView *)view).bounds));
+    static CGFloat touch_angle;
+    static CGPoint touch_point;
+    static CGFloat radius; // calculated as the square root of the sum of the squares of its two values
+    draw_tick_wheel = draw_tick_wheel_init((ControlView *)view, &touch_angle, &radius);
     return ^ (UITouch * touch) {
         
         return ^ (void(^ _Nullable set_button_state)(unsigned int)) {
-            static CGFloat touch_angle;
-            static CGPoint touch_point;
-            static CGFloat radius; // calculated as the square root of the sum of the squares of its two values
+//            static CGFloat touch_angle;
+//            static CGPoint touch_point;
+//            static CGFloat radius; // calculated as the square root of the sum of the squares of its two values
             touch_point = [touch preciseLocationInView:(ControlView *)view];
             touch_angle = fmaxf(180.0,
                                 fminf(atan2(touch_point.y - center_point.y, touch_point.x - center_point.x) * (180.0 / M_PI) + 360.0,
@@ -166,61 +202,22 @@ static void (^(^(^touch_handler_init)(ControlView *, UILabel *))(UITouch *))(voi
             
             // Short-circuit conditional (https://en.wikipedia.org/wiki/Short-circuit_evaluation)
             // completely evaluate the first argument (active_component_bit_vector == MASK_ALL), including any side effects, before (optionally) processing the second argument
-            
-            const long(^ const even_number)(void) = ^ long(void) {
-
-                    printf("even_number\n");
-
-                    return 2;
-
-                };
-
-
-
-
-            const long(^ const odd_number)(void) = ^ long(void) {
-
-                    printf("odd_number\n");
-
-                    return 1;
-
-                };
-
-            
-            ((active_component_bit_vector & MASK_ALL) && filter(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
+        
+            ((active_component_bit_vector & MASK_ALL)
+             && filter(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
                 //                printf("touch_angle == %f\n", touch_angle);
-                                [button setCenter:^ (CGFloat radians) {
-                                    return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
-                                }(degreesToRadians(rescale(button.tag, 0.0, 4.0, 180.0, 270.0)))];
-                            })) || reduce(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
-                                //                if (touch.phase == UITouchPhaseEnd,ed) printf("\treduce\n");
-                                                [button setCenter:^ (CGFloat radians) {
-                                                    return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
-                                                }(degreesToRadians(touch_angle))];
-                                                UIGraphicsBeginImageContextWithOptions(((ControlView *)view).bounds.size, FALSE, 1.0);
-                                                {
-                                                    CGContextRef ctx = UIGraphicsGetCurrentContext();
-                                                    CGContextTranslateCTM(ctx, CGRectGetMinX(((ControlView *)view).bounds), CGRectGetMinY(((ControlView *)view).bounds));
-
-                                                    for (unsigned int t = 180; t <= 270; t++) {
-                                                        CGFloat angle = degreesToRadians(t);
-                                                        CGFloat tick_height = (t == 180 || t == 270) ? 10.0 : (t % (unsigned int)round((270 - 180) / 10) == 0) ? 6.0 : 3.0;
-                                                        {
-                                                            CGPoint xy_outer = CGPointMake(((radius + tick_height) * cosf(angle)),
-                                                                                           ((radius + tick_height) * sinf(angle)));
-                                                            CGPoint xy_inner = CGPointMake(((radius - tick_height) * cosf(angle)),
-                                                                                           ((radius - tick_height) * sinf(angle)));
-                                                            CGContextSetStrokeColorWithColor(ctx, (t <= angle) ? [[UIColor systemGreenColor] CGColor] : [[UIColor systemRedColor] CGColor]);
-                                                            CGContextSetLineWidth(ctx, (t == 180 || t == 270) ? 2.0 : (t % 10 == 0) ? 1.0 : 0.625);
-                                                            CGContextMoveToPoint(ctx, xy_outer.x + CGRectGetMaxX(((ControlView *)view).bounds), xy_outer.y + CGRectGetMaxY(((ControlView *)view).bounds));
-                                                            CGContextAddLineToPoint(ctx, xy_inner.x + CGRectGetMaxX(((ControlView *)view).bounds), xy_inner.y + CGRectGetMaxY(((ControlView *)view).bounds));
-                                                        }
-                                                        CGContextStrokePath(ctx);
-                                                    }
-                                                } UIGraphicsEndImageContext();
-                                                [(ControlView *)view setNeedsDisplay];
-                                            });
-
+                [button setCenter:^ (CGFloat radians) {
+                    return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
+                }(degreesToRadians(rescale(button.tag, 0.0, 4.0, 180.0, 270.0)))];
+            })) || ((active_component_bit_vector & ~MASK_ALL)
+                     && reduce(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
+                //                if (touch.phase == UITouchPhaseEnd,ed) printf("\treduce\n");
+                [button setCenter:^ (CGFloat radians) {
+                    return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
+                }(degreesToRadians(touch_angle))];
+                [((ControlView *)view) setNeedsDisplay];
+            }));
+            
         };
     };
 };
@@ -286,6 +283,10 @@ static void (^(^(^touch_handler_init)(ControlView *, UILabel *))(UITouch *))(voi
 
 - (void)touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
     dispatch_barrier_async(dispatch_get_main_queue(), ^{ handle_touch(set_state); });
+}
+
+- (void)drawRect:(CGRect)rect {
+    draw_tick_wheel(UIGraphicsGetCurrentContext(), rect);
 }
 
 @end
