@@ -78,11 +78,16 @@ static UIImage * (^CaptureDeviceConfigurationControlPropertySymbolImage)(Capture
 
 #define MASK_ALL  (1UL << 0 | 1UL << 1 | 1UL << 2 | 1UL << 3 | 1UL << 4)
 #define MASK_NONE (  0 << 0 |   0 << 1 |   0 << 2 |   0 << 3 |   0 << 4)
-static  uint8_t active_component_bit_vector  = MASK_ALL;
-static  uint8_t selected_property_bit_vector = MASK_NONE;
-static  uint8_t hidden_property_bit_vector   = MASK_NONE;
+static uint8_t mask_all  = (1UL << 0 | 1UL << 1 | 1UL << 2 | 1UL << 3 | 1UL << 4);
+static uint8_t active_component_bit_vector  = MASK_ALL;
+static uint8_t selected_property_bit_vector = MASK_NONE;
+static uint8_t hidden_property_bit_vector   = MASK_NONE;
 
-void(^set_state)(unsigned int) = ^ (unsigned int touch_property) {
+static unsigned int (^Log2n)(unsigned int) = ^ unsigned int (unsigned int bit_field) {
+    return (bit_field > 1) ? 1 + Log2n(bit_field / 2) : 0;
+};
+
+void (^set_state)(unsigned int) = ^ (unsigned int touch_property) {
     active_component_bit_vector = ~active_component_bit_vector;
     
     // converse nonimplication
@@ -111,24 +116,19 @@ static void (^(^map)(__strong UIButton * _Nonnull [_Nonnull 5]))(UIButton * (^__
     };
 };
 
-static unsigned int (^Log2n)(unsigned int) = ^ unsigned int (unsigned int bit_field) {
-    return (bit_field > 1) ? 1 + Log2n(bit_field / 2) : 0;
-};
-
 static long (^(^reduce)(__strong UIButton * _Nonnull [_Nonnull 5]))(void (^__strong)(UIButton * _Nonnull, unsigned int)) = ^ (__strong UIButton * _Nonnull button_collection[5]) {
-    return ^ (void(^enumeration)(UIButton * _Nonnull, unsigned int)) {
-                dispatch_barrier_async(dispatch_get_main_queue(), ^{
-                    unsigned int selected_property_bit_position = (Log2n(selected_property_bit_vector));
-//                    printf("selected_property_bit_position == %d\n", selected_property_bit_position);
-                    enumeration(button_collection[selected_property_bit_position], (unsigned int)selected_property_bit_position);
-                });
-        return (long)1;
+    return ^ long (void(^enumeration)(UIButton * _Nonnull, unsigned int)) {
+        dispatch_barrier_async(dispatch_get_main_queue(), ^{
+            unsigned int selected_property_bit_position = (Log2n(selected_property_bit_vector));
+            enumeration(button_collection[selected_property_bit_position], (unsigned int)selected_property_bit_position);
+        });
+        return active_component_bit_vector;
     };
 };
 
-static long (^(^filter)(__strong UIButton * _Nonnull [_Nonnull 5]))(void (^__strong)(UIButton * _Nonnull, unsigned int)) = ^ (__strong UIButton * _Nonnull button_collection[5]) {
+static uint8_t (^(^filter)(__strong UIButton * _Nonnull [_Nonnull 5]))(void (^__strong)(UIButton * _Nonnull, unsigned int)) = ^ (__strong UIButton * _Nonnull button_collection[5]) {
     dispatch_queue_t enumerator_queue  = dispatch_queue_create("enumerator_queue", DISPATCH_QUEUE_SERIAL);
-    return ^ (void(^enumeration)(UIButton * _Nonnull, unsigned int)) {
+    return ^ uint8_t (void(^enumeration)(UIButton * _Nonnull, unsigned int)) {
         dispatch_barrier_async(dispatch_get_main_queue(), ^{
             dispatch_apply(5, enumerator_queue, ^(size_t index) {
                 dispatch_barrier_async(dispatch_get_main_queue(), ^{
@@ -138,7 +138,7 @@ static long (^(^filter)(__strong UIButton * _Nonnull [_Nonnull 5]))(void (^__str
                 });
             });
         });
-        return (long)1;
+        return active_component_bit_vector;
     };
 };
 
@@ -152,57 +152,75 @@ static void (^(^(^touch_handler_init)(ControlView *, UILabel *))(UITouch *))(voi
             static CGFloat touch_angle;
             static CGPoint touch_point;
             static CGFloat radius; // calculated as the square root of the sum of the squares of its two values
-            static unsigned int touch_property;
             touch_point = [touch preciseLocationInView:(ControlView *)view];
-            radius = fmaxf(CGRectGetMidX(((ControlView *)view).bounds),
-                           fminf((sqrt(pow(touch_point.x - center_point.x, 2.0) + pow(touch_point.y - center_point.y, 2.0))),
-                                 CGRectGetMaxX(((ControlView *)view).bounds)));
             touch_angle = fmaxf(180.0,
                                 fminf(atan2(touch_point.y - center_point.y, touch_point.x - center_point.x) * (180.0 / M_PI) + 360.0,
                                       270.0));
-            touch_property = (unsigned int)round(fmaxf(0.0,
-                                                       fminf((unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 4.0)),
-                                                             4.0)));
+            if (set_button_state != nil) set_button_state((unsigned int)round(fmaxf(0.0,
+                                                                                    fminf((unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 4.0)),
+                                                                                          4.0))));
+            radius = fmaxf(CGRectGetMidX(((ControlView *)view).bounds),
+                           fminf((sqrt(pow(touch_point.x - center_point.x, 2.0) + pow(touch_point.y - center_point.y, 2.0))),
+                                 CGRectGetMaxX(((ControlView *)view).bounds)));
             
-            if (set_button_state != nil) set_button_state(touch_property);
+            
+            // Short-circuit conditional (https://en.wikipedia.org/wiki/Short-circuit_evaluation)
+            // completely evaluate the first argument (active_component_bit_vector == MASK_ALL), including any side effects, before (optionally) processing the second argument
+            
+            const long(^ const even_number)(void) = ^ long(void) {
 
-//            ((active_component_bit_vector & MASK_ALL) && printf("filter\t%f\n", touch_angle)) || ((active_component_bit_vector & ~MASK_ALL) && printf("reduce\t%f\n", touch_angle));
-            ((active_component_bit_vector & MASK_ALL) &&
-             filter(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
-                [button setHighlighted:((active_component_bit_vector >> button.tag) & 1UL) & (UITouchPhaseEnded ^ touch.phase) & !(touch_property ^ button.tag)];
-                [button setCenter:^ (CGFloat radians) {
-                    return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
-                }(degreesToRadians(rescale(button.tag, 0.0, 4.0, 180.0, 270.0)))];
-            })) ||
-            ((active_component_bit_vector & ~MASK_ALL) && reduce(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
-                [button setCenter:^ (CGFloat radians) {
-                    UIGraphicsBeginImageContextWithOptions(((ControlView *)view).bounds.size, FALSE, 1.0);
-                    {
-                        CGContextRef ctx = UIGraphicsGetCurrentContext();
-                        CGContextTranslateCTM(ctx, CGRectGetMinX(((ControlView *)view).bounds), CGRectGetMinY(((ControlView *)view).bounds));
-                        
-                        for (unsigned int t = 180; t <= 270; t++) {
-                            CGFloat angle = degreesToRadians(t);
-                            CGFloat tick_height = (t == 180 || t == 270) ? 10.0 : (t % (unsigned int)round((270 - 180) / 10) == 0) ? 6.0 : 3.0;
-                            {
-                                CGPoint xy_outer = CGPointMake(((radius + tick_height) * cosf(angle)),
-                                                               ((radius + tick_height) * sinf(angle)));
-                                CGPoint xy_inner = CGPointMake(((radius - tick_height) * cosf(angle)),
-                                                               ((radius - tick_height) * sinf(angle)));
-                                CGContextSetStrokeColorWithColor(ctx, (t <= angle) ? [[UIColor systemGreenColor] CGColor] : [[UIColor systemRedColor] CGColor]);
-                                CGContextSetLineWidth(ctx, (t == 180 || t == 270) ? 2.0 : (t % 10 == 0) ? 1.0 : 0.625);
-                                CGContextMoveToPoint(ctx, xy_outer.x + CGRectGetMaxX(((ControlView *)view).bounds), xy_outer.y + CGRectGetMaxY(((ControlView *)view).bounds));
-                                CGContextAddLineToPoint(ctx, xy_inner.x + CGRectGetMaxX(((ControlView *)view).bounds), xy_inner.y + CGRectGetMaxY(((ControlView *)view).bounds));
-                            }
-                            CGContextStrokePath(ctx);
-                        }
-                    } UIGraphicsEndImageContext();
-                    [view setNeedsDisplay];
-                    
-                    return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
-                }(degreesToRadians(touch_angle))];
-                
-            }));
+                    printf("even_number\n");
+
+                    return 2;
+
+                };
+
+
+
+
+            const long(^ const odd_number)(void) = ^ long(void) {
+
+                    printf("odd_number\n");
+
+                    return 1;
+
+                };
+
+            
+            ((active_component_bit_vector & MASK_ALL) && filter(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
+                //                printf("touch_angle == %f\n", touch_angle);
+                                [button setCenter:^ (CGFloat radians) {
+                                    return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
+                                }(degreesToRadians(rescale(button.tag, 0.0, 4.0, 180.0, 270.0)))];
+                            })) || reduce(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
+                                //                if (touch.phase == UITouchPhaseEnd,ed) printf("\treduce\n");
+                                                [button setCenter:^ (CGFloat radians) {
+                                                    return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
+                                                }(degreesToRadians(touch_angle))];
+                                                UIGraphicsBeginImageContextWithOptions(((ControlView *)view).bounds.size, FALSE, 1.0);
+                                                {
+                                                    CGContextRef ctx = UIGraphicsGetCurrentContext();
+                                                    CGContextTranslateCTM(ctx, CGRectGetMinX(((ControlView *)view).bounds), CGRectGetMinY(((ControlView *)view).bounds));
+
+                                                    for (unsigned int t = 180; t <= 270; t++) {
+                                                        CGFloat angle = degreesToRadians(t);
+                                                        CGFloat tick_height = (t == 180 || t == 270) ? 10.0 : (t % (unsigned int)round((270 - 180) / 10) == 0) ? 6.0 : 3.0;
+                                                        {
+                                                            CGPoint xy_outer = CGPointMake(((radius + tick_height) * cosf(angle)),
+                                                                                           ((radius + tick_height) * sinf(angle)));
+                                                            CGPoint xy_inner = CGPointMake(((radius - tick_height) * cosf(angle)),
+                                                                                           ((radius - tick_height) * sinf(angle)));
+                                                            CGContextSetStrokeColorWithColor(ctx, (t <= angle) ? [[UIColor systemGreenColor] CGColor] : [[UIColor systemRedColor] CGColor]);
+                                                            CGContextSetLineWidth(ctx, (t == 180 || t == 270) ? 2.0 : (t % 10 == 0) ? 1.0 : 0.625);
+                                                            CGContextMoveToPoint(ctx, xy_outer.x + CGRectGetMaxX(((ControlView *)view).bounds), xy_outer.y + CGRectGetMaxY(((ControlView *)view).bounds));
+                                                            CGContextAddLineToPoint(ctx, xy_inner.x + CGRectGetMaxX(((ControlView *)view).bounds), xy_inner.y + CGRectGetMaxY(((ControlView *)view).bounds));
+                                                        }
+                                                        CGContextStrokePath(ctx);
+                                                    }
+                                                } UIGraphicsEndImageContext();
+                                                [(ControlView *)view setNeedsDisplay];
+                                            });
+
         };
     };
 };
@@ -215,15 +233,7 @@ static void (^(^(^touch_handler_init)(ControlView *, UILabel *))(UITouch *))(voi
 
 - (void)awakeFromNib {
     [super awakeFromNib];
-
-    property_value_label = [[UILabel alloc] initWithFrame:CGRectMake(CGRectGetMidX(self.bounds), CGRectGetMidX(self.bounds), 175, 24)];
-    property_value_label.text = @"---";
-    property_value_label.textColor = [UIColor whiteColor];
-    property_value_label.textAlignment = NSTextAlignmentCenter;
-    property_value_label.font = [UIFont boldSystemFontOfSize:20];
     
-    [self addSubview:property_value_label];
-
     haptic_feedback = [[UISelectionFeedbackGenerator alloc] init];
     [haptic_feedback prepare];
     
@@ -260,8 +270,6 @@ static void (^(^(^touch_handler_init)(ControlView *, UILabel *))(UITouch *))(voi
         [button setCenter:[[UIBezierPath bezierPathWithArcCenter:CGPointMake(CGRectGetMaxX(self.bounds), CGRectGetMaxY(self.bounds)) radius:CGRectGetMidX(self.bounds) startAngle:angle endAngle:angle clockwise:FALSE] currentPoint]];
         return button;
     });
-    
-    
 }
 
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
