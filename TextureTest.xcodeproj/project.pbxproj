@@ -23,6 +23,8 @@
 /* Begin PBXFileReference section */
 		B90B097C2793070E0052879E /* Kernels.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Kernels.metal; sourceTree = "<group>"; };
 		B90B097E2793074D0052879E /* KernelTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = KernelTypes.h; sourceTree = "<group>"; };
+		B90E4E3227AC4CB600911C23 /* TransitionAnimation.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TransitionAnimation.h; sourceTree = "<group>"; };
+		B90E4E3327AC4CB600911C23 /* TransitionAnimation.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TransitionAnimation.m; sourceTree = "<group>"; };
 		B90E67D427A5C6B8004B935F /* ControlView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ControlView.h; sourceTree = "<group>"; };
 		B90E67D527A5C6B8004B935F /* ControlView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ControlView.m; sourceTree = "<group>"; wrapsLines = 0; };
 		B94F5B4F27A58AAF00DA42A4 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
@@ -66,6 +68,8 @@
 		B9FB8D3C2792DD970088F353 = {
 			isa = PBXGroup;
 			children = (
+				B90E4E3227AC4CB600911C23 /* TransitionAnimation.h */,
+				B90E4E3327AC4CB600911C23 /* TransitionAnimation.m */,
 				B9D264C827987C38004776B5 /* CodeSnippetReview */,
 				B9FB8D472792DD970088F353 /* TextureTest */,
 				B9FB8D462792DD970088F353 /* Products */,
