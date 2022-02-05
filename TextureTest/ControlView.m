@@ -218,21 +218,30 @@ static void (^(^(^touch_handler_init)(ControlView *))(UITouch *))(void(^ _Nullab
     };
 };
 
-static uint8_t (^(^animate)(__weak CADisplayLink * _Nonnull, NSTimeInterval))(void (^(^__strong)(CADisplayLink *))(void)) = ^ (__weak CADisplayLink * _Nonnull w_display_link, NSTimeInterval duration) {
-    __block typeof(CADisplayLink *) s_display_link = w_display_link;
-    dispatch_queue_t animator_queue  = dispatch_queue_create("animator_queue", DISPATCH_QUEUE_SERIAL);
-    dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, animator_queue);
-    dispatch_source_set_timer(timer, DISPATCH_TIME_NOW, duration * NSEC_PER_SEC, 0 * NSEC_PER_SEC);
-    dispatch_source_set_event_handler(timer, ^{
-        [s_display_link invalidate];
-        [s_display_link removeFromRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
-    });
-    
-    return ^ uint8_t (void (^(^__strong animator)(CADisplayLink *))(void)) {
-        [s_display_link invalidate];
-        s_display_link = [CADisplayLink displayLinkWithTarget:animator(s_display_link) selector:@selector(invoke)];
-        [s_display_link addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
-        dispatch_resume(timer);
+static long (^(^animate)(unsigned int))(void(^__strong)(unsigned int *)) = ^ (unsigned int duration) {
+    __block typeof(CADisplayLink *) display_link;
+    __block unsigned int frames = duration;
+    return ^ long (void (^__strong animator)(unsigned int *)) {
+        display_link = [CADisplayLink displayLinkWithTarget:^{
+            frames >>= 1; // should shift bits
+            return
+            ((frames & 01) &&
+            ^ long {
+                animator(&frames);
+                return active_component_bit_vector;
+            }())
+            
+            ||
+            
+            ((frames | 01) &&
+            ^ long {
+                printf("COMPLETE\n");
+                [display_link invalidate];
+                return active_component_bit_vector;
+            }());
+        } selector:@selector(invoke)];
+        [display_link addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
+        
         return active_component_bit_vector;
     };
 };
@@ -269,7 +278,6 @@ static uint8_t (^(^animate)(__weak CADisplayLink * _Nonnull, NSTimeInterval))(vo
 
 @implementation ControlView {
     UISelectionFeedbackGenerator * haptic_feedback;
-    CADisplayLink * display_link;
 }
 
 - (void)awakeFromNib {
@@ -305,17 +313,9 @@ static uint8_t (^(^animate)(__weak CADisplayLink * _Nonnull, NSTimeInterval))(vo
         return button;
     });
     
-    animate(display_link, 1)(^ (CADisplayLink * display_link) {
-        // To-Do: Determine the condition that establishes the end of the animation
-        static int counter;
-        return ^{
-            static CFTimeInterval time, end_time;
-            time = display_link.timestamp;
-            end_time = time;
-            static CFTimeInterval * current_time;
-            current_time = &time;
-            printf("%d\t%f", ++counter, *current_time);
-        };
+    animate(30)(^ (unsigned int * frame) {
+        printf("%d\n", *frame);
+        if (*frame >= 30) printf("30---------\n");
     });
 
     touch_handler = touch_handler_init(self);
