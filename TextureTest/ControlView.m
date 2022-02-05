@@ -167,7 +167,8 @@ static void (^(^draw_tick_wheel_init)(ControlView *, CGFloat *, CGFloat *))(CGCo
         //                    CGContextClip(ctx);
         UIGraphicsEndImageContext();
         //        UIGraphicsPushContext(ctx);
-        //        [(ControlView *)view drawRect:rect]; UIGraphicsPopContext();
+        //        [(ControlView *)view drawRect:rect];
+        // UIGraphicsPopContext();
         //
         //        [(ControlView *)view setNeedsDisplay];
     };
@@ -217,23 +218,58 @@ static void (^(^(^touch_handler_init)(ControlView *))(UITouch *))(void(^ _Nullab
     };
 };
 
-static uint8_t (^(^animate)(__strong CADisplayLink * _Nonnull, unsigned int))(void (^__strong)(CADisplayLink *, unsigned int)) = ^ (__strong CADisplayLink * _Nonnull display_link, unsigned int frames) {
+static uint8_t (^(^animate)(__weak CADisplayLink * _Nonnull, NSTimeInterval))(void (^(^__strong)(CADisplayLink *))(void)) = ^ (__weak CADisplayLink * _Nonnull w_display_link, NSTimeInterval duration) {
+    __block typeof(CADisplayLink *) s_display_link = w_display_link;
     dispatch_queue_t animator_queue  = dispatch_queue_create("animator_queue", DISPATCH_QUEUE_SERIAL);
-    return ^ uint8_t (void(^animator)(CADisplayLink *, unsigned int)) {
-        dispatch_barrier_async(dispatch_get_main_queue(), ^{
-            dispatch_apply(frames, animator_queue, ^(size_t frame) {
-                dispatch_barrier_async(dispatch_get_main_queue(), ^{
-                    animator(display_link, (unsigned int)frame);
-                });
-            });
-        });
-        return active_component_bit_vector; // this is where set_state will eventually executed
+    dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, animator_queue);
+    dispatch_source_set_timer(timer, DISPATCH_TIME_NOW, duration * NSEC_PER_SEC, 0 * NSEC_PER_SEC);
+    dispatch_source_set_event_handler(timer, ^{
+        [s_display_link invalidate];
+        [s_display_link removeFromRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
+    });
+    
+    return ^ uint8_t (void (^(^__strong animator)(CADisplayLink *))(void)) {
+        [s_display_link invalidate];
+        s_display_link = [CADisplayLink displayLinkWithTarget:animator(s_display_link) selector:@selector(invoke)];
+        [s_display_link addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
+        dispatch_resume(timer);
+        return active_component_bit_vector;
     };
 };
 
+//void (^(^(^animation)(void))(void))(void) = ^{
+//    static CGFloat starting_radius, ending_radius, radius_step, radius_val;
+//    return ^{
+//        starting_radius = radius;
+//        ending_radius   = CGRectGetMinX(control_view.layer.bounds);
+//        radius_step     = 0.0005; //(ending_radius - radius);
+//        radius_val      = starting_radius;
+//        void (^eventHandlerBlock)(void) = ^{
+//            radius_val += radius_step;
+//            for (const int property = const intTorchLevel; property < const intNone; property++) {
+//                [bg(property)() setCenter:[[UIBezierPath bezierPathWithArcCenter:center_point radius:radius_val startAngle:degreesToRadians(CaptureDeviceConfigurationPropertyButtonAngle(property)) endAngle:degreesToRadians(CaptureDeviceConfigurationPropertyButtonAngle(property)) clockwise:FALSE] currentPoint]];
+//            }
+//            if (radius_val >= ending_radius)
+//            {
+//                [display_link invalidate];
+//                [display_link removeFromRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
+//            }
+//        };
+//
+//        const NSUInteger frameInterval = (unsigned int)round(radius_max - radius_min);
+//
+//        return ^ {
+//            [display_link invalidate];
+//            display_link = [CADisplayLink displayLinkWithTarget:eventHandlerBlock selector:@selector(invoke)];
+//            display_link.preferredFramesPerSecond = frameInterval;
+//            [display_link addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
+//        };
+//    };
+//};
+
 @implementation ControlView {
     UISelectionFeedbackGenerator * haptic_feedback;
-    CADisplayLink * _Nonnull display_link;
+    CADisplayLink * display_link;
 }
 
 - (void)awakeFromNib {
@@ -249,19 +285,17 @@ static uint8_t (^(^animate)(__strong CADisplayLink * _Nonnull, unsigned int))(vo
         [button setImage:[UIImage systemImageNamed:CaptureDeviceConfigurationControlPropertyImageValues[1][index] withConfiguration:CaptureDeviceConfigurationControlPropertySymbolImageConfiguration(CaptureDeviceConfigurationControlStateSelected)] forState:UIControlStateSelected];
         [button setImage:[UIImage systemImageNamed:CaptureDeviceConfigurationControlPropertyImageValues[1][index] withConfiguration:CaptureDeviceConfigurationControlPropertySymbolImageConfiguration(CaptureDeviceConfigurationControlStateHighlighted)] forState:UIControlStateHighlighted];
         [button sizeToFit];
-        [button setUserInteractionEnabled:FALSE];
         
         CGFloat angle = rescale(index, 0.0, 4.0, 180.0, 270.0);
         NSNumber * button_angle = [NSNumber numberWithFloat:angle];
-        objc_setAssociatedObject (
-                                  button,
+        objc_setAssociatedObject (button,
                                   (void *)button.tag,
                                   button_angle,
-                                  OBJC_ASSOCIATION_RETAIN
-                                  );
+                                  OBJC_ASSOCIATION_RETAIN);
         
+        [button setUserInteractionEnabled:FALSE];
         void (^eventHandlerBlockTouchUpInside)(void) = ^{
-            NSNumber *associatedObject = (NSNumber *)objc_getAssociatedObject (button, (void *)button.tag);
+            NSNumber * associatedObject = (NSNumber *)objc_getAssociatedObject (button, (void *)button.tag);
         };
         objc_setAssociatedObject(button, @selector(invoke), eventHandlerBlockTouchUpInside, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
         [button addTarget:eventHandlerBlockTouchUpInside action:@selector(invoke) forControlEvents:UIControlEventTouchUpInside];
@@ -271,7 +305,19 @@ static uint8_t (^(^animate)(__strong CADisplayLink * _Nonnull, unsigned int))(vo
         return button;
     });
     
-    
+    animate(display_link, 1)(^ (CADisplayLink * display_link) {
+        // To-Do: Determine the condition that establishes the end of the animation
+        static int counter;
+        return ^{
+            static CFTimeInterval time, end_time;
+            time = display_link.timestamp;
+            end_time = time;
+            static CFTimeInterval * current_time;
+            current_time = &time;
+            printf("%d\t%f", ++counter, *current_time);
+        };
+    });
+
     touch_handler = touch_handler_init(self);
 }
 
