@@ -217,18 +217,16 @@ static void (^(^(^touch_handler_init)(ControlView *))(UITouch *))(void(^ _Nullab
     };
 };
 
-#define FRAMES_30 0b111111111111111111111111111111
 static long (^(^animate)(long))(void(^__strong)(long *)) = ^ (long duration) {
     __block typeof(CADisplayLink *) display_link;
-    __block long frames = duration;
+    __block long frames = ~(1UL << duration);
 
     return ^ long (void (^__strong animator)(long *)) {
         display_link = [CADisplayLink displayLinkWithTarget:^{
-            frames >>= 01;
             return
-            ((frames & 01) &&
+            (((frames >>= 1UL) & 1UL) &&
             ^ long {
-                long position = (Log2n(frames));
+                long position = Log2n(frames);
                 printf("\t%ld\n", position);
                 animator(&frames);
                 return active_component_bit_vector;
@@ -329,7 +327,7 @@ static long (^(^animate)(long))(void(^__strong)(long *)) = ^ (long duration) {
 
 - (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
     dispatch_barrier_async(dispatch_get_main_queue(), ^{
-        animate((long)FRAMES_30)(^ (long * frame) {
+        animate((long)30)(^ (long * frame) {
 //            printf("%ld\n", *frame);
         });
         dispatch_barrier_async(dispatch_get_main_queue(), ^{
