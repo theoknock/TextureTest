@@ -78,7 +78,6 @@ static UIImage * (^CaptureDeviceConfigurationControlPropertySymbolImage)(Capture
 
 #define MASK_ALL  (1UL << 0 | 1UL << 1 | 1UL << 2 | 1UL << 3 | 1UL << 4)
 #define MASK_NONE (  0 << 0 |   0 << 1 |   0 << 2 |   0 << 3 |   0 << 4)
-static uint8_t mask_all  = (1UL << 0 | 1UL << 1 | 1UL << 2 | 1UL << 3 | 1UL << 4);
 static uint8_t active_component_bit_vector  = MASK_ALL;
 static uint8_t selected_property_bit_vector = MASK_NONE;
 static uint8_t hidden_property_bit_vector   = MASK_NONE;
@@ -218,15 +217,19 @@ static void (^(^(^touch_handler_init)(ControlView *))(UITouch *))(void(^ _Nullab
     };
 };
 
-static long (^(^animate)(unsigned int))(void(^__strong)(unsigned int *)) = ^ (unsigned int duration) {
+#define FRAMES_30 0b111111111111111111111111111111
+static long (^(^animate)(long))(void(^__strong)(long *)) = ^ (long duration) {
     __block typeof(CADisplayLink *) display_link;
-    __block unsigned int frames = duration;
-    return ^ long (void (^__strong animator)(unsigned int *)) {
+    __block long frames = duration;
+
+    return ^ long (void (^__strong animator)(long *)) {
         display_link = [CADisplayLink displayLinkWithTarget:^{
-            frames >>= 1; // should shift bits
+            frames >>= 01;
             return
             ((frames & 01) &&
             ^ long {
+                long position = (Log2n(frames));
+                printf("\t%ld\n", position);
                 animator(&frames);
                 return active_component_bit_vector;
             }())
@@ -312,11 +315,6 @@ static long (^(^animate)(unsigned int))(void(^__strong)(unsigned int *)) = ^ (un
         [button setCenter:[[UIBezierPath bezierPathWithArcCenter:CGPointMake(CGRectGetMaxX(self.bounds), CGRectGetMaxY(self.bounds)) radius:CGRectGetMidX(self.bounds) startAngle:angle endAngle:angle clockwise:FALSE] currentPoint]];
         return button;
     });
-    
-    animate(30)(^ (unsigned int * frame) {
-        printf("%d\n", *frame);
-        if (*frame >= 30) printf("30---------\n");
-    });
 
     touch_handler = touch_handler_init(self);
 }
@@ -330,7 +328,16 @@ static long (^(^animate)(unsigned int))(void(^__strong)(unsigned int *)) = ^ (un
 }
 
 - (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
-    dispatch_barrier_async(dispatch_get_main_queue(), ^{ handle_touch(set_state); });
+    dispatch_barrier_async(dispatch_get_main_queue(), ^{
+        animate((long)FRAMES_30)(^ (long * frame) {
+//            printf("%ld\n", *frame);
+        });
+        dispatch_barrier_async(dispatch_get_main_queue(), ^{
+            handle_touch(set_state);
+        });
+    });
+    
+    
 }
 
 - (void)touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
