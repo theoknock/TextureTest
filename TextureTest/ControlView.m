@@ -229,17 +229,6 @@ static long (^(^animate)(long))(void(^__strong)(long)) = ^ (long duration) {
              ^ long {
                 animator(Log2n(frames));
                 
-                ((active_component_bit_vector & MASK_ALL)
-                 && ^ long {
-                    printf("Transition animation from one state...\n");
-                    return active_component_bit_vector;
-                }())
-                || ((active_component_bit_vector & ~MASK_ALL)
-                    && ^ long {
-                    printf("...to another state...\n");
-                    return active_component_bit_vector;
-                }());
-                
                 return active_component_bit_vector;
             }())
             
@@ -338,15 +327,25 @@ static long (^(^animate)(long))(void(^__strong)(long)) = ^ (long duration) {
 
 - (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
     dispatch_barrier_async(dispatch_get_main_queue(), ^{
-        animate((long)30)(^ (long frame) {
-            printf("frame == %ld\n", frame);
-        });
+        
+        ((active_component_bit_vector & MASK_ALL) &&
+         
+         animate((long)30)(^ (long frame) {
+            printf("Transition animation from one state...\n");
+        }))
+        
+        ||
+        
+        ((active_component_bit_vector & ~MASK_ALL) &&
+         
+         animate((long)30)(^ (long frame) {
+            printf("Transition animation from one state...\n");
+        }));
+        
         dispatch_barrier_async(dispatch_get_main_queue(), ^{
             handle_touch(set_state);
         });
     });
-    
-    
 }
 
 - (void)touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
