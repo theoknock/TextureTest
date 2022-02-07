@@ -275,6 +275,7 @@ static long (^(^animate)(long))(void(^__strong)(long)) = ^ (long duration) {
 //            [display_link addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
 //        };
 //    };
+
 //};
 
 @implementation ControlView {
@@ -286,6 +287,7 @@ static long (^(^animate)(long))(void(^__strong)(long)) = ^ (long duration) {
 
     haptic_feedback = [[UISelectionFeedbackGenerator alloc] init];
     [haptic_feedback prepare];
+    
     
     map(buttons)(^ UIButton * (unsigned int index) {
         UIButton * button;
@@ -339,7 +341,7 @@ static long (^(^animate)(long))(void(^__strong)(long)) = ^ (long duration) {
         ((active_component_bit_vector & ~MASK_ALL) &&
          
          animate((long)30)(^ (long frame) {
-            printf("Transition animation from one state...\n");
+            printf("... to another state\n");
         }));
         
         dispatch_barrier_async(dispatch_get_main_queue(), ^{
@@ -353,6 +355,8 @@ static long (^(^animate)(long))(void(^__strong)(long)) = ^ (long duration) {
 }
 
 - (void)drawRect:(CGRect)rect {
+    [haptic_feedback selectionChanged];
+    [haptic_feedback prepare];
     draw_tick_wheel(UIGraphicsGetCurrentContext(), rect);
 }
 
