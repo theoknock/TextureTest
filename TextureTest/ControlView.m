@@ -82,7 +82,7 @@ static uint8_t active_component_bit_vector  = MASK_ALL;
 static uint8_t selected_property_bit_vector = MASK_NONE;
 static uint8_t hidden_property_bit_vector   = MASK_NONE;
 
-static unsigned int (^Log2n)(unsigned int) = ^ unsigned int (unsigned int bit_field) {
+static long (^Log2n)(unsigned int) = ^ long (unsigned int bit_field) {
     return (bit_field > 1) ? 1 + Log2n(bit_field / 2) : 0;
 };
 
@@ -180,7 +180,7 @@ static void (^(^(^touch_handler_init)(ControlView *))(UITouch *))(void(^ _Nullab
     CGPoint center_point = CGPointMake(CGRectGetMaxX(((ControlView *)view).bounds), CGRectGetMaxY(((ControlView *)view).bounds));
     static CGFloat touch_angle;
     static CGPoint touch_point;
-    static CGFloat radius; // calculated as the square root of the sum of the squares of its two values
+    static CGFloat radius;
     draw_tick_wheel = draw_tick_wheel_init((ControlView *)view, &touch_angle, &radius);
     return ^ (UITouch * touch) {
         
@@ -217,24 +217,35 @@ static void (^(^(^touch_handler_init)(ControlView *))(UITouch *))(void(^ _Nullab
     };
 };
 
-static long (^(^animate)(long))(void(^__strong)(long *)) = ^ (long duration) {
+static long (^(^animate)(long))(void(^__strong)(long)) = ^ (long duration) {
     __block typeof(CADisplayLink *) display_link;
-    __block long frames = ~(1UL << duration);
+    __block long frames = ~(1 << (duration + 1));
 
-    return ^ long (void (^__strong animator)(long *)) {
+    return ^ long (void (^__strong animator)(long)) {
         display_link = [CADisplayLink displayLinkWithTarget:^{
+            frames >>= 1;
             return
-            (((frames >>= 1UL) & 1UL) &&
-            ^ long {
-                long position = Log2n(frames);
-                printf("\t%ld\n", position);
-                animator(&frames);
+            ((frames & 1) &&
+             ^ long {
+                animator(Log2n(frames));
+                
+                ((active_component_bit_vector & MASK_ALL)
+                 && ^ long {
+                    printf("Transition animation from one state...\n");
+                    return active_component_bit_vector;
+                }())
+                || ((active_component_bit_vector & ~MASK_ALL)
+                    && ^ long {
+                    printf("...to another state...\n");
+                    return active_component_bit_vector;
+                }());
+                
                 return active_component_bit_vector;
             }())
             
             ||
             
-            ((frames | 01) &&
+            ((frames | 1) &&
             ^ long {
                 printf("COMPLETE\n");
                 [display_link invalidate];
@@ -327,8 +338,8 @@ static long (^(^animate)(long))(void(^__strong)(long *)) = ^ (long duration) {
 
 - (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
     dispatch_barrier_async(dispatch_get_main_queue(), ^{
-        animate((long)30)(^ (long * frame) {
-//            printf("%ld\n", *frame);
+        animate((long)30)(^ (long frame) {
+            printf("frame == %ld\n", frame);
         });
         dispatch_barrier_async(dispatch_get_main_queue(), ^{
             handle_touch(set_state);
