@@ -217,18 +217,17 @@ static void (^(^(^touch_handler_init)(ControlView *))(UITouch *))(void(^ _Nullab
     };
 };
 
-static long (^(^animate)(long))(void(^__strong)(long)) = ^ (long duration) {
+static long (^(^integrate)(long))(void(^__strong)(long)) = ^ (long duration) {
     __block typeof(CADisplayLink *) display_link;
     __block long frames = ~(1 << (duration + 1));
 
-    return ^ long (void (^__strong animator)(long)) {
+    return ^ long (void (^__strong enumeration)(long)) {                        // integrand
         display_link = [CADisplayLink displayLinkWithTarget:^{
             frames >>= 1;
             return
             ((frames & 1) &&
              ^ long {
-                animator(Log2n(frames));
-                
+                enumeration(Log2n(frames));
                 return active_component_bit_vector;
             }())
             
@@ -329,25 +328,25 @@ static long (^(^animate)(long))(void(^__strong)(long)) = ^ (long duration) {
 
 - (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
     dispatch_barrier_async(dispatch_get_main_queue(), ^{
-        
         ((active_component_bit_vector & MASK_ALL) &&
          
-         animate((long)30)(^ (long frame) {
-            printf("Transition animation from one state...\n");
+         integrate((long)30)(^ (long frame) {
+            printf("State: 11111\tframe: %ld\n", frame);
         }))
         
         ||
         
         ((active_component_bit_vector & ~MASK_ALL) &&
          
-         animate((long)30)(^ (long frame) {
-            printf("... to another state\n");
+         integrate((long)30)(^ (long frame) {
+            printf("State: 00000\tframe: %ld\n", frame);
         }));
         
         dispatch_barrier_async(dispatch_get_main_queue(), ^{
             handle_touch(set_state);
         });
     });
+    
 }
 
 - (void)touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
