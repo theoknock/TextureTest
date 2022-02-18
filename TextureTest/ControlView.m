@@ -306,6 +306,7 @@ static long (^(^integrate)(long))(void(^__strong)(long)) = ^ (long duration) {
         [button setUserInteractionEnabled:FALSE];
         void (^eventHandlerBlockTouchUpInside)(void) = ^{
             NSNumber * associatedObject = (NSNumber *)objc_getAssociatedObject (button, (void *)button.tag);
+            printf("%s\n", [[associatedObject stringValue] UTF8String]);
         };
         objc_setAssociatedObject(button, @selector(invoke), eventHandlerBlockTouchUpInside, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
         [button addTarget:eventHandlerBlockTouchUpInside action:@selector(invoke) forControlEvents:UIControlEventTouchUpInside];
