@@ -156,7 +156,6 @@ static long (^(^reduce)(__strong UIButton * _Nonnull [_Nonnull 5]))(void (^__str
 
 void (^(^set_state)(unsigned int))(CGPoint, CGFloat) = ^ (unsigned int touch_property) {
     active_component_bit_vector = ~active_component_bit_vector;
-    
     // converse nonimplication
     uint8_t selected_property_bit_mask = MASK_NONE;
     selected_property_bit_mask ^= (1UL << touch_property) & ~active_component_bit_vector;
@@ -209,7 +208,7 @@ static void (^(^draw_tick_wheel_init)(ControlView *, CGFloat *, CGFloat *))(CGCo
             printf("Clearing context...\n");
             UIGraphicsEndImageContext();
             
-            return (long)1;
+            return active_component_bit_vector;
         }())
         
         ||
@@ -244,7 +243,7 @@ static void (^(^draw_tick_wheel_init)(ControlView *, CGFloat *, CGFloat *))(CGCo
             // UIGraphicsPopContext();
             //
             //        [(ControlView *)view setNeedsDisplay];
-            return (long)1;
+            return active_component_bit_vector;
         }());
     };
     
@@ -265,9 +264,12 @@ static void (^(^(^touch_handler_init)(ControlView *))(UITouch *))(void (^(^)(uns
             touch_angle = fmaxf(180.0,
                                 fminf(atan2(touch_point.y - center_point.y, touch_point.x - center_point.x) * (180.0 / M_PI) + 360.0,
                                       270.0));
-            if (set_button_state != nil) (set_button_state((unsigned int)round(fmaxf(0.0,
-                                                                                     fminf((unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 4.0)),
-                                                                                           4.0)))))(center_point, radius);
+            void (^transition_animation)(CGPoint, CGFloat) = (set_button_state != nil) ? (set_button_state((unsigned int)round(fmaxf(0.0,
+                                                                                                         fminf((unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 4.0)),
+                                                                                                               4.0))))) : nil;
+//            if (set_button_state != nil) (set_button_state((unsigned int)round(fmaxf(0.0,
+//                                                                                     fminf((unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 4.0)),
+//                                                                                           4.0)))))(center_point, radius);
             radius = fmaxf(CGRectGetMidX(((ControlView *)view).bounds),
                            fminf((sqrt(pow(touch_point.x - center_point.x, 2.0) + pow(touch_point.y - center_point.y, 2.0))),
                                  CGRectGetMaxX(((ControlView *)view).bounds)));
@@ -289,7 +291,9 @@ static void (^(^(^touch_handler_init)(ControlView *))(UITouch *))(void (^(^)(uns
                 }(degreesToRadians(touch_angle))];
                 [((ControlView *)view) setNeedsDisplay];
             }));
+            if (transition_animation != nil) transition_animation(center_point, radius);
         };
+        
     };
 };
 
@@ -368,6 +372,7 @@ static void (^(^(^touch_handler_init)(ControlView *))(UITouch *))(void (^(^)(uns
 }
 
 - (void)drawRect:(CGRect)rect {
+    [haptic_feedback prepare];
     [haptic_feedback selectionChanged];
     [haptic_feedback prepare];
     draw_tick_wheel(UIGraphicsGetCurrentContext(), rect);
