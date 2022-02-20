@@ -31,6 +31,8 @@ typedef enum : NSUInteger {
 @property (weak) IBOutlet id<CaptureDeviceConfigurationControlPropertyDelegate> captureDeviceConfigurationControlPropertyDelegate;
 
 @property (strong, nonatomic) IBOutlet UILabel *stateBitVectorLabel;
+@property (strong, nonatomic) IBOutlet UILabel *selectedBitVectorLabel;
+@property (strong, nonatomic) IBOutlet UILabel *hiddenBitVectorLabel;
 
 @end
 

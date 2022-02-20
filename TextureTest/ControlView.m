@@ -136,8 +136,9 @@ static uint8_t (^(^filter)(__strong UIButton * _Nonnull [_Nonnull 5]))(void (^__
                 dispatch_barrier_async(dispatch_get_main_queue(), ^{
                     [button_collection[index] setSelected:(selected_property_bit_vector >> index) & 1UL];
                     [button_collection[index] setHidden:(hidden_property_bit_vector >> index) & 1UL];
-                    enumeration(button_collection[index], (unsigned int)index);
                 });
+                enumeration(button_collection[index], (unsigned int)index);
+                
             });
         });
         return active_component_bit_vector;
@@ -363,6 +364,14 @@ static void (^(^(^touch_handler_init)(ControlView *))(UITouch *))(void (^(^)(uns
     });
 
     [self.stateBitVectorLabel setText:[NSString stringWithFormat:@"%@", (active_component_bit_vector == MASK_ALL) ? @"11111" : @"00000"]];
+    NSMutableString * selected_bit_vector_str = [[NSMutableString alloc] initWithCapacity:5];
+    for (int i = sizeof(char) * 5; i >= 0; i--)
+          [selected_bit_vector_str appendString:[NSString stringWithFormat:@"%d", (selected_property_bit_vector & (1 << i)) >> i]];
+    [self.selectedBitVectorLabel setText:selected_bit_vector_str];
+    NSMutableString * hidden_bit_vector_str = [[NSMutableString alloc] initWithCapacity:5];
+    for (int i = sizeof(char) * 5; i >= 0; i--)
+          [hidden_bit_vector_str appendString:[NSString stringWithFormat:@"%d", (hidden_property_bit_vector & (1 << i)) >> i]];
+    [self.hiddenBitVectorLabel setText:hidden_bit_vector_str];
 }
 
 - (void)touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
