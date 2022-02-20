@@ -118,7 +118,6 @@ static long (^(^integrate)(long))(void(^__strong)(long)) = ^ (long duration) {
             
             ((frames | 1) &&
             ^ long {
-                printf("COMPLETE\n");
                 [display_link invalidate];
                 return active_component_bit_vector;
             }());
@@ -160,7 +159,10 @@ void (^(^set_state)(unsigned int))(CGPoint, CGFloat) = ^ (unsigned int touch_pro
     hidden_property_bit_vector ^= active_component_bit_vector;
     
     return ^ (CGPoint center_point, CGFloat radius) {
-        integrate((long)30)(^ (long frame) {
+        
+        ((active_component_bit_vector & MASK_ALL) &&
+         
+         integrate((long)30)(^ (long frame) {
             CGFloat angle_adj = (360.0 / 30.0) * frame;
             filter(buttons)(^{
                 return ^ (UIButton * _Nonnull button, unsigned int index) {
@@ -169,7 +171,22 @@ void (^(^set_state)(unsigned int))(CGPoint, CGFloat) = ^ (unsigned int touch_pro
                     }(degreesToRadians(rescale(button.tag, 0.0, 4.0, 180.0 + angle_adj, 270.0 + angle_adj)))];
                 };
             }());
-        });
+        }))
+        
+        ||
+        
+        ((active_component_bit_vector & ~MASK_ALL) &&
+         
+         integrate((long)30)(^ (long frame) {
+            CGFloat angle_adj = (360.0 / 30.0) * frame;
+            filter(buttons)(^{
+                return ^ (UIButton * _Nonnull button, unsigned int index) {
+                    [button setCenter:^ (CGFloat radians) {
+                        return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
+                    }(degreesToRadians(rescale(button.tag, 0.0, 4.0, 180.0 - angle_adj, 270.0 - angle_adj)))];
+                };
+            }());
+        }));
     };
 };
 
