@@ -59,9 +59,7 @@ selected_hidden_bit_vector_pair[1] ^= ~((selected_hidden_bit_vector_pair[0] & ge
 selected_property_bit_vector = selected_hidden_bit_vector_pair[0];
 hidden_property_bit_vector   = selected_hidden_bit_vector_pair[1];
 for (int property = 0; property < 5; property++) {
-    [buttons[property]() setTitle:[NSString stringWithFormat:@"%d - %d",
-                                   (BOOL)(getByte(selected_hidden_bit_vector_pair[0], property_tag) & mask[buttons[property]().tag]), //(selected_hidden_bit_vector_pair[0] | (CaptureDeviceConfigurationControlSelectedPropertyBit)(property_tag)),
-                                   (BOOL)(getByte(hidden_property_bit_vector,   property_tag) & mask[buttons[property]().tag])] forState:UIControlStateNormal];
+    w
     [buttons[property]() setSelected:(BOOL)(getByte(selected_hidden_bit_vector_pair[0], property_tag) & mask[buttons[property]().tag])]; //(selected_hidden_bit_vector_pair[0] | (CaptureDeviceConfigurationControlSelectedPropertyBit)(property_tag)),
 };
 };
