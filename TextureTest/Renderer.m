@@ -62,7 +62,7 @@ static const NSUInteger MaxBuffersInFlight = 3;
             
             CVMetalTextureCacheRef textureCache;
             CVMetalTextureCacheCreate(NULL, cacheAttributes, self->_device, NULL, &textureCache);
-            CFShow(cacheAttributes);
+//            CFShow(cacheAttributes);
             CFRelease(textureUsageValue);
             CFRelease(cacheAttributes);
             

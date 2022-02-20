@@ -38,7 +38,6 @@ dispatch_queue_t video_data_output_sample_buffer_delegate_queue;
 {
     if (self = [super init])
     {
-        NSLog(@"%s", __PRETTY_FUNCTION__);
         video_data_output_sample_buffer_delegate_queue = dispatch_queue_create("CVPixelBufferDispatchQueue", DISPATCH_QUEUE_SERIAL_WITH_AUTORELEASE_POOL);
         if (!captureSession) {
             @try {
