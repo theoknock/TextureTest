@@ -281,8 +281,8 @@ static void (^(^(^touch_handler_init)(ControlView *))(UITouch *))(void (^(^)(uns
                     [button setCenter:^ (CGFloat radians) {
                         return CGPointMake(center_point.x - *r * -cos(radians), center_point.y - *r * -sin(radians));
                     }(degreesToRadians(rescale(button.tag, 0.0, 4.0, 180.0, 270.0)))];
-                    [button setTitle:[NSString stringWithFormat:@"%d - %d",
-                                                   (Log2n(selected_property_bit_vector)), (Log2n(hidden_property_bit_vector))] forState:UIControlStateNormal];
+//                    [button setTitle:[NSString stringWithFormat:@"%d - %d",
+//                                                   (Log2n(selected_property_bit_vector)), (Log2n(hidden_property_bit_vector))] forState:UIControlStateNormal];
                 };
             }((ControlView *)view, &radius)))
             || ((active_component_bit_vector & ~MASK_ALL)
@@ -290,8 +290,8 @@ static void (^(^(^touch_handler_init)(ControlView *))(UITouch *))(void (^(^)(uns
                 [button setCenter:^ (CGFloat radians) {
                     return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
                 }(degreesToRadians(touch_angle))];
-                [button setTitle:[NSString stringWithFormat:@"%d - %d",
-                                               (Log2n(selected_property_bit_vector)), (Log2n(hidden_property_bit_vector))] forState:UIControlStateNormal];
+//                [button setTitle:[NSString stringWithFormat:@"%d - %d",
+//                                               (Log2n(selected_property_bit_vector)), (Log2n(hidden_property_bit_vector))] forState:UIControlStateNormal];
                 [((ControlView *)view) setNeedsDisplay];
             }));
             if (transition_animation != nil) transition_animation(center_point, radius);
@@ -308,6 +308,16 @@ static void (^(^(^touch_handler_init)(ControlView *))(UITouch *))(void (^(^)(uns
 - (void)awakeFromNib {
     [super awakeFromNib];
     
+    [self.stateBitVectorLabel setText:[NSString stringWithFormat:@"%@", (active_component_bit_vector == MASK_ALL) ? @"11111" : @"00000"]];
+    NSMutableString * selected_bit_vector_str = [[NSMutableString alloc] initWithCapacity:5];
+    for (int i = sizeof(char) * 4; i >= 0; i--)
+          [selected_bit_vector_str appendString:[NSString stringWithFormat:@"%d", (selected_property_bit_vector & (1 << i)) >> i]];
+    [self.selectedBitVectorLabel setText:selected_bit_vector_str];
+    NSMutableString * hidden_bit_vector_str = [[NSMutableString alloc] initWithCapacity:5];
+    for (int i = sizeof(char) * 4; i >= 0; i--)
+          [hidden_bit_vector_str appendString:[NSString stringWithFormat:@"%d", (hidden_property_bit_vector & (1 << i)) >> i]];
+    [self.hiddenBitVectorLabel setText:hidden_bit_vector_str];
+    
     haptic_feedback = [[UISelectionFeedbackGenerator alloc] init];
     [haptic_feedback prepare];
     
@@ -321,8 +331,8 @@ static void (^(^(^touch_handler_init)(ControlView *))(UITouch *))(void (^(^)(uns
         [button setImage:[UIImage systemImageNamed:CaptureDeviceConfigurationControlPropertyImageValues[1][index] withConfiguration:CaptureDeviceConfigurationControlPropertySymbolImageConfiguration(CaptureDeviceConfigurationControlStateSelected)] forState:UIControlStateSelected];
         [button setImage:[UIImage systemImageNamed:CaptureDeviceConfigurationControlPropertyImageValues[1][index] withConfiguration:CaptureDeviceConfigurationControlPropertySymbolImageConfiguration(CaptureDeviceConfigurationControlStateHighlighted)] forState:UIControlStateHighlighted];
         
-        [button setTitle:[NSString stringWithFormat:@"%d - %d",
-                                       (Log2n(selected_property_bit_vector)), (Log2n(hidden_property_bit_vector))] forState:UIControlStateNormal];
+//        [button setTitle:[NSString stringWithFormat:@"%d - %d",
+//                                       (Log2n(selected_property_bit_vector)), (Log2n(hidden_property_bit_vector))] forState:UIControlStateNormal];
         
         
         [button sizeToFit];
@@ -365,11 +375,11 @@ static void (^(^(^touch_handler_init)(ControlView *))(UITouch *))(void (^(^)(uns
 
     [self.stateBitVectorLabel setText:[NSString stringWithFormat:@"%@", (active_component_bit_vector == MASK_ALL) ? @"11111" : @"00000"]];
     NSMutableString * selected_bit_vector_str = [[NSMutableString alloc] initWithCapacity:5];
-    for (int i = sizeof(char) * 5; i >= 0; i--)
+    for (int i = sizeof(char) * 4; i >= 0; i--)
           [selected_bit_vector_str appendString:[NSString stringWithFormat:@"%d", (selected_property_bit_vector & (1 << i)) >> i]];
     [self.selectedBitVectorLabel setText:selected_bit_vector_str];
     NSMutableString * hidden_bit_vector_str = [[NSMutableString alloc] initWithCapacity:5];
-    for (int i = sizeof(char) * 5; i >= 0; i--)
+    for (int i = sizeof(char) * 4; i >= 0; i--)
           [hidden_bit_vector_str appendString:[NSString stringWithFormat:@"%d", (hidden_property_bit_vector & (1 << i)) >> i]];
     [self.hiddenBitVectorLabel setText:hidden_bit_vector_str];
 }
