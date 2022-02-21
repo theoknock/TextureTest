@@ -44,8 +44,8 @@ static unsigned int rotation_degrees;
     self = [super init];
     if(self)
     {
-        CATransform3D rotation = CATransform3DMakeRotation(degreesToRadians(215.0), 20.0, 20.0, 0.0);
-        view.layer.transform = CATransform3DTranslate(rotation, 20, 30, 0);
+//        CATransform3D rotation = CATransform3DMakeRotation(degreesToRadians(215.0), 20.0, 20.0, 0.0);
+//        view.layer.transform = CATransform3DTranslate(rotation, 20, 30, 0);
         
         _device = view.device;
         _inFlightSemaphore = dispatch_semaphore_create(MaxBuffersInFlight);
@@ -57,7 +57,7 @@ static unsigned int rotation_degrees;
             CFStringRef textureCacheKeys[2] = { kCVMetalTextureCacheMaximumTextureAgeKey, kCVMetalTextureUsage };
             float maximumTextureAge = (1.0); // / view.preferredFramesPerSecond);
             CFNumberRef maximumTextureAgeValue = CFNumberCreate(kCFAllocatorDefault, kCFNumberFloatType, &maximumTextureAge);
-            MTLTextureUsage textureUsage = MTLTextureUsageShaderRead;
+            MTLTextureUsage textureUsage = MTLTextureUsageShaderRead | MTLTextureUsageRenderTarget | MTLTextureUsageShaderWrite;
             CFNumberRef textureUsageValue = CFNumberCreate(NULL, kCFNumberNSIntegerType, &textureUsage);
             CFTypeRef textureCacheValues[2] = { maximumTextureAgeValue, textureUsageValue };
             CFIndex textureCacheAttributesCount = 2;
@@ -166,7 +166,7 @@ static unsigned int rotation_degrees;
     
     MDLMesh *mdlMesh = [MDLMesh newPlaneWithDimensions:(vector_float2){(1.3333333333 * UIScreen.mainScreen.scale), (0.75 * UIScreen.mainScreen.scale)}
                                               segments:(vector_uint2){1, 1}
-                                          geometryType:MDLGeometryTypeQuads
+                                          geometryType:MDLGeometryTypeTriangles\
                                              allocator:metalAllocator];
     
 //    MDLMesh *mdlMesh = [MDLMesh newBoxWithDimensions:(vector_float3){2, 2, 2}
@@ -192,68 +192,41 @@ static unsigned int rotation_degrees;
     {
         NSLog(@"Error creating MetalKit mesh %@", error.localizedDescription);
     }
-
-//    MTKTextureLoader* textureLoader = [[MTKTextureLoader alloc] initWithDevice:_device];
-
-//    NSDictionary *textureLoaderOptions =
-//    @{
-//      MTKTextureLoaderOptionTextureUsage       : @(MTLTextureUsageShaderRead),
-//      MTKTextureLoaderOptionTextureStorageMode : @(MTLStorageModePrivate)
-//      };
-//
-//    _colorMap = [textureLoader newTextureWithName:@"ColorMap"
-//                                      scaleFactor:1.0
-//                                           bundle:nil
-//                                          options:textureLoaderOptions
-//                                            error:&error];
-//
-//    if(!_colorMap || error)
-//    {
-//        NSLog(@"Error creating texture %@", error.localizedDescription);
-//    }
 }
 
-- (void)_updateGameState:(nonnull MTKView *)view
-{
-    /// Update any game state before encoding renderint commands to our drawable
-
-    Uniforms * uniforms = (Uniforms*)_dynamicUniformBuffer[_uniformBufferIndex].contents;
-
-    uniforms->projectionMatrix = _projectionMatrix;
-
-    vector_float3 rotationAxis = {1, 1, 1};
-    matrix_float4x4 modelMatrix = matrix4x4_rotation(_rotation, rotationAxis);
-    matrix_float4x4 viewMatrix = matrix4x4_translation(0.0, 0.0, -1.0);
-
-    uniforms->modelViewMatrix = matrix_multiply(viewMatrix, modelMatrix);
-
-    _rotation = degreesToRadians(112.5); //(_rotation > degreesToRadians(360.0)) ? 0.0 : _rotation + degreesToRadians(2.0);
-    CATransform3D rotation = CATransform3DMakeRotation(degreesToRadians(180.0), 1.0, 0.0, 0.0);
-    view.layer.transform   = CATransform3DTranslate(rotation, 0.0, 0.0, 0.0);
-}
+//- (void)_updateGameState:(nonnull MTKView *)view
+//{
+//    Uniforms * uniforms = (Uniforms*)_dynamicUniformBuffer[_uniformBufferIndex].contents;
+//
+//    uniforms->projectionMatrix = _projectionMatrix;
+//
+//    vector_float3 rotationAxis = {1, 1, 1};
+//    matrix_float4x4 modelMatrix = matrix4x4_rotation(_rotation, rotationAxis);
+//    matrix_float4x4 viewMatrix = matrix4x4_translation(0.0, 0.0, -1.0);
+//
+//    uniforms->modelViewMatrix = matrix_multiply(viewMatrix, modelMatrix);
+//
+//    _rotation = degreesToRadians(112.5); //(_rotation > degreesToRadians(360.0)) ? 0.0 : _rotation + degreesToRadians(2.0);
+////    CATransform3D rotation = CATransform3DMakeRotation(degreesToRadians(180.0), 1.0, 0.0, 0.0);
+////    view.layer.transform   = CATransform3DTranslate(rotation, 0.0, 0.0, 0.0);
+//}
 
 - (void)drawInMTKView:(nonnull MTKView *)view
 {
-    /// Per frame updates here
-
-    dispatch_semaphore_wait(_inFlightSemaphore, DISPATCH_TIME_FOREVER);
-
-    _uniformBufferIndex = (_uniformBufferIndex + 1) % MaxBuffersInFlight;
+//    dispatch_semaphore_wait(_inFlightSemaphore, DISPATCH_TIME_FOREVER);
+//
+//    _uniformBufferIndex = (_uniformBufferIndex + 1) % MaxBuffersInFlight;
 
     id <MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
     commandBuffer.label = @"MyCommand";
 
-    __block dispatch_semaphore_t block_sema = _inFlightSemaphore;
+//    __block dispatch_semaphore_t block_sema = _inFlightSemaphore;
     [commandBuffer addCompletedHandler:^(id<MTLCommandBuffer> buffer)
      {
-         dispatch_semaphore_signal(block_sema);
+//         dispatch_semaphore_signal(block_sema);
      }];
 
-    [self _updateGameState:view];
-
-    /// Delay getting the currentRenderPassDescriptor until absolutely needed. This avoids
-    ///   holding onto the drawable and blocking the display pipeline any longer than necessary
-    MTLRenderPassDescriptor* renderPassDescriptor = view.currentRenderPassDescriptor;
+   MTLRenderPassDescriptor* renderPassDescriptor = view.currentRenderPassDescriptor;
 
     if(renderPassDescriptor != nil)
     {
@@ -270,9 +243,9 @@ static unsigned int rotation_degrees;
         [renderEncoder setRenderPipelineState:_pipelineState];
         [renderEncoder setDepthStencilState:_depthState];
 
-        [renderEncoder setVertexBuffer:_dynamicUniformBuffer[_uniformBufferIndex]
-                                offset:0
-                               atIndex:BufferIndexUniforms];
+//        [renderEncoder setVertexBuffer:_dynamicUniformBuffer[_uniformBufferIndex]
+//                                offset:0
+//                               atIndex:BufferIndexUniforms];
 
         [renderEncoder setFragmentBuffer:_dynamicUniformBuffer[_uniformBufferIndex]
                                   offset:0
