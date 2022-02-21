@@ -213,25 +213,18 @@ static unsigned int rotation_degrees;
 
 - (void)drawInMTKView:(nonnull MTKView *)view
 {
-//    dispatch_semaphore_wait(_inFlightSemaphore, DISPATCH_TIME_FOREVER);
-//
-//    _uniformBufferIndex = (_uniformBufferIndex + 1) % MaxBuffersInFlight;
-
     id <MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
     commandBuffer.label = @"MyCommand";
 
-//    __block dispatch_semaphore_t block_sema = _inFlightSemaphore;
     [commandBuffer addCompletedHandler:^(id<MTLCommandBuffer> buffer)
      {
-//         dispatch_semaphore_signal(block_sema);
+
      }];
 
    MTLRenderPassDescriptor* renderPassDescriptor = view.currentRenderPassDescriptor;
 
     if(renderPassDescriptor != nil)
     {
-        /// Final pass rendering code here
-
         id <MTLRenderCommandEncoder> renderEncoder =
         [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
         renderEncoder.label = @"MyRenderEncoder";
@@ -242,10 +235,6 @@ static unsigned int rotation_degrees;
         [renderEncoder setCullMode:MTLCullModeBack];
         [renderEncoder setRenderPipelineState:_pipelineState];
         [renderEncoder setDepthStencilState:_depthState];
-
-//        [renderEncoder setVertexBuffer:_dynamicUniformBuffer[_uniformBufferIndex]
-//                                offset:0
-//                               atIndex:BufferIndexUniforms];
 
         [renderEncoder setFragmentBuffer:_dynamicUniformBuffer[_uniformBufferIndex]
                                   offset:0
