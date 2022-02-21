@@ -309,6 +309,8 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
                                     [delegate setTorchLevel_:round(rescale(touch_angle, 180.0, 270.0, 0.0, 1.0))];
                 else if (button.tag == CaptureDeviceConfigurationControlPropertyISO)
                                     [delegate setISO_:rescale(touch_angle, 180.0, 270.0, [delegate minISO_], [delegate maxISO_])];
+                else if (button.tag == CaptureDeviceConfigurationControlPropertyExposureDuration)
+                    [delegate setExposureDuration_:rescale(touch_angle, 180.0, 270.0, 0.0, 1.0)];
                 [((ControlView *)view) setNeedsDisplay];
             }));
             

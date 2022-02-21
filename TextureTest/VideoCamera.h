@@ -27,7 +27,7 @@ extern CGSize videoDimensions;
 - (void)setISO_:(CGFloat)ISO;
 - (float)maxISO_;
 - (float)minISO_;
-
+- (void)setExposureDuration_:(CGFloat)exposureDuration;
 
 
 

@@ -239,6 +239,7 @@ dispatch_queue_t video_data_output_sample_buffer_delegate_queue;
         }
         [VideoCamera.captureDevice setExposureModeCustomWithDuration:AVCaptureExposureDurationCurrent ISO:ISO completionHandler:nil];
     } @catch (NSException *exception) {
+        [VideoCamera.captureDevice setExposureModeCustomWithDuration:AVCaptureExposureDurationCurrent ISO:AVCaptureISOCurrent completionHandler:nil];
         NSLog(@"Error configuring camera:\n\t%@\n\t%@\n\t%lu",
               exception.name,
               exception.reason,
@@ -256,6 +257,42 @@ dispatch_queue_t video_data_output_sample_buffer_delegate_queue;
 
 - (float)minISO_ {
     return VideoCamera.captureDevice.activeFormat.minISO;
+}
+
+- (void)setExposureDuration_:(CGFloat)exposureDuration {
+    static const float kExposureDurationPower = 5;
+    static const float kExposureMinimumDuration = 1.0/1000;
+    
+    @try {
+        __autoreleasing NSError *error = NULL;
+        [VideoCamera.captureDevice lockForConfiguration:&error];
+        if (error) {
+            printf("Error == %s\n", [[error debugDescription] UTF8String]);
+            NSException* exception = [NSException
+                                      exceptionWithName:error.domain
+                                      reason:error.localizedDescription
+                                      userInfo:@{@"Error Code" : @(error.code)}];
+            @throw exception;
+        }
+        double p = pow( exposureDuration, kExposureDurationPower ); // Apply power function to expand slider's low-end range
+        double minDurationSeconds = MAX( CMTimeGetSeconds( VideoCamera.captureDevice.activeFormat.minExposureDuration ), kExposureMinimumDuration );
+        double maxDurationSeconds = 1.0/3.0;//CMTimeGetSeconds( self.videoDevice.activeFormat.maxExposureDuration );
+        double newDurationSeconds = p * ( maxDurationSeconds - minDurationSeconds ) + minDurationSeconds; // Scale from 0-1 slider range to actual duration
+        
+        if ( [VideoCamera.captureDevice lockForConfiguration:&error] ) {
+            [VideoCamera.captureDevice setExposureModeCustomWithDuration:CMTimeMakeWithSeconds( newDurationSeconds, 1000*1000*1000 )  ISO:AVCaptureISOCurrent completionHandler:nil];
+            [VideoCamera.captureDevice unlockForConfiguration];
+        }
+    } @catch (NSException *exception) {
+        NSLog(@"Error configuring camera:\n\t%@\n\t%@\n\t%lu",
+              exception.name,
+              exception.reason,
+              ((NSNumber *)[exception.userInfo valueForKey:@"Error Code"]).unsignedIntegerValue);
+    } @finally {
+        [VideoCamera.captureDevice unlockForConfiguration];
+        [self lensPosition_];
+//        printf("lensPosition == %f\n", lensPosition);
+    }
 }
 
 @end
