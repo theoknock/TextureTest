@@ -68,8 +68,7 @@ matrix_float4x4 matrix_perspective_right_hand(float fovyRadians, float aspect, f
 }
 
 
-vertex ColorInOut vertexShader(Vertex in [[stage_in]],
-                               constant Uniforms & uniforms [[ buffer(BufferIndexUniforms) ]])
+vertex ColorInOut vertexShader(Vertex in [[stage_in]])
 {
     ColorInOut out;
 
@@ -92,7 +91,6 @@ vertex ColorInOut vertexShader(Vertex in [[stage_in]],
 }
 
 fragment float4 fragmentShader(ColorInOut in [[stage_in]],
-                               constant Uniforms & uniforms [[ buffer(BufferIndexUniforms) ]],
                                texture2d<half> colorMap     [[ texture(TextureIndexColor) ]])
 {
     constexpr sampler colorSampler(mip_filter::linear,
