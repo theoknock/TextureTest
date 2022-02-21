@@ -15,7 +15,9 @@ static float (^degreesToRadians)(float) = ^ float (float degrees) {
 };
 
 static float (^ _Nonnull rescale)(float, float, float, float, float) = ^ (float old_value, float old_min, float old_max, float new_min, float new_max) {
-    return (new_max - new_min) * (old_value - old_min) / (old_max - old_min) + new_min;
+    float scaled_value = (new_max - new_min) * (old_value - old_min) / (old_max - old_min) + new_min;
+//    printf("scaled_value == %f\n", scaled_value);
+    return scaled_value;
 };
 
 
