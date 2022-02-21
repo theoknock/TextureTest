@@ -20,15 +20,16 @@ typedef enum : NSUInteger {
 
 @protocol CaptureDeviceConfigurationControlPropertyDelegate <NSObject>
 
-@property (nonatomic) CGFloat videoZoomFactor;
-- (void)setVideoZoomFactor:(CGFloat)videoZoomFactor;
+@property (nonatomic) CGFloat videoZoomFactor_;
+- (void)setVideoZoomFactor_:(CGFloat)videoZoomFactor;
 
 
 @end
 
 @interface ControlView : UIView
 
-@property (weak) IBOutlet id<CaptureDeviceConfigurationControlPropertyDelegate> captureDeviceConfigurationControlPropertyDelegate;
+
+@property (strong) IBOutlet id<CaptureDeviceConfigurationControlPropertyDelegate> captureDeviceConfigurationControlPropertyDelegate;
 
 @property (strong, nonatomic) IBOutlet UILabel *stateBitVectorLabel;
 @property (strong, nonatomic) IBOutlet UILabel *selectedBitVectorLabel;

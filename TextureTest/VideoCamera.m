@@ -12,7 +12,7 @@ CGSize videoDimensions;
 @interface VideoCamera ()
 {
     AVCaptureSession * captureSession;
-    AVCaptureDevice * captureDevice;
+//    AVCaptureDevice * captureDevice;
     AVCaptureDeviceInput * captureInput;
 //    AVCaptureVideoPreviewLayer *previewLayer;
     AVCaptureVideoDataOutput * captureOutput;
@@ -21,6 +21,11 @@ CGSize videoDimensions;
 @end
 
 @implementation VideoCamera
+
+static AVCaptureDevice * _captureDevice;
++ (AVCaptureDevice *)captureDevice { return _captureDevice; }
++ (void)setCaptureDevice:(AVCaptureDevice *)captureDevice { _captureDevice = captureDevice; }
+
 
 static VideoCamera * video;
 + (VideoCamera *)setAVCaptureVideoDataOutputSampleBufferDelegate:(id<AVCaptureVideoDataOutputSampleBufferDelegate>)videoOutputDelegate
@@ -47,10 +52,10 @@ dispatch_queue_t video_data_output_sample_buffer_delegate_queue;
                     [captureSession setSessionPreset:AVCaptureSessionPreset3840x2160];
                 }
                 
-                captureDevice = [AVCaptureDevice defaultDeviceWithDeviceType:AVCaptureDeviceTypeBuiltInWideAngleCamera mediaType:AVMediaTypeVideo position:AVCaptureDevicePositionBack];
+                VideoCamera.captureDevice = [AVCaptureDevice defaultDeviceWithDeviceType:AVCaptureDeviceTypeBuiltInWideAngleCamera mediaType:AVMediaTypeVideo position:AVCaptureDevicePositionBack];
                 @try {
                     __autoreleasing NSError *error = NULL;
-                    [captureDevice lockForConfiguration:&error];
+                    [VideoCamera.captureDevice lockForConfiguration:&error];
                     if (error) {
                         NSException* exception = [NSException
                                                   exceptionWithName:error.domain
@@ -58,22 +63,22 @@ dispatch_queue_t video_data_output_sample_buffer_delegate_queue;
                                                   userInfo:@{@"Error Code" : @(error.code)}];
                         @throw exception;
                     }
-                    if ([captureDevice isExposureModeSupported:AVCaptureExposureModeContinuousAutoExposure])
-                        [captureDevice setExposureMode:AVCaptureExposureModeContinuousAutoExposure];
-                    if ([captureDevice isFocusModeSupported:AVCaptureFocusModeContinuousAutoFocus])
-                        [captureDevice setFocusMode:AVCaptureFocusModeContinuousAutoFocus];
-                    [captureDevice setVideoZoomFactor:captureDevice.minAvailableVideoZoomFactor];
+                    if ([VideoCamera.captureDevice isExposureModeSupported:AVCaptureExposureModeContinuousAutoExposure])
+                        [VideoCamera.captureDevice setExposureMode:AVCaptureExposureModeContinuousAutoExposure];
+                    if ([VideoCamera.captureDevice isFocusModeSupported:AVCaptureFocusModeContinuousAutoFocus])
+                        [VideoCamera.captureDevice setFocusMode:AVCaptureFocusModeContinuousAutoFocus];
+                    [VideoCamera.captureDevice setVideoZoomFactor:VideoCamera.captureDevice.minAvailableVideoZoomFactor];
                 } @catch (NSException *exception) {
                     NSLog(@"Error configuring camera:\n\t%@\n\t%@\n\t%lu",
                           exception.name,
                           exception.reason,
                           ((NSNumber *)[exception.userInfo valueForKey:@"Error Code"]).unsignedIntegerValue);
                 } @finally {
-                    [captureDevice unlockForConfiguration];
+                    [VideoCamera.captureDevice unlockForConfiguration];
                 }
                 
                 __autoreleasing NSError * error;
-                captureInput = [AVCaptureDeviceInput deviceInputWithDevice:captureDevice error:&error];
+                captureInput = [AVCaptureDeviceInput deviceInputWithDevice:VideoCamera.captureDevice error:&error];
                 if ([captureSession canAddInput:captureInput])
                     [captureSession addInput:captureInput];
                 
@@ -113,7 +118,7 @@ dispatch_queue_t video_data_output_sample_buffer_delegate_queue;
             } @catch (NSException *exception) {
                 NSLog(@"Camera setup error: %@", exception.description);
             } @finally {
-                videoDimensions = CMVideoFormatDescriptionGetPresentationDimensions(captureDevice.activeFormat.formatDescription, TRUE, FALSE);
+                videoDimensions = CMVideoFormatDescriptionGetPresentationDimensions(VideoCamera.captureDevice.activeFormat.formatDescription, TRUE, FALSE);
             }
         }
     }
@@ -121,12 +126,63 @@ dispatch_queue_t video_data_output_sample_buffer_delegate_queue;
     return self;
 }
 
-- (CGFloat)videoZoomFactor {
-    return captureDevice.videoZoomFactor;
+- (CGFloat)videoZoomFactor_ {
+    printf("videoZoomFactor == %f\n", VideoCamera.captureDevice.videoZoomFactor);
+    return [(AVCaptureDevice *)VideoCamera.captureDevice videoZoomFactor];
 }
 
-- (void)setVideoZoomFactor:(CGFloat)videoZoomFactor {
-    (videoZoomFactor != captureDevice.videoZoomFactor) ?: [captureDevice setVideoZoomFactor:videoZoomFactor];
+- (void)setVideoZoomFactor_:(CGFloat)videoZoomFactor {
+//    @try {
+//        __autoreleasing NSError *error = NULL;
+//        [VideoCamera.captureDevice lockForConfiguration:&error];
+//        if (error) {
+//            NSException* exception = [NSException
+//                                      exceptionWithName:error.domain
+//                                      reason:error.localizedDescription
+//                                      userInfo:@{@"Error Code" : @(error.code)}];
+//            @throw exception;
+//        }
+//        (videoZoomFactor != VideoCamera.captureDevice.videoZoomFactor) ?: [VideoCamera.captureDevice setVideoZoomFactor:videoZoomFactor];
+//    } @catch (NSException *exception) {
+//        NSLog(@"Error configuring camera:\n\t%@\n\t%@\n\t%lu",
+//              exception.name,
+//              exception.reason,
+//              ((NSNumber *)[exception.userInfo valueForKey:@"Error Code"]).unsignedIntegerValue);
+//    } @finally {
+//        [VideoCamera.captureDevice unlockForConfiguration];
+//    }
+//
+    
+//    if (![VideoCamera.captureDevice isRampingVideoZoom]) {
+//        [self willChangeValueForKey:@"videoZoomFactor"];
+        
+        @try {
+            __autoreleasing NSError *error = NULL;
+            [VideoCamera.captureDevice lockForConfiguration:&error];
+            if (error) {
+                printf("Error == %s\n", [[error debugDescription] UTF8String]);
+                NSException* exception = [NSException
+                                          exceptionWithName:error.domain
+                                          reason:error.localizedDescription
+                                          userInfo:@{@"Error Code" : @(error.code)}];
+                @throw exception;
+            }
+            [VideoCamera.captureDevice setVideoZoomFactor:videoZoomFactor];
+            
+//            [VideoCamera.captureDevice setFocusModeLockedWithLensPosition:videoZoomFactor completionHandler:nil];
+        } @catch (NSException *exception) {
+            NSLog(@"Error configuring camera:\n\t%@\n\t%@\n\t%lu",
+                  exception.name,
+                  exception.reason,
+                  ((NSNumber *)[exception.userInfo valueForKey:@"Error Code"]).unsignedIntegerValue);
+        } @finally {
+            [VideoCamera.captureDevice unlockForConfiguration];
+            [self videoZoomFactor_];
+            printf("setVideoZoomFactor == %f\n", videoZoomFactor);
+        }
+//    }
+    
+    
 }
 
 @end

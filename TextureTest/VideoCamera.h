@@ -6,7 +6,7 @@
 //
 
 #import <Foundation/Foundation.h>
-@import AVFoundation;
+#import <AVFoundation/AVFoundation.h>
 #import "ControlView.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -17,9 +17,10 @@ extern CGSize videoDimensions;
 
 + (VideoCamera *)setAVCaptureVideoDataOutputSampleBufferDelegate:(id<AVCaptureVideoDataOutputSampleBufferDelegate>)videoOutputDelegate;
 
-@property (nonatomic) CGFloat videoZoomFactor;
-- (void)setVideoZoomFactor:(CGFloat)videoZoomFactor;
+@property (nonatomic) CGFloat videoZoomFactor_;
+- (void)setVideoZoomFactor_:(CGFloat)videoZoomFactor;
 
+@property (class, nonatomic, strong, readwrite) __block AVCaptureDevice * captureDevice;
 
 @end
 

@@ -20,7 +20,7 @@
                                 <rect key="frame" x="20" y="448" width="374" height="414"/>
                                 <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <connections>
-                                    <outlet property="captureDeviceConfigurationControlPropertyDelegate" destination="OeN-8S-hvu" id="jq1-g8-aav"/>
+                                    <outlet property="captureDeviceConfigurationControlPropertyDelegate" destination="OeN-8S-hvu" id="cIz-NI-OlW"/>
                                     <outlet property="hiddenBitVectorLabel" destination="3aS-Oj-R50" id="y7m-Eq-pkW"/>
                                     <outlet property="selectedBitVectorLabel" destination="4Dn-pd-2Z8" id="B94-ZO-hE0"/>
                                     <outlet property="stateBitVectorLabel" destination="fgo-Sg-ng7" id="ULg-vR-HyM"/>

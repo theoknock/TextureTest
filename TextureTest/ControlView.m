@@ -253,7 +253,7 @@ static void (^(^draw_tick_wheel_init)(ControlView *, CGFloat *, CGFloat *))(CGCo
 
 static void (^(^touch_handler)(UITouch *))(void (^(^)(unsigned int))(CGPoint, CGFloat));
 static void (^handle_touch)(void (^(^)(unsigned int))(CGPoint, CGFloat));
-static void (^(^(^touch_handler_init)(ControlView *))(UITouch *))(void (^(^)(unsigned int))(CGPoint, CGFloat)) =  ^ (ControlView * view) {
+static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurationControlPropertyDelegate>))(UITouch *))(void (^(^)(unsigned int))(CGPoint, CGFloat)) =  ^ (ControlView * view, id<CaptureDeviceConfigurationControlPropertyDelegate> delegate) {
     CGPoint center_point = CGPointMake(CGRectGetMaxX(((ControlView *)view).bounds), CGRectGetMaxY(((ControlView *)view).bounds));
     static CGFloat touch_angle;
     static CGPoint touch_point;
@@ -278,6 +278,10 @@ static void (^(^(^touch_handler_init)(ControlView *))(UITouch *))(void (^(^)(uns
                            fminf((sqrt(pow(touch_point.x - center_point.x, 2.0) + pow(touch_point.y - center_point.y, 2.0))),
                                  CGRectGetMaxX(((ControlView *)view).bounds)));
             
+            dispatch_async(dispatch_get_main_queue(), ^{
+                if (transition_animation != nil) transition_animation(center_point, radius);
+            });
+            
             ((active_component_bit_vector & MASK_ALL)
              && filter(buttons)(^ (ControlView * view, CGFloat * r) {
                 unsigned int touch_property = (unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 4.0));
@@ -295,14 +299,18 @@ static void (^(^(^touch_handler_init)(ControlView *))(UITouch *))(void (^(^)(uns
                 [button setCenter:^ (CGFloat radians) {
                     return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
                 }(degreesToRadians(touch_angle))];
+                // To-Do: Add camera configuration functionality here
+                //        1. Use touch angle to determine value
+//                printf("---------------------\nconverted touch_angle == %f\n", rescale(touch_angle, 180.0, 270.0, 0.0, 100.0)); // replace 0.0 and 100.0 with min and max of camera property
+                [delegate setVideoZoomFactor_:rescale(touch_angle, 180.0, 270.0, 0.0, 9.0)];
+//                printf("videoZoomFactor == %f\n", [delegate videoZoomFactor]); // replace 0.0 and 100.0 with min and max of camera property
+                
 //                [button setTitle:[NSString stringWithFormat:@"%d - %d",
 //                                               (Log2n(selected_property_bit_vector)), (Log2n(hidden_property_bit_vector))] forState:UIControlStateNormal];
                 [((ControlView *)view) setNeedsDisplay];
             }));
             
-            dispatch_async(dispatch_get_main_queue(), ^{
-                if (transition_animation != nil) transition_animation(center_point, radius);
-            });
+            
         };
         
     };
@@ -315,6 +323,8 @@ static void (^(^(^touch_handler_init)(ControlView *))(UITouch *))(void (^(^)(uns
 
 - (void)awakeFromNib {
     [super awakeFromNib];
+    
+//    [self.captureDeviceConfigurationControlPropertyDelegate setVideoZoomFactor:<#(CGFloat)#>]
     
     [self.stateBitVectorLabel setText:[NSString stringWithFormat:@"%@", (active_component_bit_vector == MASK_ALL) ? @"11111" : @"00000"]];
     NSMutableString * selected_bit_vector_str = [[NSMutableString alloc] initWithCapacity:5];
@@ -365,7 +375,7 @@ static void (^(^(^touch_handler_init)(ControlView *))(UITouch *))(void (^(^)(uns
         return button;
     });
     
-    touch_handler = touch_handler_init(self);
+    touch_handler = touch_handler_init(self, self.captureDeviceConfigurationControlPropertyDelegate);
 }
 
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
