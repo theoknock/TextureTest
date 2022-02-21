@@ -160,8 +160,8 @@ static const NSUInteger MaxBuffersInFlight = 3;
 
     MTKMeshBufferAllocator *metalAllocator = [[MTKMeshBufferAllocator alloc]
                                               initWithDevice: _device];
-
-    MDLMesh *mdlMesh = [MDLMesh newPlaneWithDimensions:(vector_float2){1.3333333333, 0.75}
+    
+    MDLMesh *mdlMesh = [MDLMesh newPlaneWithDimensions:(vector_float2){(1.3333333333 * UIScreen.mainScreen.scale), (0.75 * UIScreen.mainScreen.scale)}
                                               segments:(vector_uint2){1, 1}
                                           geometryType:MDLGeometryTypeQuads
                                              allocator:metalAllocator];
