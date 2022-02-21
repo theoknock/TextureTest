@@ -82,12 +82,32 @@ static uint8_t active_component_bit_vector  = MASK_ALL;
 static uint8_t selected_property_bit_vector = MASK_NONE;
 static uint8_t hidden_property_bit_vector   = MASK_NONE;
 
+static dispatch_semaphore_t transition_animation_semaphore() {
+    static dispatch_semaphore_t sem;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        sem = dispatch_semaphore_create(1);
+    });
+    
+    return sem;
+};
+
+static dispatch_queue_t enumerator_queue() {
+    static dispatch_queue_t sl_queue;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        sl_queue = dispatch_queue_create("com.somnus.xxx", NULL);
+    });
+    
+    return sl_queue;
+};
+
 static __strong UIButton * _Nonnull buttons[5];
 static void (^(^map)(__strong UIButton * _Nonnull [_Nonnull 5]))(UIButton * (^__strong)(unsigned int)) = ^ (__strong UIButton * _Nonnull button_collection[5]) {
-    dispatch_queue_t enumerator_queue  = dispatch_queue_create("enumerator_queue", DISPATCH_QUEUE_SERIAL);
+    //    dispatch_queue_t enumerator_queue  = dispatch_queue_create("enumerator_queue", DISPATCH_QUEUE_SERIAL);
     return ^ (UIButton *(^enumeration)(unsigned int)) {
         dispatch_barrier_async(dispatch_get_main_queue(), ^{
-            dispatch_apply(5, enumerator_queue, ^(size_t index) {
+            dispatch_apply(5, enumerator_queue(), ^(size_t index) {
                 dispatch_barrier_async(dispatch_get_main_queue(), ^{
                     button_collection[index] = enumeration((unsigned int)index);
                 });
@@ -100,39 +120,128 @@ static long (^Log2n)(unsigned int) = ^ long (unsigned int bit_field) {
     return (bit_field > 1) ? 1 + Log2n(bit_field / 2) : 0;
 };
 
+// To-Do: fix this:
+
+/*
+ ---------------
+ animation begin
+ frame =- 1073741823
+ frame =- 536870911
+ frame =- 268435455
+ frame =- 134217727
+ frame =- 67108863
+ frame =- 33554431
+ frame =- 16777215
+ frame =- 8388607
+ frame =- 4194303
+ frame =- 2097151
+ frame =- 1048575
+ frame =- 524287
+ frame =- 262143
+ frame =- 131071
+ ---------------
+ animation begin
+ frame =- 65535
+ frame =- 1073741823
+ frame =- 32767
+ frame =- 536870911
+ frame =- 16383
+ frame =- 268435455
+ frame =- 8191
+ frame =- 134217727
+ frame =- 4095
+ frame =- 67108863
+ frame =- 2047
+ frame =- 33554431
+ frame =- 1023
+ frame =- 16777215
+ frame =- 511
+ frame =- 8388607
+ frame =- 255
+ frame =- 4194303
+ frame =- 127
+ frame =- 2097151
+ frame =- 63
+ frame =- 1048575
+ frame =- 31
+ frame =- 524287
+ frame =- 15
+ frame =- 262143
+ frame =- 7
+ frame =- 131071
+ frame =- 3
+ frame =- 65535
+ frame =- 1
+ frame =- 32767
+ ---------------
+ animation end
+ frame =- 16383
+ frame =- 8191
+ frame =- 4095
+ frame =- 2047
+ frame =- 1023
+ frame =- 511
+ frame =- 255
+ frame =- 127
+ frame =- 63
+ frame =- 31
+ frame =- 15
+ frame =- 7
+ frame =- 3
+ frame =- 1
+ ---------------
+ animation end
+ */
+
+
 static long (^(^integrate)(long))(void(^__strong)(long)) = ^ (long duration) {
+    dispatch_barrier_async(dispatch_get_main_queue(), ^{
+        dispatch_semaphore_wait(transition_animation_semaphore(), DISPATCH_TIME_FOREVER);
+    });
     __block typeof(CADisplayLink *) display_link;
     __block long frames = ~(1 << (duration + 1));
-    
     return ^ long (void (^__strong integrand)(long)) {
-        display_link = [CADisplayLink displayLinkWithTarget:^{
-            frames >>= 1;
-            return
-            ((frames & 1) &&
-             ^ long {
-                integrand(Log2n(frames));
-                return active_component_bit_vector;
-            }())
-            
-            ||
-            
-            ((frames | 1) &&
-             ^ long {
-                [display_link invalidate];
-                return active_component_bit_vector;
-            }());
-        } selector:@selector(invoke)];
-        [display_link addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
         
+        dispatch_barrier_async(dispatch_get_main_queue(), ^{
+            printf("---------------\n\t\t\tanimation begin\n");
+            display_link = [CADisplayLink displayLinkWithTarget:^{
+                frames >>= 1;
+                return
+                ((frames & 1) &&
+                 ^ long {
+                    dispatch_barrier_async(dispatch_get_main_queue(), ^{
+                        printf("frame =- %d\n", frames);
+                        integrand(Log2n(frames));
+                    });
+                    return active_component_bit_vector;
+                }())
+                
+                ||
+                
+                ((frames | 1) &&
+                 ^ long {
+                    
+                    dispatch_barrier_async(dispatch_get_main_queue(), ^{
+                        printf("---------------\n\t\t\tanimation end\n");
+                        [display_link invalidate];
+                    });
+                    return active_component_bit_vector;
+                }());
+            } selector:@selector(invoke)];
+            [display_link addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
+        });
+        dispatch_barrier_async(dispatch_get_main_queue(), ^{
+            dispatch_semaphore_signal(transition_animation_semaphore());
+        });
         return active_component_bit_vector;
     };
 };
 
 static uint8_t (^(^filter)(__strong UIButton * _Nonnull [_Nonnull 5]))(void (^__strong)(UIButton * _Nonnull, unsigned int)) = ^ (__strong UIButton * _Nonnull button_collection[5]) {
-    dispatch_queue_t enumerator_queue  = dispatch_queue_create("enumerator_queue", DISPATCH_QUEUE_SERIAL);
+    //    dispatch_queue_t enumerator_queue  = dispatch_queue_create("enumerator_queue", DISPATCH_QUEUE_SERIAL);
     return ^ uint8_t (void(^enumeration)(UIButton * _Nonnull, unsigned int)) {
         dispatch_barrier_async(dispatch_get_main_queue(), ^{
-            dispatch_apply(5, enumerator_queue, ^(size_t index) {
+            dispatch_apply(5, enumerator_queue(), ^(size_t index) {
                 dispatch_barrier_async(dispatch_get_main_queue(), ^{
                     [button_collection[index] setSelected:(selected_property_bit_vector >> index) & 1UL];
                     [button_collection[index] setHidden:(hidden_property_bit_vector >> index) & 1UL];
@@ -149,7 +258,7 @@ static long (^(^reduce)(__strong UIButton * _Nonnull [_Nonnull 5]))(void (^__str
     return ^ long (void(^enumeration)(UIButton * _Nonnull, unsigned int)) {
         dispatch_barrier_async(dispatch_get_main_queue(), ^{
             unsigned int selected_property_bit_position = (Log2n(selected_property_bit_vector));
-//            printf("selected_property_bit_position == %d\n", selected_property_bit_position);
+            //            printf("selected_property_bit_position == %d\n", selected_property_bit_position);
             enumeration(button_collection[selected_property_bit_position], (unsigned int)selected_property_bit_position);
         });
         return active_component_bit_vector;
@@ -170,32 +279,33 @@ void (^(^set_state)(unsigned int))(CGPoint, CGFloat) = ^ (unsigned int touch_pro
     hidden_property_bit_vector ^= active_component_bit_vector;
     
     return ^ (CGPoint center_point, CGFloat radius) {
-        
-        ((active_component_bit_vector & MASK_ALL) &&
-         
-         integrate((long)30)(^ (long frame) {
-            CGFloat angle_adj = (360.0 / 30.0) * frame;
-            filter(buttons)(^{
-                return ^ (UIButton * _Nonnull button, unsigned int index) {
+        dispatch_barrier_async(dispatch_get_main_queue(), ^{
+            ((active_component_bit_vector & MASK_ALL) &&
+             
+             integrate((long)30)(^ (long frame) {
+                CGFloat angle_adj = (360.0 / 30.0) * frame;
+                filter(buttons)(^{
+                    return ^ (UIButton * _Nonnull button, unsigned int index) {
+                        [button setCenter:^ (CGFloat radians) {
+                            return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
+                        }(degreesToRadians(rescale(button.tag, 0.0, 4.0, 180.0 + angle_adj, 270.0 + angle_adj)))];
+                    };
+                }());
+            }))
+            
+            ||
+            
+            ((active_component_bit_vector & ~MASK_ALL) &&
+             
+             integrate((long)30)(^ (long frame) {
+                CGFloat angle_adj = (360.0 / 30.0) * frame;
+                reduce(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
                     [button setCenter:^ (CGFloat radians) {
                         return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
-                    }(degreesToRadians(rescale(button.tag, 0.0, 4.0, 180.0 + angle_adj, 270.0 + angle_adj)))];
-                };
-            }());
-        }))
-        
-        ||
-        
-        ((active_component_bit_vector & ~MASK_ALL) &&
-         
-         integrate((long)30)(^ (long frame) {
-            CGFloat angle_adj = (360.0 / 30.0) * frame;
-            reduce(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
-                [button setCenter:^ (CGFloat radians) {
-                    return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
-                }(degreesToRadians(rescale(button.tag, 0.0, 4.0, 180.0 - angle_adj, 270.0 - angle_adj)))];
-            });
-        }));
+                    }(degreesToRadians(rescale(button.tag, 0.0, 4.0, 180.0 - angle_adj, 270.0 - angle_adj)))];
+                });
+            }));
+        });
     };
 };
 
@@ -207,7 +317,7 @@ static void (^(^draw_tick_wheel_init)(ControlView *, CGFloat *, CGFloat *))(CGCo
         ((active_component_bit_vector & MASK_ALL) &&
          
          ^ long (void) {
-//            printf("Clearing context...\n");
+            //            printf("Clearing context...\n");
             CGContextClearRect(ctx, rect);
             
             return active_component_bit_vector;
@@ -218,13 +328,13 @@ static void (^(^draw_tick_wheel_init)(ControlView *, CGFloat *, CGFloat *))(CGCo
         ((active_component_bit_vector & ~MASK_ALL) &&
          
          ^ long (void) {
-//            printf("Rendering context...\n");
+            //            printf("Rendering context...\n");
             UIGraphicsBeginImageContextWithOptions(rect.size, FALSE, 1.0);
             //            CGContextRef ctx = UIGraphicsGetCurrentContext();
             CGContextTranslateCTM(ctx, CGRectGetMinX(rect), CGRectGetMinY(rect));
             
-//            float multiplier  = (*radius / 2.0) / CGRectGetMaxX(view.frame);
-//            unsigned int step = (unsigned int)round(((270.0 - 180.0) / multiplier) / (270.0 - 180.0));
+            //            float multiplier  = (*radius / 2.0) / CGRectGetMaxX(view.frame);
+            //            unsigned int step = (unsigned int)round(((270.0 - 180.0) / multiplier) / (270.0 - 180.0));
             for (unsigned int t = 180; t <= 270; t++) {
                 CGFloat angle = degreesToRadians(t);
                 CGFloat tick_height = (t == 180 || t == 270) ? 9.0 : (t % (unsigned int)round((270 - 180) / 9.0) == 0) ? 6.0 : 3.0;
@@ -246,7 +356,7 @@ static void (^(^draw_tick_wheel_init)(ControlView *, CGFloat *, CGFloat *))(CGCo
             //        [(ControlView *)view drawRect:rect];
             // UIGraphicsPopContext();
             //
-                    [(ControlView *)view setNeedsDisplay];
+            [(ControlView *)view setNeedsDisplay];
             return active_component_bit_vector;
         }());
     };
@@ -270,7 +380,7 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
                                       270.0));
             
             __block void (^transition_animation)(CGPoint, CGFloat);
-            dispatch_async(dispatch_get_main_queue(), ^{
+            dispatch_barrier_async(dispatch_get_main_queue(), ^{
                 transition_animation = (set_button_state != nil) ? (set_button_state((unsigned int)round(fmaxf(0.0,
                                                                                                                fminf((unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 4.0)),
                                                                                                                      4.0))))) : nil;
@@ -281,9 +391,10 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
                            fminf((sqrt(pow(touch_point.x - center_point.x, 2.0) + pow(touch_point.y - center_point.y, 2.0))),
                                  CGRectGetMaxX(((ControlView *)view).bounds)));
             
-            dispatch_async(dispatch_get_main_queue(), ^{
+            dispatch_barrier_async(dispatch_get_main_queue(), ^{
                 if (transition_animation != nil) transition_animation(center_point, radius);
             });
+            
             
             ((active_component_bit_vector & MASK_ALL)
              && filter(buttons)(^ (ControlView * view, CGFloat * r) {
@@ -306,9 +417,9 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
                 else if (button.tag == CaptureDeviceConfigurationControlPropertyLensPosition)
                     [delegate setLensPosition_:(rescale(touch_angle, 180.0, 270.0, 0.0, 1.0))];
                 else if (button.tag == CaptureDeviceConfigurationControlPropertyTorchLevel)
-                                    [delegate setTorchLevel_:round(rescale(touch_angle, 180.0, 270.0, 0.0, 1.0))];
+                    [delegate setTorchLevel_:round(rescale(touch_angle, 180.0, 270.0, 0.0, 1.0))];
                 else if (button.tag == CaptureDeviceConfigurationControlPropertyISO)
-                                    [delegate setISO_:rescale(touch_angle, 180.0, 270.0, [delegate minISO_], [delegate maxISO_])];
+                    [delegate setISO_:rescale(touch_angle, 180.0, 270.0, [delegate minISO_], [delegate maxISO_])];
                 else if (button.tag == CaptureDeviceConfigurationControlPropertyExposureDuration)
                     [delegate setExposureDuration_:rescale(touch_angle, 180.0, 270.0, 0.0, 1.0)];
                 [((ControlView *)view) setNeedsDisplay];
@@ -331,11 +442,11 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
     [self.stateBitVectorLabel setText:[NSString stringWithFormat:@"%@", (active_component_bit_vector == MASK_ALL) ? @"11111" : @"00000"]];
     NSMutableString * selected_bit_vector_str = [[NSMutableString alloc] initWithCapacity:5];
     for (int i = sizeof(char) * 4; i >= 0; i--)
-          [selected_bit_vector_str appendString:[NSString stringWithFormat:@"%d", (selected_property_bit_vector & (1 << i)) >> i]];
+        [selected_bit_vector_str appendString:[NSString stringWithFormat:@"%d", (selected_property_bit_vector & (1 << i)) >> i]];
     [self.selectedBitVectorLabel setText:selected_bit_vector_str];
     NSMutableString * hidden_bit_vector_str = [[NSMutableString alloc] initWithCapacity:5];
     for (int i = sizeof(char) * 4; i >= 0; i--)
-          [hidden_bit_vector_str appendString:[NSString stringWithFormat:@"%d", (hidden_property_bit_vector & (1 << i)) >> i]];
+        [hidden_bit_vector_str appendString:[NSString stringWithFormat:@"%d", (hidden_property_bit_vector & (1 << i)) >> i]];
     [self.hiddenBitVectorLabel setText:hidden_bit_vector_str];
     
     haptic_feedback = [[UISelectionFeedbackGenerator alloc] init];
@@ -351,8 +462,8 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
         [button setImage:[UIImage systemImageNamed:CaptureDeviceConfigurationControlPropertyImageValues[1][index] withConfiguration:CaptureDeviceConfigurationControlPropertySymbolImageConfiguration(CaptureDeviceConfigurationControlStateSelected)] forState:UIControlStateSelected];
         [button setImage:[UIImage systemImageNamed:CaptureDeviceConfigurationControlPropertyImageValues[1][index] withConfiguration:CaptureDeviceConfigurationControlPropertySymbolImageConfiguration(CaptureDeviceConfigurationControlStateHighlighted)] forState:UIControlStateHighlighted];
         
-//        [button setTitle:[NSString stringWithFormat:@"%d - %d",
-//                                       (Log2n(selected_property_bit_vector)), (Log2n(hidden_property_bit_vector))] forState:UIControlStateNormal];
+        //        [button setTitle:[NSString stringWithFormat:@"%d - %d",
+        //                                       (Log2n(selected_property_bit_vector)), (Log2n(hidden_property_bit_vector))] forState:UIControlStateNormal];
         
         
         [button sizeToFit];
@@ -392,15 +503,15 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
     dispatch_barrier_async(dispatch_get_main_queue(), ^{
         handle_touch(set_state);
     });
-
+    
     [self.stateBitVectorLabel setText:[NSString stringWithFormat:@"%@", (active_component_bit_vector == MASK_ALL) ? @"11111" : @"00000"]];
     NSMutableString * selected_bit_vector_str = [[NSMutableString alloc] initWithCapacity:5];
     for (int i = sizeof(char) * 4; i >= 0; i--)
-          [selected_bit_vector_str appendString:[NSString stringWithFormat:@"%d", (selected_property_bit_vector & (1 << i)) >> i]];
+        [selected_bit_vector_str appendString:[NSString stringWithFormat:@"%d", (selected_property_bit_vector & (1 << i)) >> i]];
     [self.selectedBitVectorLabel setText:selected_bit_vector_str];
     NSMutableString * hidden_bit_vector_str = [[NSMutableString alloc] initWithCapacity:5];
     for (int i = sizeof(char) * 4; i >= 0; i--)
-          [hidden_bit_vector_str appendString:[NSString stringWithFormat:@"%d", (hidden_property_bit_vector & (1 << i)) >> i]];
+        [hidden_bit_vector_str appendString:[NSString stringWithFormat:@"%d", (hidden_property_bit_vector & (1 << i)) >> i]];
     [self.hiddenBitVectorLabel setText:hidden_bit_vector_str];
 }
 
