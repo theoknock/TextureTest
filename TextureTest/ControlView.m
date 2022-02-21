@@ -328,8 +328,6 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
 - (void)awakeFromNib {
     [super awakeFromNib];
     
-//    [self.captureDeviceConfigurationControlPropertyDelegate setVideoZoomFactor:<#(CGFloat)#>]
-    
     [self.stateBitVectorLabel setText:[NSString stringWithFormat:@"%@", (active_component_bit_vector == MASK_ALL) ? @"11111" : @"00000"]];
     NSMutableString * selected_bit_vector_str = [[NSMutableString alloc] initWithCapacity:5];
     for (int i = sizeof(char) * 4; i >= 0; i--)

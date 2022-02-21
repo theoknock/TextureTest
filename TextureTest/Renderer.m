@@ -161,11 +161,17 @@ static const NSUInteger MaxBuffersInFlight = 3;
     MTKMeshBufferAllocator *metalAllocator = [[MTKMeshBufferAllocator alloc]
                                               initWithDevice: _device];
 
-    MDLMesh *mdlMesh = [MDLMesh newBoxWithDimensions:(vector_float3){2, 2, 2}
-                                            segments:(vector_uint3){4, 4, 4}
-                                        geometryType:MDLGeometryTypeQuads
-                                       inwardNormals:YES
-                                           allocator:metalAllocator];
+    MDLMesh *mdlMesh = [MDLMesh newPlaneWithDimensions:(vector_float2){1.3333333333, 0.75}
+                                              segments:(vector_uint2){1, 1}
+                                          geometryType:MDLGeometryTypeQuads
+                                             allocator:metalAllocator];
+    
+//    MDLMesh *mdlMesh = [MDLMesh newBoxWithDimensions:(vector_float3){2, 2, 2}
+//                                            segments:(vector_uint3){4, 4, 4}
+//                                        geometryType:MDLGeometryTypeQuads
+//                                       inwardNormals:YES
+//                                           allocator:metalAllocator];
+                                   
 
     MDLVertexDescriptor *mdlVertexDescriptor =
     MTKModelIOVertexDescriptorFromMetal(_mtlVertexDescriptor);
@@ -218,7 +224,8 @@ static const NSUInteger MaxBuffersInFlight = 3;
 
     uniforms->modelViewMatrix = matrix_multiply(viewMatrix, modelMatrix);
 
-    _rotation = (_rotation > degreesToRadians(360.0)) ? 0.0 : _rotation + degreesToRadians(2.0);
+    _rotation = degreesToRadians(112.5); //(_rotation > degreesToRadians(360.0)) ? 0.0 : _rotation + degreesToRadians(2.0);
+    
 }
 
 - (void)drawInMTKView:(nonnull MTKView *)view
