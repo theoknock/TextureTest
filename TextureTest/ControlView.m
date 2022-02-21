@@ -223,7 +223,11 @@ static void (^(^draw_tick_wheel_init)(ControlView *, CGFloat *, CGFloat *))(CGCo
             //            CGContextRef ctx = UIGraphicsGetCurrentContext();
             CGContextTranslateCTM(ctx, CGRectGetMinX(rect), CGRectGetMinY(rect));
             
-            for (unsigned int t = 180; t <= 270; t++) {
+            // To-Do: Scale number of ticks per radius of control (multiplier)
+            float multiplier  = *radius / CGRectGetMaxX(view.frame);
+            unsigned int step = (unsigned int)round(((270.0 - 180.0) / multiplier) / (270.0 - 180.0));
+            for (unsigned int t = 180; t <= 270; t = t + step) {
+                printf("t == %d (step == %lu / multiplier == %f) -- radius == %f\n", t, step, multiplier, *radius);
                 CGFloat angle = degreesToRadians(t);
                 CGFloat tick_height = (t == 180 || t == 270) ? 10.0 : (t % (unsigned int)round((270 - 180) / 10) == 0) ? 6.0 : 3.0;
                 {
