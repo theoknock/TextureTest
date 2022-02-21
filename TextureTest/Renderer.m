@@ -43,10 +43,7 @@ static unsigned int rotation_degrees;
 {
     self = [super init];
     if(self)
-    {
-//        CATransform3D rotation = CATransform3DMakeRotation(degreesToRadians(215.0), 20.0, 20.0, 0.0);
-//        view.layer.transform = CATransform3DTranslate(rotation, 20, 30, 0);
-        
+    {        
         _device = view.device;
         _inFlightSemaphore = dispatch_semaphore_create(MaxBuffersInFlight);
         [self _loadMetalWithView:view];
@@ -235,10 +232,6 @@ static unsigned int rotation_degrees;
         [renderEncoder setCullMode:MTLCullModeBack];
         [renderEncoder setRenderPipelineState:_pipelineState];
         [renderEncoder setDepthStencilState:_depthState];
-
-        [renderEncoder setFragmentBuffer:_dynamicUniformBuffer[_uniformBufferIndex]
-                                  offset:0
-                                 atIndex:BufferIndexUniforms];
 
         for (NSUInteger bufferIndex = 0; bufferIndex < _mesh.vertexBuffers.count; bufferIndex++)
         {
