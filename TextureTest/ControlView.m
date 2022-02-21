@@ -223,20 +223,18 @@ static void (^(^draw_tick_wheel_init)(ControlView *, CGFloat *, CGFloat *))(CGCo
             //            CGContextRef ctx = UIGraphicsGetCurrentContext();
             CGContextTranslateCTM(ctx, CGRectGetMinX(rect), CGRectGetMinY(rect));
             
-            // To-Do: Scale number of ticks per radius of control (multiplier)
-            float multiplier  = (*radius / 2.0) / CGRectGetMaxX(view.frame);
-            unsigned int step = (unsigned int)round(((270.0 - 180.0) / multiplier) / (270.0 - 180.0));
-            for (unsigned int t = 180; t <= 270; t = t + step) {
-                printf("t == %d (step == %lu / multiplier == %f) -- radius == %f\n", t, step, multiplier, *radius);
+//            float multiplier  = (*radius / 2.0) / CGRectGetMaxX(view.frame);
+//            unsigned int step = (unsigned int)round(((270.0 - 180.0) / multiplier) / (270.0 - 180.0));
+            for (unsigned int t = 180; t <= 270; t++) {
                 CGFloat angle = degreesToRadians(t);
-                CGFloat tick_height = (t == 180 || t == 270) ? 10.0 : (t % (unsigned int)round((270 - 180) / 10) == 0) ? 6.0 : 3.0;
+                CGFloat tick_height = (t == 180 || t == 270) ? 9.0 : (t % (unsigned int)round((270 - 180) / 9.0) == 0) ? 6.0 : 3.0;
                 {
                     CGPoint xy_outer = CGPointMake(((*radius + tick_height) * cosf(angle)),
                                                    ((*radius + tick_height) * sinf(angle)));
                     CGPoint xy_inner = CGPointMake(((*radius - tick_height) * cosf(angle)),
                                                    ((*radius - tick_height) * sinf(angle)));
                     CGContextSetStrokeColorWithColor(ctx, (t <= *touch_angle) ? [[UIColor systemGreenColor] CGColor] : [[UIColor systemRedColor] CGColor]);
-                    CGContextSetLineWidth(ctx, (t == 180 || t == 270) ? 2.0 : (t % 10 == 0) ? 1.0 : 0.625);
+                    CGContextSetLineWidth(ctx, (t == 180 || t == 270) ? 2.0 : (t % 9 == 0) ? 1.0 : 0.625);
                     CGContextMoveToPoint(ctx, xy_outer.x + CGRectGetMaxX(rect), xy_outer.y + CGRectGetMaxY(rect));
                     CGContextAddLineToPoint(ctx, xy_inner.x + CGRectGetMaxX(rect), xy_inner.y + CGRectGetMaxY(rect));
                 }
@@ -248,7 +246,7 @@ static void (^(^draw_tick_wheel_init)(ControlView *, CGFloat *, CGFloat *))(CGCo
             //        [(ControlView *)view drawRect:rect];
             // UIGraphicsPopContext();
             //
-            //        [(ControlView *)view setNeedsDisplay];
+                    [(ControlView *)view setNeedsDisplay];
             return active_component_bit_vector;
         }());
     };
@@ -294,8 +292,6 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
                     [button setCenter:^ (CGFloat radians) {
                         return CGPointMake(center_point.x - *r * -cos(radians), center_point.y - *r * -sin(radians));
                     }(degreesToRadians(rescale(button.tag, 0.0, 4.0, 180.0, 270.0)))];
-//                    [button setTitle:[NSString stringWithFormat:@"%d - %d",
-//                                                   (Log2n(selected_property_bit_vector)), (Log2n(hidden_property_bit_vector))] forState:UIControlStateNormal];
                 };
             }((ControlView *)view, &radius)))
             || ((active_component_bit_vector & ~MASK_ALL)
@@ -303,19 +299,11 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
                 [button setCenter:^ (CGFloat radians) {
                     return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
                 }(degreesToRadians(touch_angle))];
-                // To-Do: Add camera configuration functionality here
-                //        1. Use touch angle to determine value
-                //                printf("---------------------\nconverted touch_angle == %f\n", rescale(touch_angle, 180.0, 270.0, 0.0, 100.0)); // replace 0.0 and 100.0 with min and max of camera property
                 
                 if (button.tag == CaptureDeviceConfigurationControlPropertyVideoZoomFactor)
                     [delegate setVideoZoomFactor_:(unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 9.0))];
                 else if (button.tag == CaptureDeviceConfigurationControlPropertyLensPosition)
                     [delegate setLensPosition_:(rescale(touch_angle, 180.0, 270.0, 0.0, 1.0))];
-//                printf("camera property == %u ?? %lu\n", button.tag, CaptureDeviceConfigurationControlPropertyVideoZoomFactor);
-                //                printf("videoZoomFactor == %f\n", [delegate videoZoomFactor]); // replace 0.0 and 100.0 with min and max of camera property
-                
-                //                [button setTitle:[NSString stringWithFormat:@"%d - %d",
-                //                                               (Log2n(selected_property_bit_vector)), (Log2n(hidden_property_bit_vector))] forState:UIControlStateNormal];
                 [((ControlView *)view) setNeedsDisplay];
             }));
             
@@ -416,10 +404,10 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
 }
 
 - (void)drawRect:(CGRect)rect {
+    draw_tick_wheel(UIGraphicsGetCurrentContext(), rect);
     [haptic_feedback prepare];
     [haptic_feedback selectionChanged];
     [haptic_feedback prepare];
-    draw_tick_wheel(UIGraphicsGetCurrentContext(), rect);
 }
 
 @end
