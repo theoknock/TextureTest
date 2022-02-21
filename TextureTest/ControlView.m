@@ -266,9 +266,14 @@ static void (^(^(^touch_handler_init)(ControlView *))(UITouch *))(void (^(^)(uns
             touch_angle = fmaxf(180.0,
                                 fminf(atan2(touch_point.y - center_point.y, touch_point.x - center_point.x) * (180.0 / M_PI) + 360.0,
                                       270.0));
-            void (^transition_animation)(CGPoint, CGFloat) = (set_button_state != nil) ? (set_button_state((unsigned int)round(fmaxf(0.0,
-                                                                                                         fminf((unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 4.0)),
-                                                                                                               4.0))))) : nil;
+            
+            __block void (^transition_animation)(CGPoint, CGFloat);
+            dispatch_async(dispatch_get_main_queue(), ^{
+                transition_animation = (set_button_state != nil) ? (set_button_state((unsigned int)round(fmaxf(0.0,
+                                                                                                                                         fminf((unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 4.0)),
+                                                                                                                                               4.0))))) : nil;
+            });
+
             radius = fmaxf(CGRectGetMidX(((ControlView *)view).bounds),
                            fminf((sqrt(pow(touch_point.x - center_point.x, 2.0) + pow(touch_point.y - center_point.y, 2.0))),
                                  CGRectGetMaxX(((ControlView *)view).bounds)));
@@ -294,7 +299,10 @@ static void (^(^(^touch_handler_init)(ControlView *))(UITouch *))(void (^(^)(uns
 //                                               (Log2n(selected_property_bit_vector)), (Log2n(hidden_property_bit_vector))] forState:UIControlStateNormal];
                 [((ControlView *)view) setNeedsDisplay];
             }));
-            if (transition_animation != nil) transition_animation(center_point, radius);
+            
+            dispatch_async(dispatch_get_main_queue(), ^{
+                if (transition_animation != nil) transition_animation(center_point, radius);
+            });
         };
         
     };
