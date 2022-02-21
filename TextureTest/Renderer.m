@@ -15,7 +15,7 @@
 
 
 static const NSUInteger MaxBuffersInFlight = 3;
-
+static unsigned int rotation_degrees;
 @implementation Renderer
 {
     dispatch_semaphore_t _inFlightSemaphore;
@@ -44,6 +44,9 @@ static const NSUInteger MaxBuffersInFlight = 3;
     self = [super init];
     if(self)
     {
+        CATransform3D rotation = CATransform3DMakeRotation(degreesToRadians(215.0), 20.0, 20.0, 0.0);
+        view.layer.transform = CATransform3DTranslate(rotation, 20, 30, 0);
+        
         _device = view.device;
         _inFlightSemaphore = dispatch_semaphore_create(MaxBuffersInFlight);
         [self _loadMetalWithView:view];
@@ -210,7 +213,7 @@ static const NSUInteger MaxBuffersInFlight = 3;
 //    }
 }
 
-- (void)_updateGameState
+- (void)_updateGameState:(nonnull MTKView *)view
 {
     /// Update any game state before encoding renderint commands to our drawable
 
@@ -220,12 +223,13 @@ static const NSUInteger MaxBuffersInFlight = 3;
 
     vector_float3 rotationAxis = {1, 1, 1};
     matrix_float4x4 modelMatrix = matrix4x4_rotation(_rotation, rotationAxis);
-    matrix_float4x4 viewMatrix = matrix4x4_translation(0.0, 0.0, -8.0);
+    matrix_float4x4 viewMatrix = matrix4x4_translation(0.0, 0.0, -1.0);
 
     uniforms->modelViewMatrix = matrix_multiply(viewMatrix, modelMatrix);
 
     _rotation = degreesToRadians(112.5); //(_rotation > degreesToRadians(360.0)) ? 0.0 : _rotation + degreesToRadians(2.0);
-    
+    CATransform3D rotation = CATransform3DMakeRotation(degreesToRadians(180.0), 1.0, 0.0, 0.0);
+    view.layer.transform   = CATransform3DTranslate(rotation, 0.0, 0.0, 0.0);
 }
 
 - (void)drawInMTKView:(nonnull MTKView *)view
@@ -245,7 +249,7 @@ static const NSUInteger MaxBuffersInFlight = 3;
          dispatch_semaphore_signal(block_sema);
      }];
 
-    [self _updateGameState];
+    [self _updateGameState:view];
 
     /// Delay getting the currentRenderPassDescriptor until absolutely needed. This avoids
     ///   holding onto the drawable and blocking the display pipeline any longer than necessary
