@@ -264,7 +264,7 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
     return ^ (UITouch * touch) {
         
         return ^ (void (^(^ _Nullable set_button_state)(unsigned int))(CGPoint, CGFloat)) {
-            touch_point = [touch preciseLocationInView:(ControlView *)view];
+            touch_point = [touch locationInView:(ControlView *)view];
             touch_angle = fmaxf(180.0,
                                 fminf(atan2(touch_point.y - center_point.y, touch_point.x - center_point.x) * (180.0 / M_PI) + 360.0,
                                       270.0));
@@ -274,6 +274,7 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
                 transition_animation = (set_button_state != nil) ? (set_button_state((unsigned int)round(fmaxf(0.0,
                                                                                                                fminf((unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 4.0)),
                                                                                                                      4.0))))) : nil;
+                [((ControlView *)view) setNeedsDisplay];
             });
             
             radius = fmaxf(CGRectGetMidX(((ControlView *)view).bounds),
@@ -405,7 +406,7 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
 
 - (void)drawRect:(CGRect)rect {
     draw_tick_wheel(UIGraphicsGetCurrentContext(), rect);
-    [haptic_feedback prepare];
+    // To-Do: only "click" when a new value is selected - not every time drawRect is called
     [haptic_feedback selectionChanged];
     [haptic_feedback prepare];
 }
