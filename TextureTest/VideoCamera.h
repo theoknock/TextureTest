@@ -21,6 +21,8 @@ extern CGSize videoDimensions;
 - (void)setVideoZoomFactor_:(CGFloat)videoZoomFactor;
 @property (nonatomic) CGFloat lensPosition_;
 - (void)setLensPosition_:(CGFloat)lensPosition;
+@property (nonatomic) CGFloat torchLevel_;
+- (void)setTorchLevel_:(CGFloat)torchLevel;
 
 
 

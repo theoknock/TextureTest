@@ -305,6 +305,8 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
                     [delegate setVideoZoomFactor_:(unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 9.0))];
                 else if (button.tag == CaptureDeviceConfigurationControlPropertyLensPosition)
                     [delegate setLensPosition_:(rescale(touch_angle, 180.0, 270.0, 0.0, 1.0))];
+                else if (button.tag == CaptureDeviceConfigurationControlPropertyTorchLevel)
+                    [delegate setTorchLevel_:round(rescale(touch_angle, 180.0, 270.0, 0.0, 1.0))];
                 [((ControlView *)view) setNeedsDisplay];
             }));
             

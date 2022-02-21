@@ -127,35 +127,11 @@ dispatch_queue_t video_data_output_sample_buffer_delegate_queue;
 }
 
 - (CGFloat)videoZoomFactor_ {
-    printf("videoZoomFactor == %f\n", VideoCamera.captureDevice.videoZoomFactor);
+//    printf("videoZoomFactor == %f\n", VideoCamera.captureDevice.videoZoomFactor);
     return [(AVCaptureDevice *)VideoCamera.captureDevice videoZoomFactor];
 }
 
 - (void)setVideoZoomFactor_:(CGFloat)videoZoomFactor {
-//    @try {
-//        __autoreleasing NSError *error = NULL;
-//        [VideoCamera.captureDevice lockForConfiguration:&error];
-//        if (error) {
-//            NSException* exception = [NSException
-//                                      exceptionWithName:error.domain
-//                                      reason:error.localizedDescription
-//                                      userInfo:@{@"Error Code" : @(error.code)}];
-//            @throw exception;
-//        }
-//        (videoZoomFactor != VideoCamera.captureDevice.videoZoomFactor) ?: [VideoCamera.captureDevice setVideoZoomFactor:videoZoomFactor];
-//    } @catch (NSException *exception) {
-//        NSLog(@"Error configuring camera:\n\t%@\n\t%@\n\t%lu",
-//              exception.name,
-//              exception.reason,
-//              ((NSNumber *)[exception.userInfo valueForKey:@"Error Code"]).unsignedIntegerValue);
-//    } @finally {
-//        [VideoCamera.captureDevice unlockForConfiguration];
-//    }
-//
-    
-//    if (![VideoCamera.captureDevice isRampingVideoZoom]) {
-//        [self willChangeValueForKey:@"videoZoomFactor"];
-        
         @try {
             __autoreleasing NSError *error = NULL;
             [VideoCamera.captureDevice lockForConfiguration:&error];
@@ -168,8 +144,6 @@ dispatch_queue_t video_data_output_sample_buffer_delegate_queue;
                 @throw exception;
             }
             [VideoCamera.captureDevice setVideoZoomFactor:videoZoomFactor];
-            
-//            [VideoCamera.captureDevice setFocusModeLockedWithLensPosition:videoZoomFactor completionHandler:nil];
         } @catch (NSException *exception) {
             NSLog(@"Error configuring camera:\n\t%@\n\t%@\n\t%lu",
                   exception.name,
@@ -178,12 +152,12 @@ dispatch_queue_t video_data_output_sample_buffer_delegate_queue;
         } @finally {
             [VideoCamera.captureDevice unlockForConfiguration];
             [self videoZoomFactor_];
-            printf("setVideoZoomFactor == %f\n", videoZoomFactor);
+//            printf("setVideoZoomFactor == %f\n", videoZoomFactor);
         }
 }
 
 - (CGFloat)lensPosition_ {
-    printf("lensPosition_ == %f\n", VideoCamera.captureDevice.lensPosition);
+//    printf("lensPosition_ == %f\n", VideoCamera.captureDevice.lensPosition);
     return [(AVCaptureDevice *)VideoCamera.captureDevice lensPosition];
 }
 
@@ -208,7 +182,41 @@ dispatch_queue_t video_data_output_sample_buffer_delegate_queue;
     } @finally {
         [VideoCamera.captureDevice unlockForConfiguration];
         [self lensPosition_];
-        printf("lensPosition == %f\n", lensPosition);
+//        printf("lensPosition == %f\n", lensPosition);
+    }
+}
+
+- (CGFloat)torchLevel_ {
+    return [VideoCamera.captureDevice torchLevel];
+}
+
+- (void)setTorchLevel_:(CGFloat)torchLevel {
+    @try {
+        __autoreleasing NSError *error = NULL;
+        [VideoCamera.captureDevice lockForConfiguration:&error];
+        if (error) {
+            printf("Error == %s\n", [[error debugDescription] UTF8String]);
+            NSException* exception = [NSException
+                                      exceptionWithName:error.domain
+                                      reason:error.localizedDescription
+                                      userInfo:@{@"Error Code" : @(error.code)}];
+            @throw exception;
+        }
+        if ([VideoCamera.captureDevice lockForConfiguration:&error] && ([[NSProcessInfo processInfo] thermalState] != NSProcessInfoThermalStateCritical && [[NSProcessInfo processInfo] thermalState] != NSProcessInfoThermalStateSerious)) {
+            if (torchLevel != 0)
+                [VideoCamera.captureDevice setTorchModeOnWithLevel:torchLevel error:&error];
+            else
+                [VideoCamera.captureDevice setTorchMode:AVCaptureTorchModeOff];
+        }
+    } @catch (NSException *exception) {
+        NSLog(@"Error configuring camera:\n\t%@\n\t%@\n\t%lu",
+              exception.name,
+              exception.reason,
+              ((NSNumber *)[exception.userInfo valueForKey:@"Error Code"]).unsignedIntegerValue);
+    } @finally {
+        [VideoCamera.captureDevice unlockForConfiguration];
+        [self lensPosition_];
+//        printf("lensPosition == %f\n", lensPosition);
     }
 }
 
