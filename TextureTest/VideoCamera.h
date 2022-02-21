@@ -19,6 +19,10 @@ extern CGSize videoDimensions;
 
 @property (nonatomic) CGFloat videoZoomFactor_;
 - (void)setVideoZoomFactor_:(CGFloat)videoZoomFactor;
+@property (nonatomic) CGFloat lensPosition_;
+- (void)setLensPosition_:(CGFloat)lensPosition;
+
+
 
 @property (class, nonatomic, strong, readwrite) __block AVCaptureDevice * captureDevice;
 

@@ -19,9 +19,11 @@ typedef enum : NSUInteger {
 } CaptureDeviceConfigurationControlProperty;
 
 @protocol CaptureDeviceConfigurationControlPropertyDelegate <NSObject>
-
+@required
 @property (nonatomic) CGFloat videoZoomFactor_;
 - (void)setVideoZoomFactor_:(CGFloat)videoZoomFactor;
+@property (nonatomic) CGFloat lensPosition_;
+- (void)setLensPosition_:(CGFloat)lensPosition;
 
 
 @end

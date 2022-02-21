@@ -305,7 +305,9 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
                 
                 if (button.tag == CaptureDeviceConfigurationControlPropertyVideoZoomFactor)
                     [delegate setVideoZoomFactor_:(unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 9.0))];
-                printf("camera property == %u ?? %lu\n", button.tag, CaptureDeviceConfigurationControlPropertyVideoZoomFactor);
+                else if (button.tag == CaptureDeviceConfigurationControlPropertyLensPosition)
+                    [delegate setLensPosition_:(rescale(touch_angle, 180.0, 270.0, 0.0, 1.0))];
+//                printf("camera property == %u ?? %lu\n", button.tag, CaptureDeviceConfigurationControlPropertyVideoZoomFactor);
                 //                printf("videoZoomFactor == %f\n", [delegate videoZoomFactor]); // replace 0.0 and 100.0 with min and max of camera property
                 
                 //                [button setTitle:[NSString stringWithFormat:@"%d - %d",
