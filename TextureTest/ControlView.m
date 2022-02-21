@@ -224,7 +224,7 @@ static void (^(^draw_tick_wheel_init)(ControlView *, CGFloat *, CGFloat *))(CGCo
             CGContextTranslateCTM(ctx, CGRectGetMinX(rect), CGRectGetMinY(rect));
             
             // To-Do: Scale number of ticks per radius of control (multiplier)
-            float multiplier  = *radius / CGRectGetMaxX(view.frame);
+            float multiplier  = (*radius / 2.0) / CGRectGetMaxX(view.frame);
             unsigned int step = (unsigned int)round(((270.0 - 180.0) / multiplier) / (270.0 - 180.0));
             for (unsigned int t = 180; t <= 270; t = t + step) {
                 printf("t == %d (step == %lu / multiplier == %f) -- radius == %f\n", t, step, multiplier, *radius);
