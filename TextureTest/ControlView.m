@@ -386,7 +386,6 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
             touch_angle = fmaxf(180.0,
                                 fminf(touch_angle,
                                       270.0));
-            printf("touch_angle == %.2f\t\ttouch_angle_min == %.2f\t\ttouch_angle_max == %.2f\n", touch_angle, touch_angle_min, touch_angle_max);
             
             __block void (^transition_animation)(CGPoint, CGFloat);
             dispatch_barrier_async(dispatch_get_main_queue(), ^{
