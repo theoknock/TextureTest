@@ -417,31 +417,25 @@ static NSString * (^NSStringFromBitVector)(uint8_t) = ^ NSString * (uint8_t bit_
 }
 
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
-//    dispatch_barrier_async(dispatch_get_main_queue(), ^{
         (handle_touch = touch_handler(touches.anyObject))(nil);
-//    });
 }
 
 - (void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
-//    dispatch_barrier_async(dispatch_get_main_queue(), ^{
         handle_touch(nil);
-//    });
 }
 
 - (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
-//    dispatch_barrier_async(dispatch_get_main_queue(), ^{
         handle_touch(set_state);
-//    });
     
-//    dispatch_barrier_async(dispatch_get_main_queue(), ^{
+    dispatch_barrier_sync(enumerator_queue(), ^{
         [self.stateBitVectorLabel setText:[NSString stringWithFormat:@"%@", (active_component_bit_vector == MASK_ALL) ? @"11111" : @"00000"]];
         [self.selectedBitVectorLabel setText:NSStringFromBitVector(selected_property_bit_vector)];
         [self.hiddenBitVectorLabel setText:NSStringFromBitVector(hidden_property_bit_vector)];
-//    });r
+    });
 }
 
 - (void)touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
-    dispatch_barrier_async(dispatch_get_main_queue(), ^{ handle_touch(set_state); });
+    handle_touch(set_state);
 }
 
 - (void)drawRect:(CGRect)rect {
