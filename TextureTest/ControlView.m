@@ -303,11 +303,9 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
                            fminf((sqrt(pow(touch_point.x - center_point.x, 2.0) + pow(touch_point.y - center_point.y, 2.0))),
                                  CGRectGetMaxX(((ControlView *)view).bounds)));
             
-            long (^transition_animation)(CGPoint, CGFloat);
             ((long)0 || set_button_state) && set_button_state((unsigned int)round(fmaxf(0.0,
                                                                                             fminf((unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 4.0)),
-                                                                                                  4.0))));
-            ((long)0 || transition_animation) && transition_animation(center_point, radius); // __block void (^transition_animation)(CGPoint, CGFloat); transition_animation(center_point, radius);
+                                                                                                  4.0))))(center_point, radius);
             
             ((active_component_bit_vector & MASK_ALL)
              && filter(buttons)(^ (ControlView * view, CGFloat * r) {
