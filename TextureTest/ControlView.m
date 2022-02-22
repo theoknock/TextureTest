@@ -82,16 +82,6 @@ static uint8_t active_component_bit_vector  = MASK_ALL;
 static uint8_t selected_property_bit_vector = MASK_NONE;
 static uint8_t hidden_property_bit_vector   = MASK_NONE;
 
-static dispatch_semaphore_t transition_animation_semaphore() {
-    static dispatch_semaphore_t sem;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        sem = dispatch_semaphore_create(1);
-    });
-    
-    return sem;
-};
-
 static dispatch_queue_t enumerator_queue() {
     static dispatch_queue_t sl_queue;
     static dispatch_once_t onceToken;
@@ -104,7 +94,6 @@ static dispatch_queue_t enumerator_queue() {
 
 static __strong UIButton * _Nonnull buttons[5];
 static void (^(^map)(__strong UIButton * _Nonnull [_Nonnull 5]))(UIButton * (^__strong)(unsigned int)) = ^ (__strong UIButton * _Nonnull button_collection[5]) {
-    //    dispatch_queue_t enumerator_queue  = dispatch_queue_create("enumerator_queue", DISPATCH_QUEUE_SERIAL);
     return ^ (UIButton *(^enumeration)(unsigned int)) {
         dispatch_barrier_async(dispatch_get_main_queue(), ^{
             dispatch_apply(5, enumerator_queue(), ^(size_t index) {
@@ -149,17 +138,13 @@ static long (^(^integrate)(long))(void(^__strong)(long)) = ^ (long duration) {
 };
 
 static uint8_t (^(^filter)(__strong UIButton * _Nonnull [_Nonnull 5]))(void (^__strong)(UIButton * _Nonnull, unsigned int)) = ^ (__strong UIButton * _Nonnull button_collection[5]) {
-//        dispatch_queue_t enumerator_queue_local  = dispatch_queue_create_with_target("enumerator_queue", DISPATCH_QUEUE_SERIAL, enumerator_queue());
     return ^ uint8_t (void(^enumeration)(UIButton * _Nonnull, unsigned int)) {
-        //        dispatch_barrier_async(dispatch_get_main_queue(), ^{
         dispatch_apply(5, DISPATCH_APPLY_AUTO, ^(size_t index) {
-                            dispatch_barrier_async(dispatch_get_main_queue(), ^{
-            [button_collection[index] setSelected:(selected_property_bit_vector >> index) & 1UL];
-            [button_collection[index] setHidden:(hidden_property_bit_vector >> index) & 1UL];
-                            });
+            dispatch_barrier_async(dispatch_get_main_queue(), ^{
+                [button_collection[index] setSelected:(selected_property_bit_vector >> index) & 1UL];
+                [button_collection[index] setHidden:(hidden_property_bit_vector >> index) & 1UL];
+            });
             enumeration(button_collection[index], (unsigned int)index);
-            
-            //            });
         });
         return active_component_bit_vector;
     };
@@ -167,11 +152,8 @@ static uint8_t (^(^filter)(__strong UIButton * _Nonnull [_Nonnull 5]))(void (^__
 
 static long (^(^reduce)(__strong UIButton * _Nonnull [_Nonnull 5]))(void (^__strong)(UIButton * _Nonnull, unsigned int)) = ^ (__strong UIButton * _Nonnull button_collection[5]) {
     return ^ long (void(^enumeration)(UIButton * _Nonnull, unsigned int)) {
-        //        dispatch_barrier_async(dispatch_get_main_queue(), ^{
         unsigned int selected_property_bit_position = (Log2n(selected_property_bit_vector));
-        //            //printf("selected_property_bit_position == %d\n", selected_property_bit_position);
         enumeration(button_collection[selected_property_bit_position], (unsigned int)selected_property_bit_position);
-        //        });
         return active_component_bit_vector;
     };
 };
@@ -270,6 +252,8 @@ static void (^(^draw_tick_wheel_init)(ControlView *, CGFloat *, CGFloat *))(CGCo
                 //        [(ControlView *)view drawRect:rect];
                 // UIGraphicsPopContext();
                 //
+                
+                // FOURTH dispatch_barrier_sync?
                 [(ControlView *)view setNeedsDisplay];
                 return active_component_bit_vector;
             }());
@@ -433,23 +417,27 @@ static NSString * (^NSStringFromBitVector)(uint8_t) = ^ NSString * (uint8_t bit_
 }
 
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
-    dispatch_barrier_async(dispatch_get_main_queue(), ^{ (handle_touch = touch_handler(touches.anyObject))(nil); });
+//    dispatch_barrier_async(dispatch_get_main_queue(), ^{
+        (handle_touch = touch_handler(touches.anyObject))(nil);
+//    });
 }
 
 - (void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
-    dispatch_barrier_async(dispatch_get_main_queue(), ^{ handle_touch(nil); });
+//    dispatch_barrier_async(dispatch_get_main_queue(), ^{
+        handle_touch(nil);
+//    });
 }
 
 - (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
-    dispatch_barrier_async(dispatch_get_main_queue(), ^{
+//    dispatch_barrier_async(dispatch_get_main_queue(), ^{
         handle_touch(set_state);
-    });
+//    });
     
-    dispatch_barrier_async(dispatch_get_main_queue(), ^{
+//    dispatch_barrier_async(dispatch_get_main_queue(), ^{
         [self.stateBitVectorLabel setText:[NSString stringWithFormat:@"%@", (active_component_bit_vector == MASK_ALL) ? @"11111" : @"00000"]];
         [self.selectedBitVectorLabel setText:NSStringFromBitVector(selected_property_bit_vector)];
         [self.hiddenBitVectorLabel setText:NSStringFromBitVector(hidden_property_bit_vector)];
-    });
+//    });r
 }
 
 - (void)touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
