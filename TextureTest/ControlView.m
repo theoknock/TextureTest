@@ -284,7 +284,7 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
     static CGFloat radius;
     draw_tick_wheel = draw_tick_wheel_init((ControlView *)view, &touch_angle, &radius);
     return ^ (__strong UITouch * _Nullable touch) {
-        return ^ (void (^(^ _Nullable set_button_state)(unsigned int))(CGPoint, CGFloat)) {
+        return ^ (long (^(^ _Nullable set_button_state)(unsigned int))(CGPoint, CGFloat)) {
             touch_point = [touch locationInView:(ControlView *)view];
             touch_point.x = fmaxf(0.0,
                                   fminf(touch_point.x,
