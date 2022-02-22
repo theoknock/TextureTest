@@ -120,99 +120,17 @@ static long (^Log2n)(unsigned int) = ^ long (unsigned int bit_field) {
     return (bit_field > 1) ? 1 + Log2n(bit_field / 2) : 0;
 };
 
-// To-Do: fix this:
-
-/*
- ---------------
- animation begin
- frame =- 1073741823
- frame =- 536870911
- frame =- 268435455
- frame =- 134217727
- frame =- 67108863
- frame =- 33554431
- frame =- 16777215
- frame =- 8388607
- frame =- 4194303
- frame =- 2097151
- frame =- 1048575
- frame =- 524287
- frame =- 262143
- frame =- 131071
- ---------------
- animation begin
- frame =- 65535
- frame =- 1073741823
- frame =- 32767
- frame =- 536870911
- frame =- 16383
- frame =- 268435455
- frame =- 8191
- frame =- 134217727
- frame =- 4095
- frame =- 67108863
- frame =- 2047
- frame =- 33554431
- frame =- 1023
- frame =- 16777215
- frame =- 511
- frame =- 8388607
- frame =- 255
- frame =- 4194303
- frame =- 127
- frame =- 2097151
- frame =- 63
- frame =- 1048575
- frame =- 31
- frame =- 524287
- frame =- 15
- frame =- 262143
- frame =- 7
- frame =- 131071
- frame =- 3
- frame =- 65535
- frame =- 1
- frame =- 32767
- ---------------
- animation end
- frame =- 16383
- frame =- 8191
- frame =- 4095
- frame =- 2047
- frame =- 1023
- frame =- 511
- frame =- 255
- frame =- 127
- frame =- 63
- frame =- 31
- frame =- 15
- frame =- 7
- frame =- 3
- frame =- 1
- ---------------
- animation end
- */
-
-
 static long (^(^integrate)(long))(void(^__strong)(long)) = ^ (long duration) {
-    dispatch_barrier_async(dispatch_get_main_queue(), ^{
-        dispatch_semaphore_wait(transition_animation_semaphore(), DISPATCH_TIME_FOREVER);
-    });
     __block typeof(CADisplayLink *) display_link;
     __block long frames = ~(1 << (duration + 1));
     return ^ long (void (^__strong integrand)(long)) {
-        
-        dispatch_barrier_async(dispatch_get_main_queue(), ^{
-            //printf("---------------\n\t\t\tanimation begin\n");
+            printf("---------------\n\t\t\tanimation begin\n");
             display_link = [CADisplayLink displayLinkWithTarget:^{
                 frames >>= 1;
                 return
                 ((frames & 1) &&
                  ^ long {
-                    dispatch_barrier_async(dispatch_get_main_queue(), ^{
-                        //printf("frame =- %d\n", frames);
-                        integrand(Log2n(frames));
-                    });
+                    integrand(Log2n(frames));
                     return active_component_bit_vector;
                 }())
                 
@@ -220,19 +138,12 @@ static long (^(^integrate)(long))(void(^__strong)(long)) = ^ (long duration) {
                 
                 ((frames | 1) &&
                  ^ long {
-                    
-                    dispatch_barrier_async(dispatch_get_main_queue(), ^{
-                        //printf("---------------\n\t\t\tanimation end\n");
-                        [display_link invalidate];
-                    });
+                    printf("\t\t\tanimation end\n---------------\n");
+                    [display_link invalidate];
                     return active_component_bit_vector;
                 }());
             } selector:@selector(invoke)];
             [display_link addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
-        });
-        dispatch_barrier_async(dispatch_get_main_queue(), ^{
-            dispatch_semaphore_signal(transition_animation_semaphore());
-        });
         return active_component_bit_vector;
     };
 };
@@ -279,7 +190,7 @@ void (^(^set_state)(unsigned int))(CGPoint, CGFloat) = ^ (unsigned int touch_pro
     hidden_property_bit_vector ^= active_component_bit_vector;
     
     return ^ (CGPoint center_point, CGFloat radius) {
-        dispatch_barrier_async(dispatch_get_main_queue(), ^{
+        dispatch_barrier_sync(enumerator_queue(), ^{
             ((active_component_bit_vector & MASK_ALL) &&
              
              integrate((long)30)(^ (long frame) {
@@ -313,7 +224,7 @@ void (^(^set_state)(unsigned int))(CGPoint, CGFloat) = ^ (unsigned int touch_pro
 static void (^draw_tick_wheel)(CGContextRef, CGRect);
 static void (^(^draw_tick_wheel_init)(ControlView *, CGFloat *, CGFloat *))(CGContextRef, CGRect) = ^ (ControlView * view, CGFloat * touch_angle, CGFloat * radius) {
     return ^ (CGContextRef ctx, CGRect rect) {
-        
+        dispatch_barrier_sync(enumerator_queue(), ^{
         ((active_component_bit_vector & MASK_ALL) &&
          
          ^ long (void) {
@@ -359,8 +270,8 @@ static void (^(^draw_tick_wheel_init)(ControlView *, CGFloat *, CGFloat *))(CGCo
             [(ControlView *)view setNeedsDisplay];
             return active_component_bit_vector;
         }());
+        });
     };
-    
 };
 
 static void (^(^touch_handler)(__strong UITouch * _Nullable))(void (^(^)(unsigned int))(CGPoint, CGFloat));
@@ -392,7 +303,6 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
                 transition_animation = (set_button_state != nil) ? (set_button_state((unsigned int)round(fmaxf(0.0,
                                                                                                                fminf((unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 4.0)),
                                                                                                                      4.0))))) : nil;
-                [((ControlView *)view) setNeedsDisplay];
             });
             
             radius = fmaxf(CGRectGetMidX(((ControlView *)view).bounds),
@@ -401,6 +311,7 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
             
             dispatch_barrier_async(dispatch_get_main_queue(), ^{
                 if (transition_animation != nil) transition_animation(center_point, radius);
+                [((ControlView *)view) setNeedsDisplay];
             });
             
             
@@ -419,7 +330,7 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
                 [button setCenter:^ (CGFloat radians) {
                     return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
                 }(degreesToRadians(touch_angle))];
-                 
+                
                 
                 if (button.tag == CaptureDeviceConfigurationControlPropertyVideoZoomFactor)
                     [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat videoZoomFactor){
