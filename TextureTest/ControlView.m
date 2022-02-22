@@ -275,9 +275,9 @@ static void (^(^draw_tick_wheel_init)(ControlView *, CGFloat *, CGFloat *))(CGCo
     };
 };
 
-static void (^(^touch_handler)(__strong UITouch * _Nullable))(void (^(^)(unsigned int))(CGPoint, CGFloat));
-static long (^handle_touch)(void (^(^)(unsigned int))(CGPoint, CGFloat));
-static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurationControlPropertyDelegate>))(__strong UITouch * _Nullable))(void (^(^)(unsigned int))(CGPoint, CGFloat)) =  ^ (ControlView * view, id<CaptureDeviceConfigurationControlPropertyDelegate> delegate) {
+static void (^(^touch_handler)(__strong UITouch * _Nullable))(long (^(^)(unsigned int))(CGPoint, CGFloat));
+static void (^handle_touch)(long (^(^)(unsigned int))(CGPoint, CGFloat));
+static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurationControlPropertyDelegate>))(__strong UITouch * _Nullable))(long (^(^)(unsigned int))(CGPoint, CGFloat)) =  ^ (ControlView * view, id<CaptureDeviceConfigurationControlPropertyDelegate> delegate) {
     CGPoint center_point = CGPointMake(CGRectGetMaxX(((ControlView *)view).bounds), CGRectGetMaxY(((ControlView *)view).bounds));
     static CGFloat touch_angle;
     static CGPoint touch_point;
