@@ -110,13 +110,13 @@ static long (^Log2n)(unsigned int) = ^ long (unsigned int bit_field) {
 };
 
 static long (^(^integrate)(long))(void(^__strong)(long)) = ^ (long duration) {
-    __block typeof(CADisplayLink *) display_link;
     __block long frames = ~(1 << (duration + 1));
     return ^ long (void (^__strong integrand)(long)) {
-        printf("---------------\n\t\t\tanimation begin\n");
-        display_link = [CADisplayLink displayLinkWithTarget:^{
+        dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, enumerator_queue());
+        dispatch_source_set_timer(timer, DISPATCH_TIME_NOW, (1.0/duration) * NSEC_PER_SEC, 0.0 * NSEC_PER_SEC);
+        dispatch_source_set_event_handler(timer, ^{
             frames >>= 1;
-            return
+
             ((frames & 1) &&
              ^ long {
                 integrand(Log2n(frames));
@@ -127,15 +127,44 @@ static long (^(^integrate)(long))(void(^__strong)(long)) = ^ (long duration) {
             
             ((frames | 1) &&
              ^ long {
-                printf("\t\t\tanimation end\n---------------\n");
-                [display_link invalidate];
+                printf("animation end\n");
+                dispatch_suspend(timer);
                 return active_component_bit_vector;
             }());
-        } selector:@selector(invoke)];
-        [display_link addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
+        });
+        dispatch_resume(timer);
         return active_component_bit_vector;
     };
 };
+
+
+//static long (^(^integrate)(long))(void(^__strong)(long)) = ^ (long duration) {
+//    __block typeof(CADisplayLink *) display_link;
+//    __block long frames = ~(1 << (duration + 1));
+//    return ^ long (void (^__strong integrand)(long)) {
+//        printf("animation begin\t\t\t---------------\t\t\t");
+//        display_link = [CADisplayLink displayLinkWithTarget:^{
+//            frames >>= 1;
+//            return
+//            ((frames & 1) &&
+//             ^ long {
+//                integrand(Log2n(frames));
+//                return active_component_bit_vector;
+//            }())
+//
+//            ||
+//
+//            ((frames | 1) &&
+//             ^ long {
+//                printf("animation end\n");
+//                [display_link invalidate];
+//                return active_component_bit_vector;
+//            }());
+//        } selector:@selector(invoke)];
+//        [display_link addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
+//        return active_component_bit_vector;
+//    };
+//};
 
 static uint8_t (^(^filter)(__strong UIButton * _Nonnull [_Nonnull 5]))(void (^__strong)(UIButton * _Nonnull, unsigned int)) = ^ (__strong UIButton * _Nonnull button_collection[5]) {
     return ^ uint8_t (void(^enumeration)(UIButton * _Nonnull, unsigned int)) {
