@@ -191,23 +191,6 @@ static unsigned int rotation_degrees;
     }
 }
 
-//- (void)_updateGameState:(nonnull MTKView *)view
-//{
-//    Uniforms * uniforms = (Uniforms*)_dynamicUniformBuffer[_uniformBufferIndex].contents;
-//
-//    uniforms->projectionMatrix = _projectionMatrix;
-//
-//    vector_float3 rotationAxis = {1, 1, 1};
-//    matrix_float4x4 modelMatrix = matrix4x4_rotation(_rotation, rotationAxis);
-//    matrix_float4x4 viewMatrix = matrix4x4_translation(0.0, 0.0, -1.0);
-//
-//    uniforms->modelViewMatrix = matrix_multiply(viewMatrix, modelMatrix);
-//
-//    _rotation = degreesToRadians(112.5); //(_rotation > degreesToRadians(360.0)) ? 0.0 : _rotation + degreesToRadians(2.0);
-////    CATransform3D rotation = CATransform3DMakeRotation(degreesToRadians(180.0), 1.0, 0.0, 0.0);
-////    view.layer.transform   = CATransform3DTranslate(rotation, 0.0, 0.0, 0.0);
-//}
-
 - (void)drawInMTKView:(nonnull MTKView *)view
 {
     id <MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];

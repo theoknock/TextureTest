@@ -176,7 +176,7 @@ static long (^(^reduce)(__strong UIButton * _Nonnull [_Nonnull 5]))(void (^__str
     };
 };
 
-void (^(^set_state)(unsigned int))(CGPoint, CGFloat) = ^ (unsigned int touch_property) {
+long (^(^set_state)(unsigned int))(CGPoint, CGFloat) = ^ (unsigned int touch_property) {
     active_component_bit_vector = ~active_component_bit_vector;
     // converse nonimplication
     uint8_t selected_property_bit_mask = MASK_NONE;
@@ -189,7 +189,7 @@ void (^(^set_state)(unsigned int))(CGPoint, CGFloat) = ^ (unsigned int touch_pro
     hidden_property_bit_vector ^= MASK_ALL;
     hidden_property_bit_vector ^= active_component_bit_vector;
     
-    return ^ (CGPoint center_point, CGFloat radius) {
+    return ^ long (CGPoint center_point, CGFloat radius) {
 //        dispatch_barrier_sync(enumerator_queue(), ^{
             ((active_component_bit_vector & MASK_ALL) &&
              
@@ -217,6 +217,7 @@ void (^(^set_state)(unsigned int))(CGPoint, CGFloat) = ^ (unsigned int touch_pro
                 });
             }));
 //        });
+        return (long)1;
     };
 };
 
@@ -275,7 +276,7 @@ static void (^(^draw_tick_wheel_init)(ControlView *, CGFloat *, CGFloat *))(CGCo
 };
 
 static void (^(^touch_handler)(__strong UITouch * _Nullable))(void (^(^)(unsigned int))(CGPoint, CGFloat));
-static void (^handle_touch)(void (^(^)(unsigned int))(CGPoint, CGFloat));
+static long (^handle_touch)(void (^(^)(unsigned int))(CGPoint, CGFloat));
 static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurationControlPropertyDelegate>))(__strong UITouch * _Nullable))(void (^(^)(unsigned int))(CGPoint, CGFloat)) =  ^ (ControlView * view, id<CaptureDeviceConfigurationControlPropertyDelegate> delegate) {
     CGPoint center_point = CGPointMake(CGRectGetMaxX(((ControlView *)view).bounds), CGRectGetMaxY(((ControlView *)view).bounds));
     static CGFloat touch_angle;
@@ -302,30 +303,11 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
                            fminf((sqrt(pow(touch_point.x - center_point.x, 2.0) + pow(touch_point.y - center_point.y, 2.0))),
                                  CGRectGetMaxX(((ControlView *)view).bounds)));
             
-            //            __block void (^transition_animation)(CGPoint, CGFloat);
-            //            dispatch_barrier_async(dispatch_get_main_queue(), ^{
-            //                transition_animation = (set_button_state != nil) ? (set_button_state((unsigned int)round(fmaxf(0.0,
-            //                                                                                                               fminf((unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 4.0)),
-            //                                                                                                                     4.0))))) : nil;
-            //            });
-            
-            
-                (set_button_state != nil) ? ^{
-                    dispatch_barrier_sync(enumerator_queue(), ^{
-                    ((set_button_state((unsigned int)round(fmaxf(0.0,
-                                                                 fminf((unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 4.0)),
-                                                                       4.0))))))(center_point, radius);
-                    });
-                }() : ^{
-                    
-                }();
-          
-            
-            //            dispatch_barrier_async(dispatch_get_main_queue(), ^{
-            //                if (transition_animation != nil) transition_animation(center_point, radius);
-            //                [((ControlView *)view) setNeedsDisplay];
-            //            });
-            
+            long (^transition_animation)(CGPoint, CGFloat);
+            ((long)0 || set_button_state) && set_button_state((unsigned int)round(fmaxf(0.0,
+                                                                                            fminf((unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 4.0)),
+                                                                                                  4.0))));
+            ((long)0 || transition_animation) && transition_animation(center_point, radius); // __block void (^transition_animation)(CGPoint, CGFloat); transition_animation(center_point, radius);
             
             ((active_component_bit_vector & MASK_ALL)
              && filter(buttons)(^ (ControlView * view, CGFloat * r) {
