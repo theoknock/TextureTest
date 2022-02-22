@@ -6,6 +6,7 @@
 //
 
 #import <UIKit/UIKit.h>
+#import <AVFoundation/AVFoundation.h>
 @import CoreHaptics;
 
 NS_ASSUME_NONNULL_BEGIN
@@ -20,8 +21,6 @@ typedef enum : NSUInteger {
 
 @protocol CaptureDeviceConfigurationControlPropertyDelegate <NSObject>
 @required
-@property (nonatomic) CGFloat videoZoomFactor_;
-- (void)setVideoZoomFactor_:(CGFloat)videoZoomFactor;
 @property (nonatomic) CGFloat lensPosition_;
 - (void)setLensPosition_:(CGFloat)lensPosition;
 @property (nonatomic) CGFloat torchLevel_;
@@ -31,6 +30,8 @@ typedef enum : NSUInteger {
 - (float)maxISO_;
 - (float)minISO_;
 - (void)setExposureDuration_:(CGFloat)exposureDuration;
+
+- (void)setCaptureDeviceConfigurationControlPropertyUsingBlock:(void(^)(AVCaptureDevice *))captureDeviceConfigurationControlPropertyBlock;
 
 
 

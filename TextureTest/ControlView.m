@@ -375,11 +375,11 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
         return ^ (void (^(^ _Nullable set_button_state)(unsigned int))(CGPoint, CGFloat)) {
             touch_point = [touch locationInView:(ControlView *)view];
             touch_point.x = fmaxf(0.0,
-                                   fminf(touch_point.x,
-                                         CGRectGetMaxX(((ControlView *)view).bounds)));
+                                  fminf(touch_point.x,
+                                        CGRectGetMaxX(((ControlView *)view).bounds)));
             touch_point.y = fmaxf(0.0,
-                                   fminf(touch_point.y,
-                                         CGRectGetMaxY(((ControlView *)view).bounds)));
+                                  fminf(touch_point.y,
+                                        CGRectGetMaxY(((ControlView *)view).bounds)));
             touch_angle = (atan2((touch_point).y - (center_point).y,
                                  (touch_point).x - (center_point).x)) * (180.0 / M_PI);
             if (touch_angle < 0.0) touch_angle += 360.0;
@@ -407,11 +407,11 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
             ((active_component_bit_vector & MASK_ALL)
              && filter(buttons)(^ (ControlView * view, CGFloat * r) {
                 unsigned int touch_property = (unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 4.0));
-                return ^ (UIButton * _Nonnull button, unsigned int index) {
+                return ^ (UIButton * _Nonnull button, unsigned int index) {  // Consider comparing index to button.tag instead of touch_property to button.tag
                     [button setHighlighted:((active_component_bit_vector >> button.tag) & 1UL) & (UITouchPhaseEnded ^ touch.phase) & !(touch_property ^ button.tag)];
                     [button setCenter:^ (CGFloat radians) {
                         return CGPointMake(center_point.x - *r * -cos(radians), center_point.y - *r * -sin(radians));
-                    }(degreesToRadians(rescale(button.tag, 0.0, 4.0, 180.0, 270.0)))];
+                    }(degreesToRadians(rescale(button.tag, 0.0, 4.0, 180.0, 270.0)))]; // Consider using touch_property or index * (270 - 180) / 4 instead of rescaling
                 };
             }((ControlView *)view, &radius)))
             || ((active_component_bit_vector & ~MASK_ALL)
@@ -419,9 +419,14 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
                 [button setCenter:^ (CGFloat radians) {
                     return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
                 }(degreesToRadians(touch_angle))];
+                 
                 
                 if (button.tag == CaptureDeviceConfigurationControlPropertyVideoZoomFactor)
-                    [delegate setVideoZoomFactor_:rescale(touch_angle, 180.0, 270.0, 1.0, 9.0)];
+                    [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat videoZoomFactor){
+                        return ^ (AVCaptureDevice * capture_device) {
+                            [capture_device setVideoZoomFactor:videoZoomFactor];
+                        };
+                    }(rescale(touch_angle, 180.0, 270.0, 1.0, 9.0))];
                 else if (button.tag == CaptureDeviceConfigurationControlPropertyLensPosition)
                     [delegate setLensPosition_:(rescale(touch_angle, 180.0, 270.0, 0.0, 1.0))];
                 else if (button.tag == CaptureDeviceConfigurationControlPropertyTorchLevel)
@@ -439,23 +444,26 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
     };
 };
 
+static NSString * (^NSStringFromBitVector)(uint8_t) = ^ NSString * (uint8_t bit_vector) {
+    NSMutableString * bit_vector_str = [[NSMutableString alloc] initWithCapacity:5];
+    for (int i = sizeof(char) * 4; i >= 0; i--)
+        [bit_vector_str appendString:[NSString stringWithFormat:@"%d", (bit_vector & (1 << i)) >> i]];
+    return (NSString *)bit_vector_str;
+};
+
 
 @implementation ControlView {
     UISelectionFeedbackGenerator * haptic_feedback;
 }
 
+
+
 - (void)awakeFromNib {
     [super awakeFromNib];
     
     [self.stateBitVectorLabel setText:[NSString stringWithFormat:@"%@", (active_component_bit_vector == MASK_ALL) ? @"11111" : @"00000"]];
-    NSMutableString * selected_bit_vector_str = [[NSMutableString alloc] initWithCapacity:5];
-    for (int i = sizeof(char) * 4; i >= 0; i--)
-        [selected_bit_vector_str appendString:[NSString stringWithFormat:@"%d", (selected_property_bit_vector & (1 << i)) >> i]];
-    [self.selectedBitVectorLabel setText:selected_bit_vector_str];
-    NSMutableString * hidden_bit_vector_str = [[NSMutableString alloc] initWithCapacity:5];
-    for (int i = sizeof(char) * 4; i >= 0; i--)
-        [hidden_bit_vector_str appendString:[NSString stringWithFormat:@"%d", (hidden_property_bit_vector & (1 << i)) >> i]];
-    [self.hiddenBitVectorLabel setText:hidden_bit_vector_str];
+    [self.selectedBitVectorLabel setText:NSStringFromBitVector(selected_property_bit_vector)];
+    [self.hiddenBitVectorLabel setText:NSStringFromBitVector(hidden_property_bit_vector)];
     
     haptic_feedback = [[UISelectionFeedbackGenerator alloc] init];
     [haptic_feedback prepare];
@@ -512,15 +520,11 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
         handle_touch(set_state);
     });
     
-    [self.stateBitVectorLabel setText:[NSString stringWithFormat:@"%@", (active_component_bit_vector == MASK_ALL) ? @"11111" : @"00000"]];
-    NSMutableString * selected_bit_vector_str = [[NSMutableString alloc] initWithCapacity:5];
-    for (int i = sizeof(char) * 4; i >= 0; i--)
-        [selected_bit_vector_str appendString:[NSString stringWithFormat:@"%d", (selected_property_bit_vector & (1 << i)) >> i]];
-    [self.selectedBitVectorLabel setText:selected_bit_vector_str];
-    NSMutableString * hidden_bit_vector_str = [[NSMutableString alloc] initWithCapacity:5];
-    for (int i = sizeof(char) * 4; i >= 0; i--)
-        [hidden_bit_vector_str appendString:[NSString stringWithFormat:@"%d", (hidden_property_bit_vector & (1 << i)) >> i]];
-    [self.hiddenBitVectorLabel setText:hidden_bit_vector_str];
+    dispatch_barrier_async(dispatch_get_main_queue(), ^{
+        [self.stateBitVectorLabel setText:[NSString stringWithFormat:@"%@", (active_component_bit_vector == MASK_ALL) ? @"11111" : @"00000"]];
+        [self.selectedBitVectorLabel setText:NSStringFromBitVector(selected_property_bit_vector)];
+        [self.hiddenBitVectorLabel setText:NSStringFromBitVector(hidden_property_bit_vector)];
+    });
 }
 
 - (void)touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {

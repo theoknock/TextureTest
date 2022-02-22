@@ -17,8 +17,6 @@ extern CGSize videoDimensions;
 
 + (VideoCamera *)setAVCaptureVideoDataOutputSampleBufferDelegate:(id<AVCaptureVideoDataOutputSampleBufferDelegate>)videoOutputDelegate;
 
-@property (nonatomic) CGFloat videoZoomFactor_;
-- (void)setVideoZoomFactor_:(CGFloat)videoZoomFactor;
 @property (nonatomic) CGFloat lensPosition_;
 - (void)setLensPosition_:(CGFloat)lensPosition;
 @property (nonatomic) CGFloat torchLevel_;
@@ -28,6 +26,8 @@ extern CGSize videoDimensions;
 - (float)maxISO_;
 - (float)minISO_;
 - (void)setExposureDuration_:(CGFloat)exposureDuration;
+
+- (void)setCaptureDeviceConfigurationControlPropertyUsingBlock:(void(^)(AVCaptureDevice *))captureDeviceConfigurationControlPropertyBlock;
 
 
 
