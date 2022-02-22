@@ -190,7 +190,7 @@ void (^(^set_state)(unsigned int))(CGPoint, CGFloat) = ^ (unsigned int touch_pro
     hidden_property_bit_vector ^= active_component_bit_vector;
     
     return ^ (CGPoint center_point, CGFloat radius) {
-        dispatch_barrier_sync(enumerator_queue(), ^{
+//        dispatch_barrier_sync(enumerator_queue(), ^{
             ((active_component_bit_vector & MASK_ALL) &&
              
              integrate((long)30)(^ (long frame) {
@@ -216,7 +216,7 @@ void (^(^set_state)(unsigned int))(CGPoint, CGFloat) = ^ (unsigned int touch_pro
                     }(degreesToRadians(rescale(button.tag, 0.0, 4.0, 180.0 - angle_adj, 270.0 - angle_adj)))];
                 });
             }));
-        });
+//        });
     };
 };
 
@@ -298,21 +298,33 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
                                 fminf(touch_angle,
                                       270.0));
             
-            __block void (^transition_animation)(CGPoint, CGFloat);
-            dispatch_barrier_async(dispatch_get_main_queue(), ^{
-                transition_animation = (set_button_state != nil) ? (set_button_state((unsigned int)round(fmaxf(0.0,
-                                                                                                               fminf((unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 4.0)),
-                                                                                                                     4.0))))) : nil;
-            });
-            
             radius = fmaxf(CGRectGetMidX(((ControlView *)view).bounds),
                            fminf((sqrt(pow(touch_point.x - center_point.x, 2.0) + pow(touch_point.y - center_point.y, 2.0))),
                                  CGRectGetMaxX(((ControlView *)view).bounds)));
             
-            dispatch_barrier_async(dispatch_get_main_queue(), ^{
-                if (transition_animation != nil) transition_animation(center_point, radius);
-                [((ControlView *)view) setNeedsDisplay];
-            });
+            //            __block void (^transition_animation)(CGPoint, CGFloat);
+            //            dispatch_barrier_async(dispatch_get_main_queue(), ^{
+            //                transition_animation = (set_button_state != nil) ? (set_button_state((unsigned int)round(fmaxf(0.0,
+            //                                                                                                               fminf((unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 4.0)),
+            //                                                                                                                     4.0))))) : nil;
+            //            });
+            
+            
+                (set_button_state != nil) ? ^{
+                    dispatch_barrier_sync(enumerator_queue(), ^{
+                    ((set_button_state((unsigned int)round(fmaxf(0.0,
+                                                                 fminf((unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 4.0)),
+                                                                       4.0))))))(center_point, radius);
+                    });
+                }() : ^{
+                    
+                }();
+          
+            
+            //            dispatch_barrier_async(dispatch_get_main_queue(), ^{
+            //                if (transition_animation != nil) transition_animation(center_point, radius);
+            //                [((ControlView *)view) setNeedsDisplay];
+            //            });
             
             
             ((active_component_bit_vector & MASK_ALL)
