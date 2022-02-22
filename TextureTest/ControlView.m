@@ -112,6 +112,7 @@ static long (^Log2n)(unsigned int) = ^ long (unsigned int bit_field) {
 static long (^(^integrate)(long))(void(^__strong)(long)) = ^ (long duration) {
     __block long frames = ~(1 << (duration + 1));
     return ^ long (void (^__strong integrand)(long)) {
+        dispatch_barrier_async(enumerator_queue(), ^{
         dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, DISPATCH_APPLY_AUTO);
         dispatch_source_set_timer(timer, DISPATCH_TIME_NOW, (1.0/duration) * NSEC_PER_SEC, 0.0 * NSEC_PER_SEC);
         dispatch_source_set_event_handler(timer, ^{
@@ -132,8 +133,11 @@ static long (^(^integrate)(long))(void(^__strong)(long)) = ^ (long duration) {
                 return active_component_bit_vector;
             }());
         });
-        dispatch_resume(timer);
+        
+            dispatch_resume(timer);
+        });
         printf("animation begin\t\t\t---------------\t\t\t");
+
         return active_component_bit_vector;
     };
 };
