@@ -78,15 +78,16 @@ static UIImage * (^CaptureDeviceConfigurationControlPropertySymbolImage)(Capture
 
 #define MASK_ALL  (1UL << 0 | 1UL << 1 | 1UL << 2 | 1UL << 3 | 1UL << 4)
 #define MASK_NONE (  0 << 0 |   0 << 1 |   0 << 2 |   0 << 3 |   0 << 4)
-static uint8_t active_component_bit_vector  = MASK_ALL;
-static uint8_t selected_property_bit_vector = MASK_NONE;
-static uint8_t hidden_property_bit_vector   = MASK_NONE;
+static uint8_t active_component_bit_vector     = MASK_ALL;
+static uint8_t highlighted_property_bit_vector = MASK_NONE;
+static uint8_t selected_property_bit_vector    = MASK_NONE;
+static uint8_t hidden_property_bit_vector      = MASK_NONE;
 
 static dispatch_queue_t enumerator_queue() {
     static dispatch_queue_t sl_queue;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        sl_queue = dispatch_queue_create("com.somnus.xxx", NULL);
+        sl_queue = dispatch_queue_create("enumerator_queue()", NULL);
     });
     
     return sl_queue;
@@ -109,35 +110,37 @@ static long (^Log2n)(unsigned int) = ^ long (unsigned int bit_field) {
     return (bit_field > 1) ? 1 + Log2n(bit_field / 2) : 0;
 };
 
+// To-Do: disable user interaction until the timer is suspended
+//        to prevent interruptions to animation caused by touch events
 static long (^(^integrate)(long))(void(^__strong)(long)) = ^ (long duration) {
     __block long frames = ~(1 << (duration + 1));
     return ^ long (void (^__strong integrand)(long)) {
         dispatch_barrier_async(enumerator_queue(), ^{
-        dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, DISPATCH_APPLY_AUTO);
-        dispatch_source_set_timer(timer, DISPATCH_TIME_NOW, (1.0/duration) * NSEC_PER_SEC, 0.0 * NSEC_PER_SEC);
-        dispatch_source_set_event_handler(timer, ^{
-            frames >>= 1;
-
-            ((frames & 1) &&
-             ^ long {
-                integrand(Log2n(frames));
-                return active_component_bit_vector;
-            }())
-            
-            ||
-            
-            ((frames | 1) &&
-             ^ long {
-                printf("animation end\n");
-                dispatch_suspend(timer);
-                return active_component_bit_vector;
-            }());
-        });
-        
+            dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, DISPATCH_APPLY_AUTO);
+            dispatch_source_set_timer(timer, DISPATCH_TIME_NOW, (1.0/duration) * NSEC_PER_SEC, 0.0 * NSEC_PER_SEC);
+            dispatch_source_set_event_handler(timer, ^{
+                frames >>= 1;
+                
+                ((frames & 1) &&
+                 ^ long {
+                    integrand(Log2n(frames));
+//                    printf("\t\tanimation frame %d\n", frames);
+                    return active_component_bit_vector;
+                }())
+                
+                ||
+                
+                ((frames | 1) &&
+                 ^ long {
+//                    printf("animation end\n");
+                    dispatch_suspend(timer);
+                    return active_component_bit_vector;
+                }());
+            });
+//            printf("animation begin\t\t\t---------------\t\t\t");
             dispatch_resume(timer);
         });
-        printf("animation begin\t\t\t---------------\t\t\t");
-
+        
         return active_component_bit_vector;
     };
 };
@@ -193,6 +196,7 @@ static long (^(^reduce)(__strong UIButton * _Nonnull [_Nonnull 5]))(void (^__str
 };
 
 long (^(^set_state)(unsigned int))(CGPoint, CGFloat) = ^ (unsigned int touch_property) {
+    printf("\t\tset_state\n");
     active_component_bit_vector = ~active_component_bit_vector;
     // converse nonimplication
     uint8_t selected_property_bit_mask = MASK_NONE;
@@ -206,35 +210,35 @@ long (^(^set_state)(unsigned int))(CGPoint, CGFloat) = ^ (unsigned int touch_pro
     hidden_property_bit_vector ^= active_component_bit_vector;
     
     return ^ long (CGPoint center_point, CGFloat radius) {
-            ((active_component_bit_vector & MASK_ALL) &&
-             
-             integrate((long)30)(^ (long frame) {
-                CGFloat angle_adj = (360.0 / 30.0) * frame;
-                filter(buttons)(^{
-                    return ^ (UIButton * _Nonnull button, unsigned int index) {
-                        dispatch_barrier_async(dispatch_get_main_queue(), ^{
+        ((active_component_bit_vector & MASK_ALL) &&
+         
+         integrate((long)30)(^ (long frame) {
+            CGFloat angle_adj = (360.0 / 30.0) * frame;
+            filter(buttons)(^{
+                return ^ (UIButton * _Nonnull button, unsigned int index) {
+                    dispatch_barrier_async(dispatch_get_main_queue(), ^{
                         [button setCenter:^ (CGFloat radians) {
                             return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
                         }(degreesToRadians(rescale(button.tag, 0.0, 4.0, 180.0 + angle_adj, 270.0 + angle_adj)))];
-                        });
-                    };
-                }());
-            }))
-            
-            ||
-            
-            ((active_component_bit_vector & ~MASK_ALL) &&
-             
-             integrate((long)30)(^ (long frame) {
-                CGFloat angle_adj = (360.0 / 30.0) * frame;
-                reduce(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
-                    dispatch_barrier_async(dispatch_get_main_queue(), ^{
+                    });
+                };
+            }());
+        }))
+        
+        ||
+        
+        ((active_component_bit_vector & ~MASK_ALL) &&
+         
+         integrate((long)30)(^ (long frame) {
+            CGFloat angle_adj = (360.0 / 30.0) * frame;
+            reduce(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
+                dispatch_barrier_async(dispatch_get_main_queue(), ^{
                     [button setCenter:^ (CGFloat radians) {
                         return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
                     }(degreesToRadians(rescale(button.tag, 0.0, 4.0, 180.0 - angle_adj, 270.0 - angle_adj)))];
-                    });
                 });
-            }));
+            });
+        }));
         return (long)1;
     };
 };
@@ -295,22 +299,17 @@ static void (^(^draw_tick_wheel_init)(ControlView *, CGFloat *, CGFloat *))(CGCo
     };
 };
 
-static void (^(^touch_handler)(__strong UITouch * _Nullable))(long (^(^)(unsigned int))(CGPoint, CGFloat));
-static void (^handle_touch)(long (^(^)(unsigned int))(CGPoint, CGFloat));
-static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurationControlPropertyDelegate>))(__strong UITouch * _Nullable))(long (^(^)(unsigned int))(CGPoint, CGFloat)) =  ^ (ControlView * view, id<CaptureDeviceConfigurationControlPropertyDelegate> delegate) {
+static void (^(^touch_handler)(__strong UITouch * _Nullable))(long (^)(CGPoint center_point, CGFloat radius));
+static void (^handle_touch)(long (^)(CGPoint center_point, CGFloat radius));
+static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurationControlPropertyDelegate>))(__strong UITouch * _Nullable))(long (^)(CGPoint center_point, CGFloat radius)) =  ^ (ControlView * view, id<CaptureDeviceConfigurationControlPropertyDelegate> delegate) {
     CGPoint center_point = CGPointMake(CGRectGetMaxX(((ControlView *)view).bounds), CGRectGetMaxY(((ControlView *)view).bounds));
     static CGFloat touch_angle;
     static CGPoint touch_point;
     static CGFloat radius;
     draw_tick_wheel = draw_tick_wheel_init((ControlView *)view, &touch_angle, &radius);
     return ^ (__strong UITouch * _Nullable touch) {
-        return ^ (long (^(^ _Nullable set_button_state)(unsigned int))(CGPoint, CGFloat)) {
-            /*
-             FIRST DISPATCH QUEUE BARRIER (OUT OF FOUR)
-             */
+        return ^ (long (^transition)(CGPoint center_point, CGFloat radius)) {
             dispatch_barrier_sync(enumerator_queue(), ^{
-                
-                
                 touch_point = [touch locationInView:(ControlView *)view];
                 touch_point.x = fmaxf(0.0,
                                       fminf(touch_point.x,
@@ -329,42 +328,33 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
                                fminf((sqrt(pow(touch_point.x - center_point.x, 2.0) + pow(touch_point.y - center_point.y, 2.0))),
                                      CGRectGetMaxX(((ControlView *)view).bounds)));
             });
-                /*
-                 SECOND DISPATCH QUEUE BARRIER (OUT OF FOUR)
-                 */
-                dispatch_barrier_sync(enumerator_queue(), ^{
-                    ((long)0 || set_button_state) && set_button_state((unsigned int)round(fmaxf(0.0,
-                                                                                                fminf((unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 4.0)),
-                                                                                                      4.0))))(center_point, radius);
-                });
             
-            
-            /*
-             THIRD DISPATCH QUEUE BARRIER (OUT OF FOUR)
-             */
             dispatch_barrier_sync(enumerator_queue(), ^{
+                ((long)0 || transition) && transition(center_point, radius); //set_button_state((unsigned int)round(fmaxf(0.0, fminf((unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 4.0)), 4.0))))(center_point, radius);
+            });
                 
-                
+            dispatch_barrier_sync(enumerator_queue(), ^{
                 ((active_component_bit_vector & MASK_ALL)
                  && filter(buttons)(^ (ControlView * view, CGFloat * r) {
                     unsigned int touch_property = (unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 4.0));
+                    highlighted_property_bit_vector = (((active_component_bit_vector >> touch_property) & 1UL) << touch_property);
                     return ^ (UIButton * _Nonnull button, unsigned int index) {  // Consider comparing index to button.tag instead of touch_property to button.tag
                         dispatch_barrier_async(dispatch_get_main_queue(), ^{
-                        [button setHighlighted:((active_component_bit_vector >> button.tag) & 1UL) & (UITouchPhaseEnded ^ touch.phase) & !(touch_property ^ button.tag)];
-                        [button setCenter:^ (CGFloat radians) {
-                            return CGPointMake(center_point.x - *r * -cos(radians), center_point.y - *r * -sin(radians));
-                        }(degreesToRadians(rescale(button.tag, 0.0, 4.0, 180.0, 270.0)))]; // Consider using touch_property or index * (270 - 180) / 4 instead of rescaling
+                            [button setHighlighted:((active_component_bit_vector >> button.tag) & 1UL) & (UITouchPhaseEnded ^ touch.phase) & !(touch_property ^ button.tag) & ((highlighted_property_bit_vector >> button.tag) & 1UL)];
+                            [button setCenter:^ (CGFloat radians) {
+                                return CGPointMake(center_point.x - *r * -cos(radians), center_point.y - *r * -sin(radians));
+                            }(degreesToRadians(rescale(button.tag, 0.0, 4.0, 180.0, 270.0)))]; // Consider using touch_property or index * (270 - 180) / 4 instead of rescaling
                         });
                     };
                 }((ControlView *)view, &radius)))
                 || ((active_component_bit_vector & ~MASK_ALL)
                     && reduce(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
                     dispatch_barrier_async(dispatch_get_main_queue(), ^{
-                    [button setCenter:^ (CGFloat radians) {
-                        return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
-                    }(degreesToRadians(touch_angle))];
+                        [button setCenter:^ (CGFloat radians) {
+                            return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
+                        }(degreesToRadians(touch_angle))];
                     });
-                    
+
                     if (button.tag == CaptureDeviceConfigurationControlPropertyVideoZoomFactor)
                         [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat videoZoomFactor){
                             return ^ (AVCaptureDevice * capture_device) {
@@ -383,7 +373,6 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
                 }));
             });
         };
-        
     };
 };
 
@@ -398,8 +387,6 @@ static NSString * (^NSStringFromBitVector)(uint8_t) = ^ NSString * (uint8_t bit_
 @implementation ControlView {
     UISelectionFeedbackGenerator * haptic_feedback;
 }
-
-
 
 - (void)awakeFromNib {
     [super awakeFromNib];
@@ -451,25 +438,46 @@ static NSString * (^NSStringFromBitVector)(uint8_t) = ^ NSString * (uint8_t bit_
 }
 
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
-        (handle_touch = touch_handler(touches.anyObject))(nil);
+    (handle_touch = touch_handler(touches.anyObject))(nil);
+    dispatch_barrier_sync(enumerator_queue(), ^{
+        [self.highlightedBitVectorLabel setText:NSStringFromBitVector(highlighted_property_bit_vector)];
+    });
 }
 
 - (void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
-        handle_touch(nil);
+    handle_touch(nil);
+    
+    dispatch_barrier_sync(enumerator_queue(), ^{
+        [self.highlightedBitVectorLabel setText:NSStringFromBitVector(highlighted_property_bit_vector)];
+    });
 }
 
 - (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
-        handle_touch(set_state);
+    
+    // set_state() should execute here
+    // handle_touch() should require the returned block from set_state()
+    
+    
+    handle_touch(set_state(1));
     
     dispatch_barrier_sync(enumerator_queue(), ^{
         [self.stateBitVectorLabel setText:[NSString stringWithFormat:@"%@", (active_component_bit_vector == MASK_ALL) ? @"11111" : @"00000"]];
+        [self.highlightedBitVectorLabel setText:NSStringFromBitVector(highlighted_property_bit_vector)];
         [self.selectedBitVectorLabel setText:NSStringFromBitVector(selected_property_bit_vector)];
         [self.hiddenBitVectorLabel setText:NSStringFromBitVector(hidden_property_bit_vector)];
     });
 }
 
 - (void)touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
-    handle_touch(set_state);
+    dispatch_barrier_sync(enumerator_queue(), ^{
+        [self setUserInteractionEnabled:FALSE];
+    });
+    dispatch_barrier_sync(enumerator_queue(), ^{
+        handle_touch(set_state(1));
+    });
+    dispatch_barrier_sync(enumerator_queue(), ^{
+        [self setUserInteractionEnabled:TRUE];
+    });
 }
 
 - (void)drawRect:(CGRect)rect {
