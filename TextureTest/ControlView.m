@@ -338,7 +338,7 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
                  && filter(buttons)(^ (ControlView * view, CGFloat * r) {
                     unsigned int touch_property = (unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 4.0));
                     highlighted_property_bit_vector = (((active_component_bit_vector >> touch_property) & 1UL) << touch_property);
-                    return ^ (UIButton * _Nonnull button, unsigned int index) {  // Consider comparing index to button.tag instead of touch_property to button.tag
+                    return ^ (UIButton * _Nonnull button, unsigned int index) {
                         dispatch_barrier_async(dispatch_get_main_queue(), ^{
                             [button setHighlighted:((active_component_bit_vector >> button.tag) & 1UL) & (UITouchPhaseEnded ^ touch.phase) & !(touch_property ^ button.tag) & ((highlighted_property_bit_vector >> button.tag) & 1UL)];
                             [button setCenter:^ (CGFloat radians) {
@@ -458,7 +458,7 @@ static NSString * (^NSStringFromBitVector)(uint8_t) = ^ NSString * (uint8_t bit_
     // handle_touch() should require the returned block from set_state()
     
     
-    handle_touch(set_state(1));
+    handle_touch(set_state((Log2n(highlighted_property_bit_vector))));
     
     dispatch_barrier_sync(enumerator_queue(), ^{
         [self.stateBitVectorLabel setText:[NSString stringWithFormat:@"%@", (active_component_bit_vector == MASK_ALL) ? @"11111" : @"00000"]];
@@ -473,7 +473,7 @@ static NSString * (^NSStringFromBitVector)(uint8_t) = ^ NSString * (uint8_t bit_
         [self setUserInteractionEnabled:FALSE];
     });
     dispatch_barrier_sync(enumerator_queue(), ^{
-        handle_touch(set_state(1));
+        handle_touch(set_state((Log2n(highlighted_property_bit_vector))));
     });
     dispatch_barrier_sync(enumerator_queue(), ^{
         [self setUserInteractionEnabled:TRUE];
