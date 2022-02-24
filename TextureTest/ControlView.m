@@ -180,6 +180,7 @@ static uint8_t (^(^filter)(__strong UIButton * _Nonnull [_Nonnull 5]))(void (^__
             dispatch_barrier_async(dispatch_get_main_queue(), ^{
                 [button_collection[index] setSelected:(selected_property_bit_vector >> index) & 1UL];
                 [button_collection[index] setHidden:(hidden_property_bit_vector >> index) & 1UL];
+                [button_collection[index] setHighlighted:(highlighted_property_bit_vector >> index) & 1UL];
             });
             enumeration(button_collection[index], (unsigned int)index);
         });
@@ -187,20 +188,43 @@ static uint8_t (^(^filter)(__strong UIButton * _Nonnull [_Nonnull 5]))(void (^__
     };
 };
 
-static long (^(^reduce)(__strong UIButton * _Nonnull [_Nonnull 5]))(void (^__strong)(UIButton * _Nonnull, unsigned int)) = ^ (__strong UIButton * _Nonnull button_collection[5]) {
-    return ^ long (void(^enumeration)(UIButton * _Nonnull, unsigned int)) {
+
+static uint8_t (^(^reduce)(__strong UIButton * _Nonnull [_Nonnull 5]))(void (^__strong)(UIButton * _Nonnull, unsigned int)) = ^ (__strong UIButton * _Nonnull button_collection[5]) {
+    return ^ uint8_t (void(^enumeration)(UIButton * _Nonnull, unsigned int)) {
+        dispatch_apply(5, DISPATCH_APPLY_AUTO, ^(size_t index) {
+            dispatch_barrier_async(dispatch_get_main_queue(), ^{
+                [button_collection[index] setSelected:(selected_property_bit_vector >> index) & 1UL];
+                [button_collection[index] setHidden:(hidden_property_bit_vector >> index) & 1UL];
+                [button_collection[index] setHighlighted:(highlighted_property_bit_vector >> index) & 1UL];
+            });
+        });
         unsigned int selected_property_bit_position = (Log2n(selected_property_bit_vector));
         enumeration(button_collection[selected_property_bit_position], (unsigned int)selected_property_bit_position);
         return active_component_bit_vector;
     };
 };
 
-long (^(^set_state)(unsigned int))(CGPoint, CGFloat) = ^ (unsigned int touch_property) {
+
+//static long (^(^reduce)(__strong UIButton * _Nonnull [_Nonnull 5]))(void (^__strong)(UIButton * _Nonnull, unsigned int)) = ^ (__strong UIButton * _Nonnull button_collection[5]) {
+//    return ^ long (void(^enumeration)(UIButton * _Nonnull, unsigned int)) {
+//        unsigned int selected_property_bit_position = (Log2n(selected_property_bit_vector));
+//        dispatch_barrier_async(dispatch_get_main_queue(), ^{
+//            [button_collection[selected_property_bit_position] setSelected:(selected_property_bit_vector >> selected_property_bit_position) & 1UL];
+//            [button_collection[selected_property_bit_position] setHidden:(hidden_property_bit_vector >> selected_property_bit_position) & 1UL];
+//            [button_collection[selected_property_bit_position] setHighlighted:(highlighted_property_bit_vector >> selected_property_bit_position) & 1UL];
+//        });
+//        enumeration(button_collection[selected_property_bit_position], (unsigned int)selected_property_bit_position);
+//        return active_component_bit_vector;
+//    };
+//};
+
+long (^(^set_state)(void))(CGPoint, CGFloat) = ^{
     printf("\t\tset_state\n");
     active_component_bit_vector = ~active_component_bit_vector;
     // converse nonimplication
     uint8_t selected_property_bit_mask = MASK_NONE;
-    selected_property_bit_mask ^= (1UL << touch_property) & ~active_component_bit_vector;
+    unsigned int highlighted_property_bit_position = (Log2n(highlighted_property_bit_vector));
+    selected_property_bit_mask ^= (1UL << highlighted_property_bit_position) & ~active_component_bit_vector;
     selected_property_bit_vector = (selected_property_bit_vector | selected_property_bit_mask) & ~selected_property_bit_vector;
     
     // exclusive disjunction
@@ -208,6 +232,9 @@ long (^(^set_state)(unsigned int))(CGPoint, CGFloat) = ^ (unsigned int touch_pro
     hidden_property_bit_vector = selected_property_bit_mask & ~active_component_bit_vector;
     hidden_property_bit_vector ^= MASK_ALL;
     hidden_property_bit_vector ^= active_component_bit_vector;
+    
+    // reset highlighted property bit vector
+    highlighted_property_bit_vector = MASK_NONE;
     
     return ^ long (CGPoint center_point, CGFloat radius) {
         ((active_component_bit_vector & MASK_ALL) &&
@@ -306,6 +333,7 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
     static CGFloat touch_angle;
     static CGPoint touch_point;
     static CGFloat radius;
+    static unsigned int touch_property;
     draw_tick_wheel = draw_tick_wheel_init((ControlView *)view, &touch_angle, &radius);
     return ^ (__strong UITouch * _Nullable touch) {
         return ^ (long (^transition)(CGPoint center_point, CGFloat radius)) {
@@ -327,6 +355,9 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
                 radius = fmaxf(CGRectGetMidX(((ControlView *)view).bounds),
                                fminf((sqrt(pow(touch_point.x - center_point.x, 2.0) + pow(touch_point.y - center_point.y, 2.0))),
                                      CGRectGetMaxX(((ControlView *)view).bounds)));
+                
+                touch_property = (unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 4.0));
+                highlighted_property_bit_vector = (((active_component_bit_vector >> touch_property) & 1UL) << touch_property);
             });
             
             dispatch_barrier_sync(enumerator_queue(), ^{
@@ -336,11 +367,9 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
             dispatch_barrier_sync(enumerator_queue(), ^{
                 ((active_component_bit_vector & MASK_ALL)
                  && filter(buttons)(^ (ControlView * view, CGFloat * r) {
-                    unsigned int touch_property = (unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 4.0));
-                    highlighted_property_bit_vector = (((active_component_bit_vector >> touch_property) & 1UL) << touch_property);
                     return ^ (UIButton * _Nonnull button, unsigned int index) {
                         dispatch_barrier_async(dispatch_get_main_queue(), ^{
-                            [button setHighlighted:((active_component_bit_vector >> button.tag) & 1UL) & (UITouchPhaseEnded ^ touch.phase) & !(touch_property ^ button.tag) & ((highlighted_property_bit_vector >> button.tag) & 1UL)];
+//                            [button setHighlighted:((active_component_bit_vector >> button.tag) & 1UL) & (UITouchPhaseEnded ^ touch.phase) & !(touch_property ^ button.tag) & ((highlighted_property_bit_vector >> button.tag) & 1UL)];
                             [button setCenter:^ (CGFloat radians) {
                                 return CGPointMake(center_point.x - *r * -cos(radians), center_point.y - *r * -sin(radians));
                             }(degreesToRadians(rescale(button.tag, 0.0, 4.0, 180.0, 270.0)))]; // Consider using touch_property or index * (270 - 180) / 4 instead of rescaling
@@ -377,9 +406,9 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
 };
 
 static NSString * (^NSStringFromBitVector)(uint8_t) = ^ NSString * (uint8_t bit_vector) {
-    NSMutableString * bit_vector_str = [[NSMutableString alloc] initWithCapacity:5];
-    for (int i = sizeof(char) * 4; i >= 0; i--)
-        [bit_vector_str appendString:[NSString stringWithFormat:@"%d", (bit_vector & (1 << i)) >> i]];
+    NSMutableString * bit_vector_str = [[NSMutableString alloc] initWithCapacity:CaptureDeviceConfigurationControlPropertyAll];
+    for (int property = CaptureDeviceConfigurationControlPropertyTorchLevel; property < CaptureDeviceConfigurationControlPropertyAll; property++)
+        [bit_vector_str appendString:[NSString stringWithFormat:@"%d", (bit_vector & (1 << property)) >> property]];
     return (NSString *)bit_vector_str;
 };
 
@@ -458,7 +487,7 @@ static NSString * (^NSStringFromBitVector)(uint8_t) = ^ NSString * (uint8_t bit_
     // handle_touch() should require the returned block from set_state()
     
     
-    handle_touch(set_state((Log2n(highlighted_property_bit_vector))));
+    handle_touch(set_state());
     
     dispatch_barrier_sync(enumerator_queue(), ^{
         [self.stateBitVectorLabel setText:[NSString stringWithFormat:@"%@", (active_component_bit_vector == MASK_ALL) ? @"11111" : @"00000"]];
@@ -473,7 +502,7 @@ static NSString * (^NSStringFromBitVector)(uint8_t) = ^ NSString * (uint8_t bit_
         [self setUserInteractionEnabled:FALSE];
     });
     dispatch_barrier_sync(enumerator_queue(), ^{
-        handle_touch(set_state((Log2n(highlighted_property_bit_vector))));
+        handle_touch(set_state());
     });
     dispatch_barrier_sync(enumerator_queue(), ^{
         [self setUserInteractionEnabled:TRUE];

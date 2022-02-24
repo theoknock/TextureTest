@@ -16,7 +16,8 @@ typedef enum : NSUInteger {
     CaptureDeviceConfigurationControlPropertyLensPosition,
     CaptureDeviceConfigurationControlPropertyExposureDuration,
     CaptureDeviceConfigurationControlPropertyISO,
-    CaptureDeviceConfigurationControlPropertyVideoZoomFactor
+    CaptureDeviceConfigurationControlPropertyVideoZoomFactor,
+    CaptureDeviceConfigurationControlPropertyAll
 } CaptureDeviceConfigurationControlProperty;
 
 @protocol CaptureDeviceConfigurationControlPropertyDelegate <NSObject>
