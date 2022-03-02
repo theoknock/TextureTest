@@ -22,16 +22,9 @@ typedef enum : NSUInteger {
 
 @protocol CaptureDeviceConfigurationControlPropertyDelegate <NSObject>
 @required
-@property (nonatomic) CGFloat lensPosition_;
-- (void)setLensPosition_:(CGFloat)lensPosition;
-@property (nonatomic) CGFloat torchLevel_;
-- (void)setTorchLevel_:(CGFloat)torchLevel;
-@property (nonatomic) CGFloat ISO_;
-- (void)setISO_:(CGFloat)ISO;
+
 - (float)maxISO_;
 - (float)minISO_;
-- (void)setExposureDuration_:(CGFloat)exposureDuration;
-
 - (void)setCaptureDeviceConfigurationControlPropertyUsingBlock:(void(^)(AVCaptureDevice *))captureDeviceConfigurationControlPropertyBlock;
 
 @end
