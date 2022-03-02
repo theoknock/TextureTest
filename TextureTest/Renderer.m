@@ -87,10 +87,7 @@ static unsigned int rotation_degrees;
     return self;
 }
 
-- (void)_loadMetalWithView:(nonnull MTKView *)view;
-{
-    /// Load Metal state objects and initialize renderer dependent view properties
-
+- (void)_loadMetalWithView:(nonnull MTKView *)view {
     view.depthStencilPixelFormat = MTLPixelFormatDepth32Float_Stencil8;
     view.colorPixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     view.sampleCount = 1;
@@ -140,14 +137,6 @@ static unsigned int rotation_degrees;
     depthStateDesc.depthCompareFunction = MTLCompareFunctionLess;
     depthStateDesc.depthWriteEnabled = YES;
     _depthState = [_device newDepthStencilStateWithDescriptor:depthStateDesc];
-
-    for(NSUInteger i = 0; i < MaxBuffersInFlight; i++)
-    {
-        _dynamicUniformBuffer[i] = [_device newBufferWithLength:sizeof(Uniforms)
-                                                        options:MTLResourceStorageModeShared];
-
-        _dynamicUniformBuffer[i].label = @"UniformBuffer";
-    }
 
     _commandQueue = [_device newCommandQueue];
 }
