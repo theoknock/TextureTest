@@ -432,7 +432,17 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
                             };
                         }(rescale(touch_angle, 180.0, 270.0, [delegate minISO_], [delegate maxISO_]))];
                     else if (button.tag == CaptureDeviceConfigurationControlPropertyExposureDuration)
-                        [delegate setExposureDuration_:rescale(touch_angle, 180.0, 270.0, 0.0, 1.0)];
+                        [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat exposureDuration){
+                            return ^ (AVCaptureDevice * capture_device) {
+                                static const float kExposureDurationPower = 5;
+                                static const float kExposureMinimumDuration = 1.0/1000;
+                                double p = pow( exposureDuration, kExposureDurationPower ); // Apply power function to expand slider's low-end range
+                                double minDurationSeconds = MAX( CMTimeGetSeconds(capture_device.activeFormat.minExposureDuration ), kExposureMinimumDuration );
+                                double maxDurationSeconds = 1.0/3.0;//CMTimeGetSeconds( self.videoDevice.activeFormat.maxExposureDuration );
+                                double newDurationSeconds = p * ( maxDurationSeconds - minDurationSeconds ) + minDurationSeconds; // Scale from 0-1 slider range to actual duration
+                                [capture_device setExposureModeCustomWithDuration:CMTimeMakeWithSeconds( newDurationSeconds, 1000*1000*1000 )  ISO:AVCaptureISOCurrent completionHandler:nil];
+                            };
+                        }(rescale(touch_angle, 180.0, 270.0, 0.0, 1.0))];
                     [((ControlView *)view) setNeedsDisplay];
                 }));
             });
