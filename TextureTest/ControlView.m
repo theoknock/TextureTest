@@ -253,23 +253,6 @@ static long (^(^integrate)(long))(long(^ _Nullable (^__strong)(long))(CADisplayL
 //};
 
 
-
-//
-// To-Do:
-//
-// start_transition() takes set_state()
-// set_state takes end_transition()
-//
-// start_transition() executes set_state() when the animation timer is suspended
-// set_state() executes end_transition()
-
-// OR
-
-// transition() takes animation()
-// animation() takes set_state()
-// animation() returns animation()
-//
-
 long (^(^set_state)(void))(CGPoint, CGFloat) = ^{
     printf("\t\tset_state\n");
     active_component_bit_vector = ~active_component_bit_vector;
@@ -427,8 +410,19 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
                     else if (button.tag == CaptureDeviceConfigurationControlPropertyLensPosition)
                         [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat videoZoomFactor){
                             return ^ (AVCaptureDevice * capture_device) {
-                                [delegate setLensPosition_:(rescale(touch_angle, 180.0, 270.0, 0.0, 1.0))];
-                                
+                                [capture_device setFocusModeLockedWithLensPosition:(rescale(touch_angle, 180.0, 270.0, 0.0, 1.0)) completionHandler:nil];
+                            };
+                        }(rescale(touch_angle, 180.0, 270.0, 0.0, 1.0))];
+                    else if (button.tag == CaptureDeviceConfigurationControlPropertyTorchLevel)
+                        [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat videoZoomFactor){
+                            return ^ (AVCaptureDevice * capture_device) {
+                                __autoreleasing NSError * error = nil;
+                                if (([[NSProcessInfo processInfo] thermalState] != NSProcessInfoThermalStateCritical && [[NSProcessInfo processInfo] thermalState] != NSProcessInfoThermalStateSerious)) {
+                                    if (rescale(touch_angle, 180.0, 270.0, 0.0, 1.0) != 0)
+                                        [capture_device setTorchModeOnWithLevel:rescale(touch_angle, 180.0, 270.0, 0.0, 1.0) error:&error];
+                                    else
+                                        [capture_device setTorchMode:AVCaptureTorchModeOff];
+                                }
                             };
                         }(rescale(touch_angle, 180.0, 270.0, 0.0, 1.0))];
                     else if (button.tag == CaptureDeviceConfigurationControlPropertyTorchLevel)

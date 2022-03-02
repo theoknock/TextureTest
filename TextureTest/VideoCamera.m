@@ -198,7 +198,7 @@ dispatch_queue_t video_data_output_sample_buffer_delegate_queue;
                                       userInfo:@{@"Error Code" : @(error.code)}];
             @throw exception;
         }
-        if ([VideoCamera.captureDevice lockForConfiguration:&error] && ([[NSProcessInfo processInfo] thermalState] != NSProcessInfoThermalStateCritical && [[NSProcessInfo processInfo] thermalState] != NSProcessInfoThermalStateSerious)) {
+        if (([[NSProcessInfo processInfo] thermalState] != NSProcessInfoThermalStateCritical && [[NSProcessInfo processInfo] thermalState] != NSProcessInfoThermalStateSerious)) {
             if (torchLevel != 0)
                 [VideoCamera.captureDevice setTorchModeOnWithLevel:torchLevel error:&error];
             else
@@ -211,8 +211,6 @@ dispatch_queue_t video_data_output_sample_buffer_delegate_queue;
               ((NSNumber *)[exception.userInfo valueForKey:@"Error Code"]).unsignedIntegerValue);
     } @finally {
         [VideoCamera.captureDevice unlockForConfiguration];
-        [self lensPosition_];
-//        printf("lensPosition == %f\n", lensPosition);
     }
 }
 
