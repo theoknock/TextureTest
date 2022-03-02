@@ -240,8 +240,6 @@ dispatch_queue_t video_data_output_sample_buffer_delegate_queue;
               ((NSNumber *)[exception.userInfo valueForKey:@"Error Code"]).unsignedIntegerValue);
     } @finally {
         [VideoCamera.captureDevice unlockForConfiguration];
-        [self lensPosition_];
-//        printf("lensPosition == %f\n", lensPosition);
     }
 }
 

@@ -408,27 +408,29 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
                             };
                         }(rescale(touch_angle, 180.0, 270.0, 1.0, 9.0))];
                     else if (button.tag == CaptureDeviceConfigurationControlPropertyLensPosition)
-                        [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat videoZoomFactor){
+                        [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat lensPosition){
                             return ^ (AVCaptureDevice * capture_device) {
-                                [capture_device setFocusModeLockedWithLensPosition:(rescale(touch_angle, 180.0, 270.0, 0.0, 1.0)) completionHandler:nil];
+                                [capture_device setFocusModeLockedWithLensPosition:lensPosition completionHandler:nil];
                             };
                         }(rescale(touch_angle, 180.0, 270.0, 0.0, 1.0))];
                     else if (button.tag == CaptureDeviceConfigurationControlPropertyTorchLevel)
-                        [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat videoZoomFactor){
+                        [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat torchLevel){
                             return ^ (AVCaptureDevice * capture_device) {
                                 __autoreleasing NSError * error = nil;
                                 if (([[NSProcessInfo processInfo] thermalState] != NSProcessInfoThermalStateCritical && [[NSProcessInfo processInfo] thermalState] != NSProcessInfoThermalStateSerious)) {
-                                    if (rescale(touch_angle, 180.0, 270.0, 0.0, 1.0) != 0)
-                                        [capture_device setTorchModeOnWithLevel:rescale(touch_angle, 180.0, 270.0, 0.0, 1.0) error:&error];
+                                    if (torchLevel != 0)
+                                        [capture_device setTorchModeOnWithLevel:torchLevel error:&error];
                                     else
                                         [capture_device setTorchMode:AVCaptureTorchModeOff];
                                 }
                             };
                         }(rescale(touch_angle, 180.0, 270.0, 0.0, 1.0))];
-                    else if (button.tag == CaptureDeviceConfigurationControlPropertyTorchLevel)
-                        [delegate setTorchLevel_:rescale(touch_angle, 180.0, 270.0, 0.0, 1.0)];
                     else if (button.tag == CaptureDeviceConfigurationControlPropertyISO)
-                        [delegate setISO_:rescale(touch_angle, 180.0, 270.0, [delegate minISO_], [delegate maxISO_])];
+                        [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat ISO){
+                            return ^ (AVCaptureDevice * capture_device) {
+                                [capture_device setExposureModeCustomWithDuration:AVCaptureExposureDurationCurrent ISO:ISO completionHandler:nil];
+                            };
+                        }(rescale(touch_angle, 180.0, 270.0, [delegate minISO_], [delegate maxISO_]))];
                     else if (button.tag == CaptureDeviceConfigurationControlPropertyExposureDuration)
                         [delegate setExposureDuration_:rescale(touch_angle, 180.0, 270.0, 0.0, 1.0)];
                     [((ControlView *)view) setNeedsDisplay];
