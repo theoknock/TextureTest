@@ -357,6 +357,7 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
     static CGFloat touch_angle;
     static CGPoint touch_point;
     static CGFloat radius;
+    static unsigned int touch_property;
     draw_tick_wheel = draw_tick_wheel_init((ControlView *)view, &touch_angle, &radius);
     return ^ (__strong UITouch * _Nullable touch) {
         return ^ (long (^transition)(CGPoint center_point, CGFloat radius)) {
@@ -375,15 +376,15 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
                                fminf((sqrt(pow(touch_point.x - center_point.x, 2.0) + pow(touch_point.y - center_point.y, 2.0))),
                                      CGRectGetMaxX(((ControlView *)view).bounds)));
                 
-                {
-                    unsigned int touch_property = ((unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 4.0)));
-                    highlighted_property_bit_vector = (((active_component_bit_vector & MASK_ALL) & 1UL) << touch_property);
-                };
+                touch_property = ((unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 4.0)));
+                highlighted_property_bit_vector = (((active_component_bit_vector & MASK_ALL) & 1UL) << touch_property);
+
             });
             
             dispatch_barrier_sync(enumerator_queue(), ^{
                 ((active_component_bit_vector & MASK_ALL)
                  && filter(buttons)(^ (ControlView * view, CGFloat * r) {
+                    highlighted_property_bit_vector = (((active_component_bit_vector & MASK_ALL) & 1UL) << touch_property);
                     return ^ (UIButton * _Nonnull button, unsigned int index) {
                         dispatch_barrier_async(dispatch_get_main_queue(), ^{
                             //                            [button setHighlighted:((active_component_bit_vector >> button.tag) & 1UL) & (UITouchPhaseEnded ^ touch.phase) & !(touch_property ^ button.tag) & ((highlighted_property_bit_vector >> button.tag) & 1UL)];
