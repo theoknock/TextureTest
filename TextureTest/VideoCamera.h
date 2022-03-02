@@ -29,9 +29,7 @@ extern CGSize videoDimensions;
 
 - (void)setCaptureDeviceConfigurationControlPropertyUsingBlock:(void(^)(AVCaptureDevice *))captureDeviceConfigurationControlPropertyBlock;
 
-
-
-@property (class, nonatomic, strong, readwrite) __block AVCaptureDevice * captureDevice;
+@property (class, nonatomic, strong, readwrite) AVCaptureDevice * captureDevice;
 
 @end
 

@@ -34,10 +34,6 @@ typedef enum : NSUInteger {
 
 - (void)setCaptureDeviceConfigurationControlPropertyUsingBlock:(void(^)(AVCaptureDevice *))captureDeviceConfigurationControlPropertyBlock;
 
-
-
-
-
 @end
 
 @interface ControlView : UIView

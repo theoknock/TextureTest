@@ -12,7 +12,7 @@ CGSize videoDimensions;
 @interface VideoCamera ()
 {
     AVCaptureSession * captureSession;
-//    AVCaptureDevice * captureDevice;
+    AVCaptureDevice * captureDevice;
     AVCaptureDeviceInput * captureInput;
 //    AVCaptureVideoPreviewLayer *previewLayer;
     AVCaptureVideoDataOutput * captureOutput;
