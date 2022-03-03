@@ -19,6 +19,8 @@
     [super viewDidLoad];
     
     _view = (MTKView *)self.view;
+    [_view.layer setAffineTransform:CGAffineTransformMakeRotation(degreesToRadians(360.0))];
+    [_view.layer setAffineTransform:CGAffineTransformScale(_view.layer.affineTransform, -1, -1)];
     _view.device = MTLCreateSystemDefaultDevice();
     _view.backgroundColor = UIColor.blackColor;
     

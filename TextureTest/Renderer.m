@@ -233,9 +233,6 @@
 
 - (void)mtkView:(nonnull MTKView *)view drawableSizeWillChange:(CGSize)size
 {
-    CGSize scaled_size = CGSizeMake(size.width * view.layer.contentsScale, size.height * view.layer.contentsScale);
-    [view.layer setAffineTransform:CGAffineTransformMakeRotation(degreesToRadians(360.0))];
-    [view.layer setAffineTransform:CGAffineTransformScale(view.layer.affineTransform, -1, -1)];
     [view setDrawableSize:size];
 }
 
