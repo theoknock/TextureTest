@@ -40,10 +40,10 @@ typedef enum : NSUInteger {
 } CaptureDeviceConfigurationControlState;
 
 static UIImageSymbolConfiguration * (^CaptureDeviceConfigurationControlPropertySymbolImageConfiguration)(CaptureDeviceConfigurationControlState) = ^ UIImageSymbolConfiguration * (CaptureDeviceConfigurationControlState state) {
-    UIImageSymbolConfiguration * symbol_point_size_weight = [UIImageSymbolConfiguration configurationWithPointSize:42.0 weight:UIImageSymbolWeightUltraLight];
+    UIImageSymbolConfiguration * symbol_point_size_weight = [UIImageSymbolConfiguration configurationWithPointSize:42.0 weight:UIImageSymbolWeightLight];
     switch (state) {
         case CaptureDeviceConfigurationControlStateDeselected: {
-            UIImageSymbolConfiguration * symbol_color             = [UIImageSymbolConfiguration configurationWithHierarchicalColor:[UIColor systemIndigoColor]];
+            UIImageSymbolConfiguration * symbol_color             = [UIImageSymbolConfiguration configurationWithHierarchicalColor:[UIColor systemBlueColor]];
             return [symbol_color configurationByApplyingConfiguration:symbol_point_size_weight];
         }
             break;
@@ -615,6 +615,9 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
 
 - (void)awakeFromNib {
     [super awakeFromNib];
+    
+    [self.layer setAffineTransform:CGAffineTransformMakeRotation(degreesToRadians(360.0))];
+    [self.layer setAffineTransform:CGAffineTransformScale(self.layer.affineTransform, -1, -1)];
     
     [self updateStateLabels];
         haptic_feedback = [[UISelectionFeedbackGenerator alloc] init];
