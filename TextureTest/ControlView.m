@@ -12,6 +12,7 @@
 #include <simd/simd.h>
 #include <stdio.h>
 #include <math.h>
+#include <stdatomic.h>
 @import Accelerate;
 @import CoreHaptics;
 
@@ -76,12 +77,17 @@ static UIImage * (^CaptureDeviceConfigurationControlPropertySymbolImage)(Capture
     return [UIImage systemImageNamed:CaptureDeviceConfigurationControlPropertySymbol(property, state) withConfiguration:CaptureDeviceConfigurationControlPropertySymbolImageConfiguration(state)];
 };
 
-#define MASK_ALL  (1UL << 0 | 1UL << 1 | 1UL << 2 | 1UL << 3 | 1UL << 4)
+const unsigned int capture_device_configuration_control_property_torch_level_bit = (1UL << 0);
+const unsigned int capture_device_configuration_control_property_lens_position_bit = (1UL << 1);
+const unsigned int capture_device_configuration_control_property_exposure_duration_bit = (1UL << 2);
+const unsigned int capture_device_configuration_control_property_iso_bit = (1UL << 3);
+const unsigned int capture_device_configuration_control_property_video_zoom_factor_bit = (1UL << 4);
+#define MASK_ALL  (capture_device_configuration_control_property_torch_level_bit | capture_device_configuration_control_property_lens_position_bit | capture_device_configuration_control_property_exposure_duration_bit | capture_device_configuration_control_property_iso_bit | capture_device_configuration_control_property_video_zoom_factor_bit)
 #define MASK_NONE (  0 << 0 |   0 << 1 |   0 << 2 |   0 << 3 |   0 << 4)
-static uint8_t active_component_bit_vector     = MASK_ALL;
-static uint8_t highlighted_property_bit_vector = MASK_NONE;
-static uint8_t selected_property_bit_vector    = MASK_NONE;
-static uint8_t hidden_property_bit_vector      = MASK_NONE;
+_Atomic unsigned int active_component_bit_vector     = MASK_ALL;
+_Atomic unsigned int highlighted_property_bit_vector = MASK_NONE;
+_Atomic unsigned int selected_property_bit_vector    = MASK_NONE;
+_Atomic unsigned int hidden_property_bit_vector      = MASK_NONE;
 
 static __strong UIButton * _Nonnull buttons[5];
 static UIButton * (^capture_device_configuration_control_property_button)(CaptureDeviceConfigurationControlProperty) = ^ (CaptureDeviceConfigurationControlProperty property) {
@@ -262,11 +268,10 @@ static Log2n_Block Log2n_recursive = ^ long (unsigned int property) {
 
 static long (^(^reduce)(__strong UIButton * _Nonnull [_Nonnull 5]))(void (^__strong)(UIButton * _Nonnull, unsigned int)) = ^ (__strong UIButton * _Nonnull button_collection[5]) {
     return ^ long (void(^reduction)(UIButton * _Nonnull, unsigned int)) {
-        dispatch_barrier_async(dispatch_get_main_queue(), ^{
+        dispatch_apply(1, DISPATCH_APPLY_AUTO, ^(size_t index) {
             unsigned int selected_property_bit_position = Log2n_recursive(selected_property_bit_vector);
-            printf("\t\tselected_property_bit_position (reduce) == %d\n", selected_property_bit_position);
-            reduction(capture_device_configuration_control_property_button(selected_property_bit_position), (unsigned int)capture_device_configuration_control_property_button(selected_property_bit_position).tag);
-            printf("\t\t(unsigned int)capture_device_configuration_control_property_button(selected_property_bit_position).tag (reduce) == %d\n", (unsigned int)capture_device_configuration_control_property_button(selected_property_bit_position).tag);
+            reduction(capture_device_configuration_control_property_button(selected_property_bit_position), selected_property_bit_position);
+
         });
         return active_component_bit_vector;
     };
@@ -286,9 +291,9 @@ static long (^(^integrate)(long))(long(^ _Nullable (^__strong)(long))(CADisplayL
                 ((long)0 || (cancel = (integrand(frame)))) && cancel(display_link); // runs a cancel handler if one was provided
                 return active_component_bit_vector;
             }())
-
+            
             ||
-
+            
             ((frames | 1) && ^ long {
                 [display_link invalidate];
                 return active_component_bit_vector;
@@ -302,74 +307,75 @@ static long (^(^integrate)(long))(long(^ _Nullable (^__strong)(long))(CADisplayL
 // _Nullable block parameters must return long (for bitwise-null predicate)
 // _Nonnull block parameters can return void
 long (^set_state)(void (^ _Nonnull)(long (^ _Nullable)(void))) = ^ long (void (^ _Nonnull touch_handler)(long (^ _Nullable)(void))) {
-    active_component_bit_vector = ~active_component_bit_vector;
+    dispatch_barrier_async(enumerator_queue(), ^{
+        active_component_bit_vector = ~active_component_bit_vector;
+        
+        // converse nonimplication
+        uint8_t selected_property_bit_mask = MASK_NONE;
+        uint8_t selected_property_bit_position = (Log2n_recursive(selected_property_bit_vector));
+        uint8_t highlighted_property_bit_position = (Log2n_recursive(highlighted_property_bit_vector));
+        selected_property_bit_mask ^= (1UL << highlighted_property_bit_position) & ~active_component_bit_vector;
+        selected_property_bit_vector = (selected_property_bit_vector | selected_property_bit_mask) & ~selected_property_bit_vector;
+        
+        // exclusive disjunction
+        hidden_property_bit_vector = ~active_component_bit_vector;
+        hidden_property_bit_vector = selected_property_bit_mask & ~active_component_bit_vector;
+        hidden_property_bit_vector ^= MASK_ALL;
+        hidden_property_bit_vector ^= active_component_bit_vector;
+        
+        // highlighted_reset
+        //    highlighted_property_bit_vector = ~active_component_bit_vector;
+        //    highlighted_property_bit_vector = MASK_NONE & ~active_component_bit_vector;
+        //    highlighted_property_bit_vector ^= MASK_ALL;
+        //    highlighted_property_bit_vector ^= active_component_bit_vector;
+        
+        
+        
+        
+        
+        // To-Do: Split the animations in half, with 5 buttons exiting and one entering and vice versa
+        //        (maybe by setting state between exit and entrance)
+        //    return ^ long (CGPoint center_point, CGFloat radius) {
+        //        ((active_component_bit_vector & MASK_ALL) &&
+        //         integrate((long)30)(^ (long frame) {
+        //            return ^ long (CADisplayLink * display_link) {
+        //                CGFloat angle_adj = (360.0 / 30.0) * frame;
+        //                filter(buttons)(^{
+        //                    return ^ (UIButton * _Nonnull button, unsigned int index) {
+        //                        dispatch_barrier_async(dispatch_get_main_queue(), ^{
+        //                            [button setCenter:^ (CGFloat radians) {
+        //                                return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
+        //                            }(degreesToRadians(rescale(index, 0.0, 4.0, 180.0 + angle_adj, 270.0 + angle_adj)))];
+        //                        });
+        //                    };
+        //                }());
+        //                return (long)1;
+        //            };
+        //        }))
+        //
+        //        ||
+        //
+        //        ((active_component_bit_vector & ~MASK_ALL) &&
+        //         integrate((long)30)(^ (long frame) {
+        //            return ^ long (CADisplayLink * display_link) {
+        //                CGFloat angle_adj = (360.0 / 30.0) * frame;
+        //                reduce(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
+        //                    dispatch_barrier_async(dispatch_get_main_queue(), ^{
+        //                        [button setCenter:^ (CGFloat radians) {
+        //                            return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
+        //                        }(degreesToRadians(rescale(index, 0.0, 4.0, 180.0 - angle_adj, 270.0 - angle_adj)))];
+        //                    });
+        //                });
+        ////                [display_link invalidate]; // test -- remove
+        //                return (long)1;
+        //            };
+        //        }));
+        //        return (long)1;
+        //    };
+        highlighted_property_bit_vector = MASK_NONE;
+    });
     
-    // converse nonimplication
-    // To-Do: Fix button-display issue when the same property is selected twice in a row or the exposure-duration property is selected
-    uint8_t selected_property_bit_mask = MASK_NONE;
-    uint8_t selected_property_bit_position = (Log2n_recursive(selected_property_bit_vector));
-    uint8_t highlighted_property_bit_position = (Log2n_recursive(highlighted_property_bit_vector));
-    selected_property_bit_mask ^= (1UL << highlighted_property_bit_position) & ~active_component_bit_vector;
-    selected_property_bit_vector = (selected_property_bit_vector | selected_property_bit_mask) & ~selected_property_bit_vector;
-    
-    // exclusive disjunction
-    hidden_property_bit_vector = ~active_component_bit_vector;
-    hidden_property_bit_vector = selected_property_bit_mask & ~active_component_bit_vector;
-    hidden_property_bit_vector ^= MASK_ALL;
-    hidden_property_bit_vector ^= active_component_bit_vector;
-    
-    // highlighted_reset
-//    highlighted_property_bit_vector = ~active_component_bit_vector;
-//    highlighted_property_bit_vector = MASK_NONE & ~active_component_bit_vector;
-//    highlighted_property_bit_vector ^= MASK_ALL;
-//    highlighted_property_bit_vector ^= active_component_bit_vector;
-    
-    
-    
-
-    
-    // To-Do: Split the animations in half, with 5 buttons exiting and one entering and vice versa
-    //        (maybe by setting state between exit and entrance)
-//    return ^ long (CGPoint center_point, CGFloat radius) {
-//        ((active_component_bit_vector & MASK_ALL) &&
-//         integrate((long)30)(^ (long frame) {
-//            return ^ long (CADisplayLink * display_link) {
-//                CGFloat angle_adj = (360.0 / 30.0) * frame;
-//                filter(buttons)(^{
-//                    return ^ (UIButton * _Nonnull button, unsigned int index) {
-//                        dispatch_barrier_async(dispatch_get_main_queue(), ^{
-//                            [button setCenter:^ (CGFloat radians) {
-//                                return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
-//                            }(degreesToRadians(rescale(button.tag, 0.0, 4.0, 180.0 + angle_adj, 270.0 + angle_adj)))];
-//                        });
-//                    };
-//                }());
-//                return (long)1;
-//            };
-//        }))
-//
-//        ||
-//
-//        ((active_component_bit_vector & ~MASK_ALL) &&
-//         integrate((long)30)(^ (long frame) {
-//            return ^ long (CADisplayLink * display_link) {
-//                CGFloat angle_adj = (360.0 / 30.0) * frame;
-//                reduce(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
-//                    dispatch_barrier_async(dispatch_get_main_queue(), ^{
-//                        [button setCenter:^ (CGFloat radians) {
-//                            return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
-//                        }(degreesToRadians(rescale(button.tag, 0.0, 4.0, 180.0 - angle_adj, 270.0 - angle_adj)))];
-//                    });
-//                });
-////                [display_link invalidate]; // test -- remove
-//                return (long)1;
-//            };
-//        }));
-//        return (long)1;
-//    };
-    highlighted_property_bit_vector = MASK_NONE;
-    
-    touch_handler(nil); // buttons toggle correctly, but do not position correctly
+    dispatch_barrier_async(enumerator_queue(), ^{ touch_handler(nil); /* the torch-level button does not position correctly when the control returns to the primary state */ });
     
     return (long)1;
 };
@@ -425,7 +431,7 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
     draw_tick_wheel = draw_tick_wheel_init((ControlView *)view, &touch_angle, &radius);
     return ^ (__strong UITouch * _Nullable touch) {
         return ^ (long (^ _Nullable state_setter)(void (^ _Nonnull /* handle_touch (for set_state) */)(long (^ _Nullable /* set_state (a placeholder for handle_touch in this case) */)(void)))) {
-            dispatch_barrier_sync(enumerator_queue(), ^{
+//            dispatch_barrier_sync(enumerator_queue(), ^{
                 touch_point = [touch locationInView:(ControlView *)view];
                 touch_point.x = fmaxf(0.0, fminf(touch_point.x, CGRectGetMaxX(((ControlView *)view).bounds)));
                 touch_point.y = fmaxf(0.0, fminf(touch_point.y, CGRectGetMaxY(((ControlView *)view).bounds)));
@@ -439,17 +445,17 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
                                      CGRectGetMaxX(((ControlView *)view).bounds)));
                 
                 highlighted_property_bit_vector = (((active_component_bit_vector & MASK_ALL) & 1UL) << ((unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 4.0))));
-            });
+//            });
             
-            dispatch_barrier_sync(enumerator_queue(), ^{
+//            dispatch_barrier_sync(enumerator_queue(), ^{
                 ((active_component_bit_vector & MASK_ALL)
                  && filter(buttons)(^ (ControlView * view, CGFloat * r) {
                     return ^ (UIButton * _Nonnull button, unsigned int index) {
                         dispatch_barrier_async(dispatch_get_main_queue(), ^{
-                            //                            [button setHighlighted:((active_component_bit_vector >> button.tag) & 1UL) & (UITouchPhaseEnded ^ touch.phase) & !(touch_property ^ button.tag) & ((highlighted_property_bit_vector >> button.tag) & 1UL)];
+                            //                            [button setHighlighted:((active_component_bit_vector >> index) & 1UL) & (UITouchPhaseEnded ^ touch.phase) & !(touch_property ^ index) & ((highlighted_property_bit_vector >> index) & 1UL)];
                             [button setCenter:^ (CGFloat radians) {
                                 return CGPointMake(center_point.x - *r * -cos(radians), center_point.y - *r * -sin(radians));
-                            }(degreesToRadians(rescale(button.tag, 0.0, 4.0, 180.0, 270.0)))];
+                            }(degreesToRadians(rescale(index, 0.0, 4.0, 180.0, 270.0)))];
                         });
                     };
                 }((ControlView *)view, &radius)))
@@ -461,19 +467,19 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
                         }(degreesToRadians(touch_angle))];
                     });
                     
-                    if (button.tag == CaptureDeviceConfigurationControlPropertyVideoZoomFactor)
+                    if (index == CaptureDeviceConfigurationControlPropertyVideoZoomFactor)
                         [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat videoZoomFactor){
                             return ^ (AVCaptureDevice * capture_device) {
                                 [capture_device setVideoZoomFactor:videoZoomFactor];
                             };
                         }(rescale(touch_angle, 180.0, 270.0, 1.0, 9.0))];
-                    else if (button.tag == CaptureDeviceConfigurationControlPropertyLensPosition)
+                    else if (index == CaptureDeviceConfigurationControlPropertyLensPosition)
                         [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat lensPosition){
                             return ^ (AVCaptureDevice * capture_device) {
                                 [capture_device setFocusModeLockedWithLensPosition:lensPosition completionHandler:nil];
                             };
                         }(rescale(touch_angle, 180.0, 270.0, 0.0, 1.0))];
-                    else if (button.tag == CaptureDeviceConfigurationControlPropertyTorchLevel)
+                    else if (index == CaptureDeviceConfigurationControlPropertyTorchLevel)
                         [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat torchLevel){
                             return ^ (AVCaptureDevice * capture_device) {
                                 __autoreleasing NSError * error = nil;
@@ -485,13 +491,13 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
                                 }
                             };
                         }(rescale(touch_angle, 180.0, 270.0, 0.0, 1.0))];
-                    else if (button.tag == CaptureDeviceConfigurationControlPropertyISO)
+                    else if (index == CaptureDeviceConfigurationControlPropertyISO)
                         [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat ISO){
                             return ^ (AVCaptureDevice * capture_device) {
                                 [capture_device setExposureModeCustomWithDuration:AVCaptureExposureDurationCurrent ISO:ISO completionHandler:nil];
                             };
                         }(rescale(touch_angle, 180.0, 270.0, [delegate minISO_], [delegate maxISO_]))];
-                    else if (button.tag == CaptureDeviceConfigurationControlPropertyExposureDuration)
+                    else if (index == CaptureDeviceConfigurationControlPropertyExposureDuration)
                         [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat exposureDuration){
                             return ^ (AVCaptureDevice * capture_device) {
                                 static const float kExposureDurationPower = 5;
@@ -503,20 +509,20 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
                                 [capture_device setExposureModeCustomWithDuration:CMTimeMakeWithSeconds( newDurationSeconds, 1000*1000*1000 )  ISO:AVCaptureISOCurrent completionHandler:nil];
                             };
                         }(rescale(touch_angle, 180.0, 270.0, 0.0, 1.0))];
-//                    [((ControlView *)view) setNeedsDisplay];
                 }));
-            });
+                [((ControlView *)view) setNeedsDisplay];
+//            });
             
-            dispatch_barrier_sync(enumerator_queue(), ^{
-                ((long)0 || state_setter) && state_setter(^ (long (^ _Nullable set_state)(void)) {
+//            dispatch_barrier_sync(enumerator_queue(), ^{
+            ((long)0 || state_setter) && state_setter(^ (long (^ _Nullable set_state)(void)) {
                     ((active_component_bit_vector & MASK_ALL)
                      && filter(buttons)(^ (ControlView * view, CGFloat * r) {
                         return ^ (UIButton * _Nonnull button, unsigned int index) {
                             dispatch_barrier_async(dispatch_get_main_queue(), ^{
-                                //                            [button setHighlighted:((active_component_bit_vector >> button.tag) & 1UL) & (UITouchPhaseEnded ^ touch.phase) & !(touch_property ^ button.tag) & ((highlighted_property_bit_vector >> button.tag) & 1UL)];
+                                //                            [button setHighlighted:((active_component_bit_vector >> index) & 1UL) & (UITouchPhaseEnded ^ touch.phase) & !(touch_property ^ index) & ((highlighted_property_bit_vector >> index) & 1UL)];
                                 [button setCenter:^ (CGFloat radians) {
                                     return CGPointMake(center_point.x - *r * -cos(radians), center_point.y - *r * -sin(radians));
-                                }(degreesToRadians(rescale(button.tag, 0.0, 4.0, 180.0, 270.0)))]; // Consider using touch_property or index * (270 - 180) / 4 instead of rescaling
+                                }(degreesToRadians(rescale(index, 0.0, 4.0, 180.0, 270.0)))];
                             });
                         };
                     }((ControlView *)view, &radius)))
@@ -527,48 +533,94 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
                                 return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
                             }(degreesToRadians(touch_angle))];
                         });
+                        
+                        if (index == CaptureDeviceConfigurationControlPropertyVideoZoomFactor)
+                            [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat videoZoomFactor){
+                                return ^ (AVCaptureDevice * capture_device) {
+                                    [capture_device setVideoZoomFactor:videoZoomFactor];
+                                };
+                            }(rescale(touch_angle, 180.0, 270.0, 1.0, 9.0))];
+                        else if (index == CaptureDeviceConfigurationControlPropertyLensPosition)
+                            [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat lensPosition){
+                                return ^ (AVCaptureDevice * capture_device) {
+                                    [capture_device setFocusModeLockedWithLensPosition:lensPosition completionHandler:nil];
+                                };
+                            }(rescale(touch_angle, 180.0, 270.0, 0.0, 1.0))];
+                        else if (index == CaptureDeviceConfigurationControlPropertyTorchLevel)
+                            [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat torchLevel){
+                                return ^ (AVCaptureDevice * capture_device) {
+                                    __autoreleasing NSError * error = nil;
+                                    if (([[NSProcessInfo processInfo] thermalState] != NSProcessInfoThermalStateCritical && [[NSProcessInfo processInfo] thermalState] != NSProcessInfoThermalStateSerious)) {
+                                        if (torchLevel != 0)
+                                            [capture_device setTorchModeOnWithLevel:torchLevel error:&error];
+                                        else
+                                            [capture_device setTorchMode:AVCaptureTorchModeOff];
+                                    }
+                                };
+                            }(rescale(touch_angle, 180.0, 270.0, 0.0, 1.0))];
+                        else if (index == CaptureDeviceConfigurationControlPropertyISO)
+                            [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat ISO){
+                                return ^ (AVCaptureDevice * capture_device) {
+                                    [capture_device setExposureModeCustomWithDuration:AVCaptureExposureDurationCurrent ISO:ISO completionHandler:nil];
+                                };
+                            }(rescale(touch_angle, 180.0, 270.0, [delegate minISO_], [delegate maxISO_]))];
+                        else if (index == CaptureDeviceConfigurationControlPropertyExposureDuration)
+                            [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat exposureDuration){
+                                return ^ (AVCaptureDevice * capture_device) {
+                                    static const float kExposureDurationPower = 5;
+                                    static const float kExposureMinimumDuration = 1.0/1000;
+                                    double p = pow( exposureDuration, kExposureDurationPower ); // Apply power function to expand slider's low-end range
+                                    double minDurationSeconds = MAX( CMTimeGetSeconds(capture_device.activeFormat.minExposureDuration ), kExposureMinimumDuration );
+                                    double maxDurationSeconds = 1.0/3.0;//CMTimeGetSeconds( self.videoDevice.activeFormat.maxExposureDuration );
+                                    double newDurationSeconds = p * ( maxDurationSeconds - minDurationSeconds ) + minDurationSeconds; // Scale from 0-1 slider range to actual duration
+                                    [capture_device setExposureModeCustomWithDuration:CMTimeMakeWithSeconds( newDurationSeconds, 1000*1000*1000 )  ISO:AVCaptureISOCurrent completionHandler:nil];
+                                };
+                            }(rescale(touch_angle, 180.0, 270.0, 0.0, 1.0))];
                     }));
-                });
+//                });
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        [((ControlView *)view) setNeedsDisplay];
+                    });
             });
             
-//            dispatch_barrier_sync(enumerator_queue(), ^{
-//                ((long)0 || transition) && transition(center_point, radius); //set_button_state((unsigned int)round(fmaxf(0.0, fminf((unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 4.0)), 4.0))))(center_point, radius);
-//                ((active_component_bit_vector & MASK_ALL)
-//                 && filter(buttons)(^ (ControlView * view, CGFloat * r) {
-//                    return ^ (UIButton * _Nonnull button, unsigned int index) {
-//                        dispatch_barrier_async(dispatch_get_main_queue(), ^{
-//                            //                            [button setHighlighted:((active_component_bit_vector >> button.tag) & 1UL) & (UITouchPhaseEnded ^ touch.phase) & !(touch_property ^ button.tag) & ((highlighted_property_bit_vector >> button.tag) & 1UL)];
-//                            [button setCenter:^ (CGFloat radians) {
-//                                return CGPointMake(center_point.x - *r * -cos(radians), center_point.y - *r * -sin(radians));
-//                            }(degreesToRadians(rescale(button.tag, 0.0, 4.0, 180.0, 270.0)))]; // Consider using touch_property or index * (270 - 180) / 4 instead of rescaling
-//                        });
-//                    };
-//                }((ControlView *)view, &radius)))
-//                || ((active_component_bit_vector & ~MASK_ALL)
-//                    && reduce(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
-//                    dispatch_barrier_async(dispatch_get_main_queue(), ^{
-//                        [button setCenter:^ (CGFloat radians) {
-//                            return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
-//                        }(degreesToRadians(touch_angle))];
-//                    });
-//                }));
-//            });
-            [((ControlView *)view) setNeedsDisplay];
+            //            dispatch_barrier_sync(enumerator_queue(), ^{
+            //                ((long)0 || transition) && transition(center_point, radius); //set_button_state((unsigned int)round(fmaxf(0.0, fminf((unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 4.0)), 4.0))))(center_point, radius);
+            //                ((active_component_bit_vector & MASK_ALL)
+            //                 && filter(buttons)(^ (ControlView * view, CGFloat * r) {
+            //                    return ^ (UIButton * _Nonnull button, unsigned int index) {
+            //                        dispatch_barrier_async(dispatch_get_main_queue(), ^{
+            //                            //                            [button setHighlighted:((active_component_bit_vector >> index) & 1UL) & (UITouchPhaseEnded ^ touch.phase) & !(touch_property ^ index) & ((highlighted_property_bit_vector >> index) & 1UL)];
+            //                            [button setCenter:^ (CGFloat radians) {
+            //                                return CGPointMake(center_point.x - *r * -cos(radians), center_point.y - *r * -sin(radians));
+            //                            }(degreesToRadians(rescale(index, 0.0, 4.0, 180.0, 270.0)))]; // Consider using touch_property or index * (270 - 180) / 4 instead of rescaling
+            //                        });
+            //                    };
+            //                }((ControlView *)view, &radius)))
+            //                || ((active_component_bit_vector & ~MASK_ALL)
+            //                    && reduce(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
+            //                    dispatch_barrier_async(dispatch_get_main_queue(), ^{
+            //                        [button setCenter:^ (CGFloat radians) {
+            //                            return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
+            //                        }(degreesToRadians(touch_angle))];
+            //                    });
+            //                }));
+            //            });
+//            [((ControlView *)view) setNeedsDisplay];
         };
     };
 };
 
 
 @implementation ControlView {
-//    UISelectionFeedbackGenerator * haptic_feedback;
+    //    UISelectionFeedbackGenerator * haptic_feedback;
 }
 
 - (void)awakeFromNib {
     [super awakeFromNib];
     
     [self updateStateLabels];
-//    haptic_feedback = [[UISelectionFeedbackGenerator alloc] init];
-//    [haptic_feedback prepare];
+    //    haptic_feedback = [[UISelectionFeedbackGenerator alloc] init];
+    //    [haptic_feedback prepare];
     
     CGPoint default_center_point = CGPointMake(CGRectGetMaxX(((ControlView *)self).bounds), CGRectGetMaxY(((ControlView *)self).bounds));
     CGFloat default_radius       = CGRectGetMidX(self.bounds);
@@ -589,14 +641,14 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
         CGFloat angle = rescale(index, 0.0, 4.0, 180.0, 270.0);
         NSNumber * button_angle = [NSNumber numberWithFloat:angle];
         objc_setAssociatedObject (button,
-                                  (void *)button.tag,
+                                  (void *)index,
                                   button_angle,
                                   OBJC_ASSOCIATION_RETAIN);
         
         [button setUserInteractionEnabled:FALSE];
         void (^eventHandlerBlockTouchUpInside)(void) = ^{
-            NSNumber * associatedObject = (NSNumber *)objc_getAssociatedObject (button, (void *)button.tag);
-            printf("%s\n", [[associatedObject stringValue] UTF8String]);
+            NSNumber * associatedObject = (NSNumber *)objc_getAssociatedObject (button, (void *)index);
+//            printf("%s\n", [[associatedObject stringValue] UTF8String]);
         };
         objc_setAssociatedObject(button, @selector(invoke), eventHandlerBlockTouchUpInside, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
         [button addTarget:eventHandlerBlockTouchUpInside action:@selector(invoke) forControlEvents:UIControlEventTouchUpInside];
@@ -606,23 +658,21 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
         return button;
     });
     
-//    'void (^(^__strong)(UITouch * _Nullable __strong))(long (^ _Nullable __strong)(void (^ _Nullable __strong)(long (^ _Nullable __strong)(void))))'
-//    'void (^(^)(UITouch * _Nullable __strong))(long (^ _Nullable __strong)(long (^ _Nullable __strong)(void)))'
     touch_handler = touch_handler_init((ControlView *)self, self.captureDeviceConfigurationControlPropertyDelegate); // touch_handler_init(self, self.captureDeviceConfigurationControlPropertyDelegate);
 }
 
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
-    (handle_touch = touch_handler(touches.anyObject))(nil);
+    dispatch_barrier_sync(enumerator_queue(), ^{ (handle_touch = touch_handler(touches.anyObject))(nil); });
     dispatch_barrier_sync(enumerator_queue(), ^{ [self updateStateLabels]; });
 }
 
 - (void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
-    handle_touch(nil);
+    dispatch_barrier_sync(enumerator_queue(), ^{ handle_touch(nil); });
     dispatch_barrier_sync(enumerator_queue(), ^{ [self updateStateLabels]; });
 }
 
 - (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
-    handle_touch(set_state);
+    dispatch_barrier_sync(enumerator_queue(), ^{ handle_touch(set_state); });
     dispatch_barrier_sync(enumerator_queue(), ^{ [self updateStateLabels]; });
 }
 
