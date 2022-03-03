@@ -136,9 +136,7 @@
     _commandQueue = [_device newCommandQueue];
 }
 
-- (void)_loadAssets
-{
-    /// Load assets into metal objects
+- (void)_loadAssets {
 
     NSError *error;
 
@@ -236,7 +234,9 @@
 - (void)mtkView:(nonnull MTKView *)view drawableSizeWillChange:(CGSize)size
 {
     CGSize scaled_size = CGSizeMake(size.width * view.layer.contentsScale, size.height * view.layer.contentsScale);
-    [view setDrawableSize:scaled_size];
+    [view.layer setAffineTransform:CGAffineTransformMakeRotation(degreesToRadians(360.0))];
+    [view.layer setAffineTransform:CGAffineTransformScale(view.layer.affineTransform, -1, -1)];
+    [view setDrawableSize:size];
 }
 
 - (void)captureOutput:(AVCaptureOutput *)output didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer fromConnection:(AVCaptureConnection *)connection {
