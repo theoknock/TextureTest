@@ -501,7 +501,7 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
                                 [capture_device setExposureModeCustomWithDuration:CMTimeMakeWithSeconds( newDurationSeconds, 1000*1000*1000 )  ISO:AVCaptureISOCurrent completionHandler:nil];
                             };
                         }(rescale(touch_angle, 180.0, 270.0, 0.0, 1.0))];
-                    [((ControlView *)view) setNeedsDisplay];
+//                    [((ControlView *)view) setNeedsDisplay];
                 }));
             });
             
@@ -527,6 +527,7 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
                     });
                 }));
             });
+            [((ControlView *)view) setNeedsDisplay];
         };
     };
 };
