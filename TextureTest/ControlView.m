@@ -116,10 +116,6 @@ static void (^(^map)(__strong UIButton * _Nonnull [_Nonnull 5]))(UIButton * (^__
     };
 };
 
-static long (^Log2n)(unsigned int) = ^ long (unsigned int bit_field) {
-    return (bit_field > 1) ? 1 + Log2n(bit_field / 2) : 0;
-};
-
 static uint8_t (^(^filter)(__strong UIButton * _Nonnull [_Nonnull 5]))(void (^__strong)(UIButton * _Nonnull, unsigned int)) = ^ (__strong UIButton * _Nonnull button_collection[5]) {
     return ^ uint8_t (void(^enumeration)(UIButton * _Nonnull, unsigned int)) {
         dispatch_apply(5, DISPATCH_APPLY_AUTO, ^(size_t index) {
@@ -130,16 +126,7 @@ static uint8_t (^(^filter)(__strong UIButton * _Nonnull [_Nonnull 5]))(void (^__
 };
 
 
-static long (^(^reduce)(__strong UIButton * _Nonnull [_Nonnull 5]))(void (^__strong)(UIButton * _Nonnull, unsigned int)) = ^ (__strong UIButton * _Nonnull button_collection[5]) {
-    return ^ long (void(^reduction)(UIButton * _Nonnull, unsigned int)) {
-        dispatch_barrier_async(dispatch_get_main_queue(), ^{
-            unsigned int selected_property_bit_position = (unsigned int)(Log2n(selected_property_bit_vector));
-            reduction(capture_device_configuration_control_property_button(selected_property_bit_position), (unsigned int)selected_property_bit_position);
-//            printf("selected_property_bit_position == %d\n", selected_property_bit_position);
-        });
-        return active_component_bit_vector;
-    };
-};
+
 
 
 //static long (^(^integrate)(long))(long(^ _Nullable (^__strong)(long))(void)) = ^ (long duration) {
@@ -175,34 +162,7 @@ static long (^(^reduce)(__strong UIButton * _Nonnull [_Nonnull 5]))(void (^__str
 //    };
 //};
 
-static long (^(^integrate)(long))(long(^ _Nullable (^__strong)(long))(CADisplayLink *)) = ^ (long duration) {
-    __block typeof(CADisplayLink *) display_link;
-    __block long frames = ~(1 << (duration + 1));
-    __block long frame;
-    __block long(^cancel)(CADisplayLink *);
-    return ^ long (long(^ _Nullable (^__strong integrand)(long))(CADisplayLink *)) {
-//        printf("animation begin\t\t\t---------------\t\t\t");
-        display_link = [CADisplayLink displayLinkWithTarget:^{
-            frames >>= 1;
-            return
-            ((frames & 1) && ^ long {
-                frame = (long)Log2n((unsigned int)frames);
-                ((long)0 || (cancel = (integrand(frame)))) && cancel(display_link); // runs a cancel handler if one was provided
-                return active_component_bit_vector;
-            }())
 
-            ||
-
-            ((frames | 1) && ^ long {
-//                printf("animation end\n");
-                [display_link invalidate];
-                return active_component_bit_vector;
-            }());
-        } selector:@selector(invoke)];
-        [display_link addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
-        return active_component_bit_vector;
-    };
-};
 
 //void (^test)(void) = ^{
 //    __block int i = 0;
@@ -253,6 +213,13 @@ static long (^(^integrate)(long))(long(^ _Nullable (^__strong)(long))(CADisplayL
 //    blk2()((long)1);
 //};
 
+static NSString * (^NSStringFromBitVector)(uint8_t, unsigned int) = ^ NSString * (uint8_t bit_vector, unsigned int length) {
+    NSMutableString * bit_vector_str = [[NSMutableString alloc] initWithCapacity:length];
+    for (int property = 0; property < length; property++)
+        [bit_vector_str appendString:[NSString stringWithFormat:@"%d", (bit_vector & (1 << property)) >> property]];
+    return (NSString *)bit_vector_str;
+};
+
 int setBit(int x, unsigned char position) {
     int mask = 1 << position;
     return x | mask;
@@ -279,20 +246,68 @@ bool isBitSet(int x, unsigned char position) {
     return (x & 1) != 0;
 }
 
+int extractBit(int bit_vector, int length, int position)
+{
+    return (((1 << length) - 1) & (bit_vector >> (position - 1)));
+}
+
+typedef long (^Log2n_Block)(unsigned int);
+static Log2n_Block Log2n_recursive = ^ long (unsigned int property) {
+    return (property > 1) ? 1 + Log2n_recursive(property / 2) : 0;
+};
+
+//static Log2n_Block Log2n = ^ (unsigned int bit_vector) {
+//    return Log2n_recursive(extractBit(bit_vector, 5, 1));
+//};
+
+static long (^(^reduce)(__strong UIButton * _Nonnull [_Nonnull 5]))(void (^__strong)(UIButton * _Nonnull, unsigned int)) = ^ (__strong UIButton * _Nonnull button_collection[5]) {
+    return ^ long (void(^reduction)(UIButton * _Nonnull, unsigned int)) {
+        dispatch_barrier_async(dispatch_get_main_queue(), ^{
+            unsigned int selected_property_bit_position = Log2n_recursive(selected_property_bit_vector);
+            printf("\t\tselected_property_bit_position (reduce) == %d\n", selected_property_bit_position);
+            reduction(capture_device_configuration_control_property_button(selected_property_bit_position), (unsigned int)capture_device_configuration_control_property_button(selected_property_bit_position).tag);
+            printf("\t\t(unsigned int)capture_device_configuration_control_property_button(selected_property_bit_position).tag (reduce) == %d\n", (unsigned int)capture_device_configuration_control_property_button(selected_property_bit_position).tag);
+        });
+        return active_component_bit_vector;
+    };
+};
+
+static long (^(^integrate)(long))(long(^ _Nullable (^__strong)(long))(CADisplayLink *)) = ^ (long duration) {
+    __block typeof(CADisplayLink *) display_link;
+    __block long frames = ~(1 << (duration + 1));
+    __block long frame;
+    __block long(^cancel)(CADisplayLink *);
+    return ^ long (long(^ _Nullable (^__strong integrand)(long))(CADisplayLink *)) {
+        display_link = [CADisplayLink displayLinkWithTarget:^{
+            frames >>= 1;
+            return
+            ((frames & 1) && ^ long {
+                frame = (long)Log2n_recursive((unsigned int)frames);
+                ((long)0 || (cancel = (integrand(frame)))) && cancel(display_link); // runs a cancel handler if one was provided
+                return active_component_bit_vector;
+            }())
+
+            ||
+
+            ((frames | 1) && ^ long {
+                [display_link invalidate];
+                return active_component_bit_vector;
+            }());
+        } selector:@selector(invoke)];
+        [display_link addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
+        return active_component_bit_vector;
+    };
+};
 
 long (^(^set_state)(void))(CGPoint, CGFloat) = ^{
-//    printf("\t\tset_state\n");
     active_component_bit_vector = ~active_component_bit_vector;
     
     // converse nonimplication
     uint8_t selected_property_bit_mask = MASK_NONE;
-    uint8_t selected_property_bit_position = (Log2n(selected_property_bit_vector));
-    uint8_t highlighted_property_bit_position = (Log2n(highlighted_property_bit_vector));
-//    uint8_t highlighted_property_bit_position_test = highlighted_property_bit_vector & (~highlighted_property_bit_vector+1);
-    printf("\nhighlighted_property_bit_position == %ld\n", (Log2n(highlighted_property_bit_position)));
+    uint8_t selected_property_bit_position = (Log2n_recursive(selected_property_bit_vector));
+    uint8_t highlighted_property_bit_position = (Log2n_recursive(highlighted_property_bit_vector));
     selected_property_bit_mask ^= (1UL << highlighted_property_bit_position) & ~active_component_bit_vector;
     selected_property_bit_vector = (selected_property_bit_vector | selected_property_bit_mask) & ~selected_property_bit_vector;
-    printf("selected_property_bit_vector == %ld\n\n", (Log2n(selected_property_bit_vector)));
     
     // exclusive disjunction
     hidden_property_bit_vector = ~active_component_bit_vector;
@@ -301,10 +316,12 @@ long (^(^set_state)(void))(CGPoint, CGFloat) = ^{
     hidden_property_bit_vector ^= active_component_bit_vector;
     
     // highlighted_reset
-    highlighted_property_bit_vector = ~active_component_bit_vector;
-    highlighted_property_bit_vector = selected_property_bit_position & ~active_component_bit_vector;
-    highlighted_property_bit_vector ^= MASK_NONE;
-    highlighted_property_bit_vector ^= active_component_bit_vector;
+//    highlighted_property_bit_vector = ~active_component_bit_vector;
+//    highlighted_property_bit_vector = MASK_NONE & ~active_component_bit_vector;
+//    highlighted_property_bit_vector ^= MASK_ALL;
+//    highlighted_property_bit_vector ^= active_component_bit_vector;
+    
+    
     
 
     
@@ -345,7 +362,7 @@ long (^(^set_state)(void))(CGPoint, CGFloat) = ^{
                 return (long)1;
             };
         }));
-        
+        highlighted_property_bit_vector = MASK_NONE;
         return (long)1;
     };
 };
@@ -415,8 +432,10 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
                                fminf((sqrt(pow(touch_point.x - center_point.x, 2.0) + pow(touch_point.y - center_point.y, 2.0))),
                                      CGRectGetMaxX(((ControlView *)view).bounds)));
                 
-                touch_property = ((unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 4.0)));
-                highlighted_property_bit_vector = (((active_component_bit_vector & MASK_ALL) & 1UL) << touch_property);
+//                touch_property = ((unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 4.0)));
+//                printf("touch_property == %lu\n", touch_property);
+                highlighted_property_bit_vector = (((active_component_bit_vector & MASK_ALL) & 1UL) << ((unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 4.0))));
+//                touch_property = -1;
 //                selected_property_bit_vector = (((active_component_bit_vector & MASK_ALL) & (UITouchPhaseBegan ^ touch.phase) & (UITouchPhaseMoved ^ touch.phase) & 1UL) << touch_property);
             });
             
@@ -512,13 +531,6 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
     };
 };
 
-static NSString * (^NSStringFromBitVector)(uint8_t) = ^ NSString * (uint8_t bit_vector) {
-    NSMutableString * bit_vector_str = [[NSMutableString alloc] initWithCapacity:CaptureDeviceConfigurationControlPropertyAll];
-    for (int property = CaptureDeviceConfigurationControlPropertyTorchLevel; property < CaptureDeviceConfigurationControlPropertyAll; property++)
-        [bit_vector_str appendString:[NSString stringWithFormat:@"%d", (bit_vector & (1 << property)) >> property]];
-    return (NSString *)bit_vector_str;
-};
-
 
 @implementation ControlView {
 //    UISelectionFeedbackGenerator * haptic_feedback;
@@ -527,10 +539,7 @@ static NSString * (^NSStringFromBitVector)(uint8_t) = ^ NSString * (uint8_t bit_
 - (void)awakeFromNib {
     [super awakeFromNib];
     
-    [self.stateBitVectorLabel setText:[NSString stringWithFormat:@"%@", (active_component_bit_vector == MASK_ALL) ? @"11111" : @"00000"]];
-    [self.selectedBitVectorLabel setText:NSStringFromBitVector(selected_property_bit_vector)];
-    [self.hiddenBitVectorLabel setText:NSStringFromBitVector(hidden_property_bit_vector)];
-    
+    [self updateStateLabels];
 //    haptic_feedback = [[UISelectionFeedbackGenerator alloc] init];
 //    [haptic_feedback prepare];
     
@@ -608,10 +617,10 @@ static NSString * (^NSStringFromBitVector)(uint8_t) = ^ NSString * (uint8_t bit_
 }
 
 - (void)updateStateLabels {
-    [self.stateBitVectorLabel setText:NSStringFromBitVector(active_component_bit_vector)];
-    [self.highlightedBitVectorLabel setText:NSStringFromBitVector(highlighted_property_bit_vector)];
-    [self.selectedBitVectorLabel setText:NSStringFromBitVector(selected_property_bit_vector)];
-    [self.hiddenBitVectorLabel setText:NSStringFromBitVector(hidden_property_bit_vector)];
+    [self.stateBitVectorLabel setText:NSStringFromBitVector(active_component_bit_vector, 5)];
+    [self.highlightedBitVectorLabel setText:NSStringFromBitVector(highlighted_property_bit_vector, 5)];
+    [self.selectedBitVectorLabel setText:NSStringFromBitVector(selected_property_bit_vector, 5)];
+    [self.hiddenBitVectorLabel setText:NSStringFromBitVector(hidden_property_bit_vector, 5)];
 }
 
 @end
