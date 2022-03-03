@@ -421,8 +421,6 @@ static void (^(^draw_tick_wheel_init)(ControlView *, CGFloat *, CGFloat *))(CGCo
 
 static void (^(^touch_handler)(__strong UITouch * _Nullable))(long (^ _Nullable /* set_state (for this handle_touch) */)(void (^ _Nonnull /* handle_touch (for set_state) */)(long (^ _Nullable /* set_state (a placeholder for handle_touch in this case) */)(void))));
 static void (^handle_touch)(long (^ _Nullable /* set_state (for this handle_touch) */)(void (^ _Nonnull /* handle_touch (for set_state) */)(long (^ _Nullable /* set_state (a placeholder for handle_touch in this case) */)(void))));
-//'long (^(^(^__strong)(ControlView *__strong, __strong id<CaptureDeviceConfigurationControlPropertyDelegate>))(UITouch * _Nullable __strong))(long (^ _Nullable __strong)(long (^ _Nullable __strong)(void)))'
-//'long (^)(ControlView *__strong, __strong id<CaptureDeviceConfigurationControlPropertyDelegate>)'
 static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurationControlPropertyDelegate>))(__strong UITouch * _Nullable))(long (^ _Nullable /* set_state (for this handle_touch) */)(void (^ _Nonnull /* handle_touch (for set_state) */)(long (^ _Nullable /* set_state (a placeholder for handle_touch in this case) */)(void)))) =  ^ (ControlView * view, id<CaptureDeviceConfigurationControlPropertyDelegate> delegate) {
     CGPoint center_point = CGPointMake(CGRectGetMaxX(((ControlView *)view).bounds), CGRectGetMaxY(((ControlView *)view).bounds));
     static CGFloat touch_angle;
@@ -612,15 +610,15 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
 
 
 @implementation ControlView {
-    //    UISelectionFeedbackGenerator * haptic_feedback;
+        UISelectionFeedbackGenerator * haptic_feedback;
 }
 
 - (void)awakeFromNib {
     [super awakeFromNib];
     
     [self updateStateLabels];
-    //    haptic_feedback = [[UISelectionFeedbackGenerator alloc] init];
-    //    [haptic_feedback prepare];
+        haptic_feedback = [[UISelectionFeedbackGenerator alloc] init];
+        [haptic_feedback prepare];
     
     CGPoint default_center_point = CGPointMake(CGRectGetMaxX(((ControlView *)self).bounds), CGRectGetMaxY(((ControlView *)self).bounds));
     CGFloat default_radius       = CGRectGetMidX(self.bounds);
@@ -691,8 +689,8 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
 - (void)drawRect:(CGRect)rect {
     draw_tick_wheel(UIGraphicsGetCurrentContext(), rect);
     // To-Do: only "click" when a new value is selected - not every time drawRect is called
-    //    [haptic_feedback selectionChanged];
-    //    [haptic_feedback prepare];
+        [haptic_feedback selectionChanged];
+        [haptic_feedback prepare];
 }
 
 - (void)updateStateLabels {
