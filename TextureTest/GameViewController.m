@@ -30,7 +30,9 @@
     }
     
     _renderer = [[Renderer alloc] initWithMetalKitView:_view];
+    
     [_renderer mtkView:_view drawableSizeWillChange:_view.drawableSize];
+    printf("%s\n   ", [NSStringFromCGSize(_view.drawableSize) UTF8String]);
     
     _view.delegate = _renderer;
 }

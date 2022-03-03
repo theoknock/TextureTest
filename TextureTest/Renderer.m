@@ -145,9 +145,9 @@
     MTKMeshBufferAllocator *metalAllocator = [[MTKMeshBufferAllocator alloc]
                                               initWithDevice: _device];
     
-    MDLMesh *mdlMesh = [MDLMesh newPlaneWithDimensions:(vector_float2){(1.3333333333 * UIScreen.mainScreen.nativeScale), (0.75 * UIScreen.mainScreen.nativeScale)}
+    MDLMesh *mdlMesh = [MDLMesh newPlaneWithDimensions:(vector_float2){(1.3333333333 * UIScreen.mainScreen.nativeScale), (UIScreen.mainScreen.nativeScale)}
                                               segments:(vector_uint2){1, 1}
-                                          geometryType:MDLGeometryTypeTriangles
+                                          geometryType:MDLGeometryTypeQuads
                                              allocator:metalAllocator];
     
 //    MDLMesh *mdlMesh = [MDLMesh newBoxWithDimensions:(vector_float3){2, 2, 2}
@@ -235,7 +235,8 @@
 
 - (void)mtkView:(nonnull MTKView *)view drawableSizeWillChange:(CGSize)size
 {
-    [view setDrawableSize:size];
+    CGSize scaled_size = CGSizeMake(size.width * view.layer.contentsScale, size.height * view.layer.contentsScale);
+    [view setDrawableSize:scaled_size];
 }
 
 - (void)captureOutput:(AVCaptureOutput *)output didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer fromConnection:(AVCaptureConnection *)connection {
