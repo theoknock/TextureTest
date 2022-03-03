@@ -13,16 +13,11 @@
 // Include header shared between C code here, which executes Metal API commands, and .metal files
 #import "ShaderTypes.h"
 
-
-static const NSUInteger MaxBuffersInFlight = 3;
-static unsigned int rotation_degrees;
 @implementation Renderer
 {
-    dispatch_semaphore_t _inFlightSemaphore;
     id <MTLDevice> _device;
     id <MTLCommandQueue> _commandQueue;
 
-    id <MTLBuffer> _dynamicUniformBuffer[MaxBuffersInFlight];
     id <MTLRenderPipelineState> _pipelineState;
     id <MTLDepthStencilState> _depthState;
     id <MTLTexture> _colorMap;
@@ -43,9 +38,9 @@ static unsigned int rotation_degrees;
 {
     self = [super init];
     if(self)
-    {        
+    {
         _device = view.device;
-        _inFlightSemaphore = dispatch_semaphore_create(MaxBuffersInFlight);
+        
         [self _loadMetalWithView:view];
         [self _loadAssets];
         
@@ -150,9 +145,9 @@ static unsigned int rotation_degrees;
     MTKMeshBufferAllocator *metalAllocator = [[MTKMeshBufferAllocator alloc]
                                               initWithDevice: _device];
     
-    MDLMesh *mdlMesh = [MDLMesh newPlaneWithDimensions:(vector_float2){(1.3333333333 * UIScreen.mainScreen.scale), (0.75 * UIScreen.mainScreen.scale)}
+    MDLMesh *mdlMesh = [MDLMesh newPlaneWithDimensions:(vector_float2){(1.3333333333 * UIScreen.mainScreen.nativeScale), (0.75 * UIScreen.mainScreen.nativeScale)}
                                               segments:(vector_uint2){1, 1}
-                                          geometryType:MDLGeometryTypeTriangles\
+                                          geometryType:MDLGeometryTypeTriangles
                                              allocator:metalAllocator];
     
 //    MDLMesh *mdlMesh = [MDLMesh newBoxWithDimensions:(vector_float3){2, 2, 2}
@@ -240,9 +235,8 @@ static unsigned int rotation_degrees;
 
 - (void)mtkView:(nonnull MTKView *)view drawableSizeWillChange:(CGSize)size
 {
-    //
+    [view setDrawableSize:size];
 }
-
 
 - (void)captureOutput:(AVCaptureOutput *)output didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer fromConnection:(AVCaptureConnection *)connection {
     create_texture(CMSampleBufferGetImageBuffer(sampleBuffer));
