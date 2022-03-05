@@ -13,6 +13,8 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdatomic.h>
+#include <libkern/OSAtomic.h>
+
 @import Accelerate;
 @import CoreHaptics;
 
@@ -113,7 +115,7 @@ static dispatch_queue_t enumerator_queue() {
 static void (^(^map)(__strong UIButton * _Nonnull [_Nonnull 5]))(UIButton * (^__strong)(unsigned int)) = ^ (__strong UIButton * _Nonnull button_collection[5]) {
     return ^ (UIButton *(^enumeration)(unsigned int)) {
         dispatch_barrier_async(dispatch_get_main_queue(), ^{
-            dispatch_apply(5, enumerator_queue(), ^(size_t index) {
+            dispatch_apply(5, DISPATCH_APPLY_AUTO, ^(size_t index) {
                 dispatch_barrier_async(dispatch_get_main_queue(), ^{
                     button_collection[index] = enumeration((unsigned int)index);
                 });
@@ -259,7 +261,8 @@ int extractBit(int bit_vector, int length, int position)
 
 typedef long (^Log2n_Block)(unsigned int);
 static Log2n_Block Log2n_recursive = ^ long (unsigned int property) {
-    return (property > 1) ? 1 + Log2n_recursive(property / 2) : 0;
+//    return (property > 1) ? 1 + Log2n_recursive(property / 2) : 0;
+    return floor(log2(property));
 };
 
 //static Log2n_Block Log2n = ^ (unsigned int bit_vector) {
@@ -271,7 +274,7 @@ static long (^(^reduce)(__strong UIButton * _Nonnull [_Nonnull 5]))(void (^__str
         dispatch_apply(1, DISPATCH_APPLY_AUTO, ^(size_t index) {
             unsigned int selected_property_bit_position = Log2n_recursive(selected_property_bit_vector);
             reduction(capture_device_configuration_control_property_button(selected_property_bit_position), selected_property_bit_position);
-
+            
         });
         return active_component_bit_vector;
     };
@@ -279,7 +282,7 @@ static long (^(^reduce)(__strong UIButton * _Nonnull [_Nonnull 5]))(void (^__str
 
 static long (^(^integrate)(long))(long(^ _Nullable (^__strong)(long))(CADisplayLink *)) = ^ (long duration) {
     __block typeof(CADisplayLink *) display_link;
-    __block long frames = ~(1 << (duration + 1));
+    __block _Atomic long frames = ~(1 << (duration + 1));
     __block long frame;
     __block long(^cancel)(CADisplayLink *);
     return ^ long (long(^ _Nullable (^__strong integrand)(long))(CADisplayLink *)) {
@@ -304,80 +307,123 @@ static long (^(^integrate)(long))(long(^ _Nullable (^__strong)(long))(CADisplayL
     };
 };
 
-// _Nullable block parameters must return long (for bitwise-null predicate)
-// _Nonnull block parameters can return void
-long (^set_state)(void (^ _Nonnull)(long (^ _Nullable)(void))) = ^ long (void (^ _Nonnull touch_handler)(long (^ _Nullable)(void))) {
-    dispatch_barrier_async(enumerator_queue(), ^{
-        active_component_bit_vector = ~active_component_bit_vector;
-        
-        // converse nonimplication
-        uint8_t selected_property_bit_mask = MASK_NONE;
-        uint8_t selected_property_bit_position = (Log2n_recursive(selected_property_bit_vector));
-        uint8_t highlighted_property_bit_position = (Log2n_recursive(highlighted_property_bit_vector));
-        selected_property_bit_mask ^= (1UL << highlighted_property_bit_position) & ~active_component_bit_vector;
-        selected_property_bit_vector = (selected_property_bit_vector | selected_property_bit_mask) & ~selected_property_bit_vector;
-        
-        // exclusive disjunction
-        hidden_property_bit_vector = ~active_component_bit_vector;
-        hidden_property_bit_vector = selected_property_bit_mask & ~active_component_bit_vector;
-        hidden_property_bit_vector ^= MASK_ALL;
-        hidden_property_bit_vector ^= active_component_bit_vector;
-        
-        // highlighted_reset
-        //    highlighted_property_bit_vector = ~active_component_bit_vector;
-        //    highlighted_property_bit_vector = MASK_NONE & ~active_component_bit_vector;
-        //    highlighted_property_bit_vector ^= MASK_ALL;
-        //    highlighted_property_bit_vector ^= active_component_bit_vector;
-        
-        
-        
-        
-        
-        // To-Do: Split the animations in half, with 5 buttons exiting and one entering and vice versa
-        //        (maybe by setting state between exit and entrance)
-        //    return ^ long (CGPoint center_point, CGFloat radius) {
-        //        ((active_component_bit_vector & MASK_ALL) &&
-        //         integrate((long)30)(^ (long frame) {
-        //            return ^ long (CADisplayLink * display_link) {
-        //                CGFloat angle_adj = (360.0 / 30.0) * frame;
-        //                filter(buttons)(^{
-        //                    return ^ (UIButton * _Nonnull button, unsigned int index) {
-        //                        dispatch_barrier_async(dispatch_get_main_queue(), ^{
-        //                            [button setCenter:^ (CGFloat radians) {
-        //                                return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
-        //                            }(degreesToRadians(rescale(index, 0.0, 4.0, 180.0 + angle_adj, 270.0 + angle_adj)))];
-        //                        });
-        //                    };
-        //                }());
-        //                return (long)1;
-        //            };
-        //        }))
-        //
-        //        ||
-        //
-        //        ((active_component_bit_vector & ~MASK_ALL) &&
-        //         integrate((long)30)(^ (long frame) {
-        //            return ^ long (CADisplayLink * display_link) {
-        //                CGFloat angle_adj = (360.0 / 30.0) * frame;
-        //                reduce(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
-        //                    dispatch_barrier_async(dispatch_get_main_queue(), ^{
-        //                        [button setCenter:^ (CGFloat radians) {
-        //                            return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
-        //                        }(degreesToRadians(rescale(index, 0.0, 4.0, 180.0 - angle_adj, 270.0 - angle_adj)))];
-        //                    });
-        //                });
-        ////                [display_link invalidate]; // test -- remove
-        //                return (long)1;
-        //            };
-        //        }));
-        //        return (long)1;
-        //    };
-        highlighted_property_bit_vector = MASK_NONE;
-    });
+//static void (^(^transition)(CGPoint, CGFloat))(void (^ _Nonnull handle_touch)(long (^ _Nullable state)(void))) = ^ (CGPoint center_point, CGFloat radius) {
+//    ((active_component_bit_vector & MASK_ALL) &&
+//     integrate((long)30)(^ (long frame) {
+//        return ^ long (CADisplayLink * display_link) {
+//            CGFloat angle_adj = (360.0 / 30.0) * frame;
+//            filter(buttons)(^{
+//                return ^ (UIButton * _Nonnull button, unsigned int index) {
+//                    dispatch_barrier_async(dispatch_get_main_queue(), ^{
+//                        [button setCenter:^ (CGFloat radians) {
+//                            return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
+//                        }(degreesToRadians(rescale(index, 0.0, 4.0, 180.0 + angle_adj, 270.0 + angle_adj)))];
+//                    });
+//                };
+//            }());
+//            return (long)1;
+//        };
+//    }))
+//
+//    ||
+//
+//    ((active_component_bit_vector & ~MASK_ALL) &&
+//     integrate((long)30)(^ (long frame) {
+//        return ^ long (CADisplayLink * display_link) {
+//            CGFloat angle_adj = (360.0 / 30.0) * frame;
+//            reduce(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
+//                dispatch_barrier_async(dispatch_get_main_queue(), ^{
+//                    [button setCenter:^ (CGFloat radians) {
+//                        return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
+//                    }(degreesToRadians(rescale(index, 0.0, 4.0, 180.0 - angle_adj, 270.0 - angle_adj)))];
+//                });
+//            });
+//            //                [display_link invalidate]; // test -- remove
+//            return (long)1;
+//        };
+//    }));
+//
+//    return ^ (void (^ _Nonnull handle_touch)(long (^ _Nullable)(void))) {
+//        handle_touch(nil);
+//    };
+//};
+
+//typedef long (^ _Nonnull post_transition_animation_touch_handler)(void);
+//long (^ _Nonnull post_transition_animation)(void)  = ^ long {
+//    return ^{
+//        return ^ long {
+//            return ^{
+//
+//            };
+//        };
+//    };
+//};
+//long (^(^ _Nonnull post_transition_animation)(CGPoint, CGFloat))(long (^ _Nonnull post_transition_animation_touch_handler)(void));
+
+long (^ _Nonnull animation)(void);
+long (^state)(long(^ _Nonnull)(void)) = ^ long (long (^ _Nonnull __strong transition)(void)) {
+    active_component_bit_vector = ~active_component_bit_vector;
+    // converse nonimplication
+    uint8_t selected_property_bit_mask = MASK_NONE;
+    uint8_t selected_property_bit_position = (Log2n_recursive(selected_property_bit_vector));
+    uint8_t highlighted_property_bit_position = (Log2n_recursive(highlighted_property_bit_vector));
+    selected_property_bit_mask ^= (1UL << highlighted_property_bit_position) & ~active_component_bit_vector;
+    selected_property_bit_vector = (selected_property_bit_vector | selected_property_bit_mask) & ~selected_property_bit_vector; // To-Do: OSAtomicOr32(selected_property_bit_mask, &selected_property_bit_vector);...
     
-    dispatch_barrier_async(enumerator_queue(), ^{ touch_handler(nil); /* the torch-level button does not position correctly when the control returns to the primary state */ });
     
-    return (long)1;
+    /*
+     
+     atomic_fetch_or(&selected_property_bit_vector, selected_property_bit_mask);
+     OSAtomicOr32(selected_property_bit_mask, &selected_property_bit_vector);
+     
+     */
+    
+    
+    // exclusive disjunction
+    hidden_property_bit_vector = ~active_component_bit_vector;
+    hidden_property_bit_vector = selected_property_bit_mask & ~active_component_bit_vector;
+    hidden_property_bit_vector ^= MASK_ALL;
+    hidden_property_bit_vector ^= active_component_bit_vector;
+    // highlighted_reset
+    highlighted_property_bit_vector = MASK_NONE;
+    
+    return transition();
+};
+
+long (^(^set_state)(void (^ _Nonnull)(long (^ _Nullable)(void))))(CGPoint, CGFloat) = ^ (void (^ _Nonnull touch_handler)(long (^ _Nullable)(void))) {
+    //    dispatch_barrier_async(enumerator_queue(), ^{
+    active_component_bit_vector = ~active_component_bit_vector;
+    
+    // converse nonimplication
+    uint8_t selected_property_bit_mask = MASK_NONE;
+    uint8_t selected_property_bit_position = (Log2n_recursive(selected_property_bit_vector));
+    uint8_t highlighted_property_bit_position = (Log2n_recursive(highlighted_property_bit_vector));
+    selected_property_bit_mask ^= (1UL << highlighted_property_bit_position) & ~active_component_bit_vector;
+    selected_property_bit_vector = (selected_property_bit_vector | selected_property_bit_mask) & ~selected_property_bit_vector;
+    
+    // exclusive disjunction
+    hidden_property_bit_vector = ~active_component_bit_vector;
+    hidden_property_bit_vector = selected_property_bit_mask & ~active_component_bit_vector;
+    hidden_property_bit_vector ^= MASK_ALL;
+    hidden_property_bit_vector ^= active_component_bit_vector;
+    
+    // highlighted_reset
+    //    highlighted_property_bit_vector = ~active_component_bit_vector;
+    //    highlighted_property_bit_vector = MASK_NONE & ~active_component_bit_vector;
+    //    highlighted_property_bit_vector ^= MASK_ALL;
+    //    highlighted_property_bit_vector ^= active_component_bit_vector;
+    
+    
+    
+    
+    
+    
+    highlighted_property_bit_vector = MASK_NONE;
+    //    });
+    
+    dispatch_barrier_async(enumerator_queue(), ^{ transition(nil); /* the torch-level button does not position correctly when the control returns to the primary state */ });
+    
+    //    return (long)1;
 };
 
 static void (^draw_tick_wheel)(CGContextRef, CGRect);
@@ -419,168 +465,357 @@ static void (^(^draw_tick_wheel_init)(ControlView *, CGFloat *, CGFloat *))(CGCo
     };
 };
 
-static void (^(^touch_handler)(__strong UITouch * _Nullable))(long (^ _Nullable /* set_state (for this handle_touch) */)(void (^ _Nonnull /* handle_touch (for set_state) */)(long (^ _Nullable /* set_state (a placeholder for handle_touch in this case) */)(void))));
-static void (^handle_touch)(long (^ _Nullable /* set_state (for this handle_touch) */)(void (^ _Nonnull /* handle_touch (for set_state) */)(long (^ _Nullable /* set_state (a placeholder for handle_touch in this case) */)(void))));
-static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurationControlPropertyDelegate>))(__strong UITouch * _Nullable))(long (^ _Nullable /* set_state (for this handle_touch) */)(void (^ _Nonnull /* handle_touch (for set_state) */)(long (^ _Nullable /* set_state (a placeholder for handle_touch in this case) */)(void)))) =  ^ (ControlView * view, id<CaptureDeviceConfigurationControlPropertyDelegate> delegate) {
+long(^perform_post_transition)(void) = ^ long {
+    return (long)1;
+};
+long (^(^post_transition)(void))(void) = ^{
+    return ^ long {
+        return (long)1;
+    };
+};
+
+long(^handle_post_transition_touch)(void) = ^ long {
+    return (long)1;
+};
+long (^(^post_transition_touch_handler)(void))(void) = ^{
+    return ^ long {
+        return (long)1;
+    };
+};
+
+long (^ASDF)(long(^)(void)) = ^ long (void) {
+    return ^ long {
+        return (long)1;
+    };
+};
+
+long (^(^param)(long(^)(void)))(void) = ^ (long(^blk_param_1)(void)) {
+    return ^ long {
+        return (long)1;
+    };
+};
+
+
+
+long (^(^blk_a_1)(long(^)(void)))(void) = ^ (long(^blk_param_1)(void)) {
+    return ^ (long (^blk_param_a)(long(^)(void))) {
+        return blk_param_a(blk_param_1);
+//        return ^ long {
+//            return (long)1;
+//        };
+    };
+};
+
+
+//long (^(^blk_c)(long(^)(void)))(void) = ^{
+//    return ^ long {
+//        return ^ (void(^l_b)(long)) {
+//            return ^ (long l_a) {
+//
+//            };
+//        };
+//    };
+//};
+
+
+
+void (^(^(^(^(^(^l)(void (^__strong)(long)))(void(^)(long)))(void (^__strong)(long)))(long))(void (^__strong)(long)))(long);
+
+
+
+long (^(^(^post_transition)(long (^(^__strong)(void))(void)))(long (^(^__strong)(long (^__strong)(void)))(void)))(void) = ^ (long(^(^post_transition_touch_handler)(void))(void)) {
+    return ^ (long(^(^post_transition_animation)(long(^)(void)))(void)) {
+        return post_transition_animation(post_transition_touch_handler());
+    };
+};
+
+void (^test)(void) = ^{
+    long (^perform_post_transition)(void) = (post_transition(blk_a))(blk_1);
+    long (^perform_post_transition_block_literals)(void) = (post_transition(^{
+        return ^ long {
+            return (long)1;
+        };
+    }))(^ (long(^blk_param_1)(void)) {
+        return ^ long {
+            return (long)1;
+        };
+    });
+};
+
+
+static void (^(^touch_handler)(__strong UITouch * _Nullable))(void(^ _Nonnull handle_touch)(long (^ _Nullable state)(void (^(^ _Nonnull transition)(CGPoint, CGFloat))(void (^ _Nonnull post_handle_touch)(void)))));
+static void (^ _Nonnull handle_touch)(long (^ _Nullable state)(void (^(^ _Nonnull transition)(CGPoint, CGFloat))(void (^ _Nonnull post_handle_touch)(void))));
+static void (^(^(^touch_handler_init)(ControlView *__strong, __strong id<CaptureDeviceConfigurationControlPropertyDelegate>))(__strong UITouch * _Nullable))(long (^ _Nullable __strong)(void (^(^ _Nonnull __strong)(CGPoint, CGFloat))(void (^ _Nonnull __strong)(void)))) = ^ (ControlView *__strong view, __strong id<CaptureDeviceConfigurationControlPropertyDelegate> delegate) {
     CGPoint center_point = CGPointMake(CGRectGetMaxX(((ControlView *)view).bounds), CGRectGetMaxY(((ControlView *)view).bounds));
     static CGFloat touch_angle;
     static CGPoint touch_point;
     static CGFloat radius;
     draw_tick_wheel = draw_tick_wheel_init((ControlView *)view, &touch_angle, &radius);
     return ^ (__strong UITouch * _Nullable touch) {
-        return ^ (long (^ _Nullable state_setter)(void (^ _Nonnull /* handle_touch (for set_state) */)(long (^ _Nullable /* set_state (a placeholder for handle_touch in this case) */)(void)))) {
-//            dispatch_barrier_sync(enumerator_queue(), ^{
-                touch_point = [touch locationInView:(ControlView *)view];
-                touch_point.x = fmaxf(0.0, fminf(touch_point.x, CGRectGetMaxX(((ControlView *)view).bounds)));
-                touch_point.y = fmaxf(0.0, fminf(touch_point.y, CGRectGetMaxY(((ControlView *)view).bounds)));
-                
-                touch_angle = (atan2((touch_point).y - (center_point).y, (touch_point).x - (center_point).x)) * (180.0 / M_PI);
-                if (touch_angle < 0.0) touch_angle += 360.0;
-                touch_angle = fmaxf(180.0, fminf(touch_angle, 270.0));
-                
-                radius = fmaxf(CGRectGetMidX(((ControlView *)view).bounds),
-                               fminf((sqrt(pow(touch_point.x - center_point.x, 2.0) + pow(touch_point.y - center_point.y, 2.0))),
-                                     CGRectGetMaxX(((ControlView *)view).bounds)));
-                
-                highlighted_property_bit_vector = (((active_component_bit_vector & MASK_ALL) & 1UL) << ((unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 4.0))));
-//            });
+        return ^ (long(^ _Nullable state_setter)(void (^(^ _Nonnull)(CGPoint, CGFloat))(void (^ _Nonnull)(void)))) {
+            touch_point = [touch locationInView:(ControlView *)view];
+            touch_point.x = fmaxf(0.0, fminf(touch_point.x, CGRectGetMaxX(((ControlView *)view).bounds)));
+            touch_point.y = fmaxf(0.0, fminf(touch_point.y, CGRectGetMaxY(((ControlView *)view).bounds)));
             
-//            dispatch_barrier_sync(enumerator_queue(), ^{
-                ((active_component_bit_vector & MASK_ALL)
-                 && filter(buttons)(^ (ControlView * view, CGFloat * r) {
-                    return ^ (UIButton * _Nonnull button, unsigned int index) {
-                        dispatch_barrier_async(dispatch_get_main_queue(), ^{
-                            //                            [button setHighlighted:((active_component_bit_vector >> index) & 1UL) & (UITouchPhaseEnded ^ touch.phase) & !(touch_property ^ index) & ((highlighted_property_bit_vector >> index) & 1UL)];
-                            [button setCenter:^ (CGFloat radians) {
-                                return CGPointMake(center_point.x - *r * -cos(radians), center_point.y - *r * -sin(radians));
-                            }(degreesToRadians(rescale(index, 0.0, 4.0, 180.0, 270.0)))];
-                        });
-                    };
-                }((ControlView *)view, &radius)))
-                || ((active_component_bit_vector & ~MASK_ALL)
-                    && reduce(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
+            touch_angle = (atan2((touch_point).y - (center_point).y, (touch_point).x - (center_point).x)) * (180.0 / M_PI);
+            if (touch_angle < 0.0) touch_angle += 360.0;
+            touch_angle = fmaxf(180.0, fminf(touch_angle, 270.0));
+            
+            radius = fmaxf(CGRectGetMidX(((ControlView *)view).bounds),
+                           fminf((sqrt(pow(touch_point.x - center_point.x, 2.0) + pow(touch_point.y - center_point.y, 2.0))),
+                                 CGRectGetMaxX(((ControlView *)view).bounds)));
+            
+            highlighted_property_bit_vector = (((active_component_bit_vector & MASK_ALL) & 1UL) << ((unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 4.0))));
+            
+            ((active_component_bit_vector & MASK_ALL)
+             && filter(buttons)(^ (ControlView * view, CGFloat * r) {
+                return ^ (UIButton * _Nonnull button, unsigned int index) {
                     dispatch_barrier_async(dispatch_get_main_queue(), ^{
+                        //                            [button setHighlighted:((active_component_bit_vector >> index) & 1UL) & (UITouchPhaseEnded ^ touch.phase) & !(touch_property ^ index) & ((highlighted_property_bit_vector >> index) & 1UL)];
                         [button setCenter:^ (CGFloat radians) {
-                            return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
-                        }(degreesToRadians(touch_angle))];
+                            return CGPointMake(center_point.x - *r * -cos(radians), center_point.y - *r * -sin(radians));
+                        }(degreesToRadians(rescale(index, 0.0, 4.0, 180.0, 270.0)))];
                     });
-                    
-                    if (index == CaptureDeviceConfigurationControlPropertyVideoZoomFactor)
-                        [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat videoZoomFactor){
-                            return ^ (AVCaptureDevice * capture_device) {
-                                [capture_device setVideoZoomFactor:videoZoomFactor];
-                            };
-                        }(rescale(touch_angle, 180.0, 270.0, 1.0, 9.0))];
-                    else if (index == CaptureDeviceConfigurationControlPropertyLensPosition)
-                        [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat lensPosition){
-                            return ^ (AVCaptureDevice * capture_device) {
-                                [capture_device setFocusModeLockedWithLensPosition:lensPosition completionHandler:nil];
-                            };
-                        }(rescale(touch_angle, 180.0, 270.0, 0.0, 1.0))];
-                    else if (index == CaptureDeviceConfigurationControlPropertyTorchLevel)
-                        [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat torchLevel){
-                            return ^ (AVCaptureDevice * capture_device) {
-                                __autoreleasing NSError * error = nil;
-                                if (([[NSProcessInfo processInfo] thermalState] != NSProcessInfoThermalStateCritical && [[NSProcessInfo processInfo] thermalState] != NSProcessInfoThermalStateSerious)) {
-                                    if (torchLevel != 0)
-                                        [capture_device setTorchModeOnWithLevel:torchLevel error:&error];
-                                    else
-                                        [capture_device setTorchMode:AVCaptureTorchModeOff];
-                                }
-                            };
-                        }(rescale(touch_angle, 180.0, 270.0, 0.0, 1.0))];
-                    else if (index == CaptureDeviceConfigurationControlPropertyISO)
-                        [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat ISO){
-                            return ^ (AVCaptureDevice * capture_device) {
-                                [capture_device setExposureModeCustomWithDuration:AVCaptureExposureDurationCurrent ISO:ISO completionHandler:nil];
-                            };
-                        }(rescale(touch_angle, 180.0, 270.0, [delegate minISO_], [delegate maxISO_]))];
-                    else if (index == CaptureDeviceConfigurationControlPropertyExposureDuration)
-                        [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat exposureDuration){
-                            return ^ (AVCaptureDevice * capture_device) {
-                                static const float kExposureDurationPower = 5;
-                                static const float kExposureMinimumDuration = 1.0/1000;
-                                double p = pow( exposureDuration, kExposureDurationPower ); // Apply power function to expand slider's low-end range
-                                double minDurationSeconds = MAX( CMTimeGetSeconds(capture_device.activeFormat.minExposureDuration ), kExposureMinimumDuration );
-                                double maxDurationSeconds = 1.0/3.0;//CMTimeGetSeconds( self.videoDevice.activeFormat.maxExposureDuration );
-                                double newDurationSeconds = p * ( maxDurationSeconds - minDurationSeconds ) + minDurationSeconds; // Scale from 0-1 slider range to actual duration
-                                [capture_device setExposureModeCustomWithDuration:CMTimeMakeWithSeconds( newDurationSeconds, 1000*1000*1000 )  ISO:AVCaptureISOCurrent completionHandler:nil];
-                            };
-                        }(rescale(touch_angle, 180.0, 270.0, 0.0, 1.0))];
-                }));
-                [((ControlView *)view) setNeedsDisplay];
-//            });
-            
-//            dispatch_barrier_sync(enumerator_queue(), ^{
-            ((long)0 || state_setter) && state_setter(^ (long (^ _Nullable set_state)(void)) {
-                    ((active_component_bit_vector & MASK_ALL)
-                     && filter(buttons)(^ (ControlView * view, CGFloat * r) {
-                        return ^ (UIButton * _Nonnull button, unsigned int index) {
-                            dispatch_barrier_async(dispatch_get_main_queue(), ^{
-                                //                            [button setHighlighted:((active_component_bit_vector >> index) & 1UL) & (UITouchPhaseEnded ^ touch.phase) & !(touch_property ^ index) & ((highlighted_property_bit_vector >> index) & 1UL)];
-                                [button setCenter:^ (CGFloat radians) {
-                                    return CGPointMake(center_point.x - *r * -cos(radians), center_point.y - *r * -sin(radians));
-                                }(degreesToRadians(rescale(index, 0.0, 4.0, 180.0, 270.0)))];
-                            });
+                };
+            }((ControlView *)view, &radius)))
+            || ((active_component_bit_vector & ~MASK_ALL)
+                && reduce(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
+                dispatch_barrier_async(dispatch_get_main_queue(), ^{
+                    [button setCenter:^ (CGFloat radians) {
+                        return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
+                    }(degreesToRadians(touch_angle))];
+                });
+                
+                if (index == CaptureDeviceConfigurationControlPropertyVideoZoomFactor)
+                    [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat videoZoomFactor){
+                        return ^ (AVCaptureDevice * capture_device) {
+                            [capture_device setVideoZoomFactor:videoZoomFactor];
                         };
-                    }((ControlView *)view, &radius)))
-                    || ((active_component_bit_vector & ~MASK_ALL)
-                        && reduce(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
-                        dispatch_barrier_async(dispatch_get_main_queue(), ^{
-                            [button setCenter:^ (CGFloat radians) {
-                                return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
-                            }(degreesToRadians(touch_angle))];
-                        });
-                        
-                        if (index == CaptureDeviceConfigurationControlPropertyVideoZoomFactor)
-                            [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat videoZoomFactor){
-                                return ^ (AVCaptureDevice * capture_device) {
-                                    [capture_device setVideoZoomFactor:videoZoomFactor];
-                                };
-                            }(rescale(touch_angle, 180.0, 270.0, 1.0, 9.0))];
-                        else if (index == CaptureDeviceConfigurationControlPropertyLensPosition)
-                            [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat lensPosition){
-                                return ^ (AVCaptureDevice * capture_device) {
-                                    [capture_device setFocusModeLockedWithLensPosition:lensPosition completionHandler:nil];
-                                };
-                            }(rescale(touch_angle, 180.0, 270.0, 0.0, 1.0))];
-                        else if (index == CaptureDeviceConfigurationControlPropertyTorchLevel)
-                            [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat torchLevel){
-                                return ^ (AVCaptureDevice * capture_device) {
-                                    __autoreleasing NSError * error = nil;
-                                    if (([[NSProcessInfo processInfo] thermalState] != NSProcessInfoThermalStateCritical && [[NSProcessInfo processInfo] thermalState] != NSProcessInfoThermalStateSerious)) {
-                                        if (torchLevel != 0)
-                                            [capture_device setTorchModeOnWithLevel:torchLevel error:&error];
-                                        else
-                                            [capture_device setTorchMode:AVCaptureTorchModeOff];
-                                    }
-                                };
-                            }(rescale(touch_angle, 180.0, 270.0, 0.0, 1.0))];
-                        else if (index == CaptureDeviceConfigurationControlPropertyISO)
-                            [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat ISO){
-                                return ^ (AVCaptureDevice * capture_device) {
-                                    [capture_device setExposureModeCustomWithDuration:AVCaptureExposureDurationCurrent ISO:ISO completionHandler:nil];
-                                };
-                            }(rescale(touch_angle, 180.0, 270.0, [delegate minISO_], [delegate maxISO_]))];
-                        else if (index == CaptureDeviceConfigurationControlPropertyExposureDuration)
-                            [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat exposureDuration){
-                                return ^ (AVCaptureDevice * capture_device) {
-                                    static const float kExposureDurationPower = 5;
-                                    static const float kExposureMinimumDuration = 1.0/1000;
-                                    double p = pow( exposureDuration, kExposureDurationPower ); // Apply power function to expand slider's low-end range
-                                    double minDurationSeconds = MAX( CMTimeGetSeconds(capture_device.activeFormat.minExposureDuration ), kExposureMinimumDuration );
-                                    double maxDurationSeconds = 1.0/3.0;//CMTimeGetSeconds( self.videoDevice.activeFormat.maxExposureDuration );
-                                    double newDurationSeconds = p * ( maxDurationSeconds - minDurationSeconds ) + minDurationSeconds; // Scale from 0-1 slider range to actual duration
-                                    [capture_device setExposureModeCustomWithDuration:CMTimeMakeWithSeconds( newDurationSeconds, 1000*1000*1000 )  ISO:AVCaptureISOCurrent completionHandler:nil];
-                                };
-                            }(rescale(touch_angle, 180.0, 270.0, 0.0, 1.0))];
-                    }));
-//                });
-                    dispatch_async(dispatch_get_main_queue(), ^{
-                        [((ControlView *)view) setNeedsDisplay];
-                    });
-            });
+                    }(rescale(touch_angle, 180.0, 270.0, 1.0, 9.0))];
+                else if (index == CaptureDeviceConfigurationControlPropertyLensPosition)
+                    [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat lensPosition){
+                        return ^ (AVCaptureDevice * capture_device) {
+                            [capture_device setFocusModeLockedWithLensPosition:lensPosition completionHandler:nil];
+                        };
+                    }(rescale(touch_angle, 180.0, 270.0, 0.0, 1.0))];
+                else if (index == CaptureDeviceConfigurationControlPropertyTorchLevel)
+                    [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat torchLevel){
+                        return ^ (AVCaptureDevice * capture_device) {
+                            __autoreleasing NSError * error = nil;
+                            if (([[NSProcessInfo processInfo] thermalState] != NSProcessInfoThermalStateCritical && [[NSProcessInfo processInfo] thermalState] != NSProcessInfoThermalStateSerious)) {
+                                if (torchLevel != 0)
+                                    [capture_device setTorchModeOnWithLevel:torchLevel error:&error];
+                                else
+                                    [capture_device setTorchMode:AVCaptureTorchModeOff];
+                            }
+                        };
+                    }(rescale(touch_angle, 180.0, 270.0, 0.0, 1.0))];
+                else if (index == CaptureDeviceConfigurationControlPropertyISO)
+                    [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat ISO){
+                        return ^ (AVCaptureDevice * capture_device) {
+                            [capture_device setExposureModeCustomWithDuration:AVCaptureExposureDurationCurrent ISO:ISO completionHandler:nil];
+                        };
+                    }(rescale(touch_angle, 180.0, 270.0, [delegate minISO_], [delegate maxISO_]))];
+                else if (index == CaptureDeviceConfigurationControlPropertyExposureDuration)
+                    [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat exposureDuration){
+                        return ^ (AVCaptureDevice * capture_device) {
+                            static const float kExposureDurationPower = 5;
+                            static const float kExposureMinimumDuration = 1.0/1000;
+                            double p = pow( exposureDuration, kExposureDurationPower ); // Apply power function to expand slider's low-end range
+                            double minDurationSeconds = MAX( CMTimeGetSeconds(capture_device.activeFormat.minExposureDuration ), kExposureMinimumDuration );
+                            double maxDurationSeconds = 1.0/3.0;//CMTimeGetSeconds( self.videoDevice.activeFormat.maxExposureDuration );
+                            double newDurationSeconds = p * ( maxDurationSeconds - minDurationSeconds ) + minDurationSeconds; // Scale from 0-1 slider range to actual duration
+                            [capture_device setExposureModeCustomWithDuration:CMTimeMakeWithSeconds( newDurationSeconds, 1000*1000*1000 )  ISO:AVCaptureISOCurrent completionHandler:nil];
+                        };
+                    }(rescale(touch_angle, 180.0, 270.0, 0.0, 1.0))];
+            }));
             
+            // state_setter goes here
+            
+            // block literal for post-transition blocks
+            
+            long(^(^post_transition_init)(long(^)(void)))(void) = ^ (long(^b)(long(^b)(void))) {
+                return ^{
+                    return (long)1;
+                };
+            };
+            
+            
+            
+            
+            ^ (long(^b)(void)) {
+                return b;
+            }(^{
+                return(long)('b');
+            });
+        
+                
+            
+            long (^ _Nonnull post_handle_touch)(void);
+            long (^(^ _Nonnull transition)(CGPoint, CGFloat))(long (^ _Nonnull)(void));
+            long (^state)(long (^(^ _Nonnull)(CGPoint, CGFloat))(long (^ _Nonnull)(void)));
+            state = ^ long (long (^(^ _Nonnull __strong animate_transition)(CGPoint, CGFloat))(long (^ _Nonnull __strong)(void))) {
+                return (animate_transition(center_point, radius))(post_handle_touch);
+            };
+        };
+    };
+};
+//'void (^(^(^)(ControlView *__strong, __strong id<CaptureDeviceConfigurationControlPropertyDelegate>))(UITouch * _Nullable __strong))(long (^ _Nullable __strong)(long (^(^ _Nonnull __strong)(CGPoint, CGFloat))(void (^ _Nonnull __strong)(void))))'
+
+
+
+    return ^ (__strong UITouch * _Nullable touch) {
+        return ^ (long(^ _Nullable state)(long (^(^ _Nonnull)(CGPoint, CGFloat))(long (^ _Nonnull)(void)))) {
+            //            dispatch_barrier_sync(enumerator_queue(), ^{
+//            touch_point = [touch locationInView:(ControlView *)view];
+//            touch_point.x = fmaxf(0.0, fminf(touch_point.x, CGRectGetMaxX(((ControlView *)view).bounds)));
+//            touch_point.y = fmaxf(0.0, fminf(touch_point.y, CGRectGetMaxY(((ControlView *)view).bounds)));
+//
+//            touch_angle = (atan2((touch_point).y - (center_point).y, (touch_point).x - (center_point).x)) * (180.0 / M_PI);
+//            if (touch_angle < 0.0) touch_angle += 360.0;
+//            touch_angle = fmaxf(180.0, fminf(touch_angle, 270.0));
+//
+//            radius = fmaxf(CGRectGetMidX(((ControlView *)view).bounds),
+//                           fminf((sqrt(pow(touch_point.x - center_point.x, 2.0) + pow(touch_point.y - center_point.y, 2.0))),
+//                                 CGRectGetMaxX(((ControlView *)view).bounds)));
+//
+//            highlighted_property_bit_vector = (((active_component_bit_vector & MASK_ALL) & 1UL) << ((unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 4.0))));
+//            //            });
+//
+//            //            dispatch_barrier_sync(enumerator_queue(), ^{
+//            ((active_component_bit_vector & MASK_ALL)
+//             && filter(buttons)(^ (ControlView * view, CGFloat * r) {
+//                return ^ (UIButton * _Nonnull button, unsigned int index) {
+//                    dispatch_barrier_async(dispatch_get_main_queue(), ^{
+//                        //                            [button setHighlighted:((active_component_bit_vector >> index) & 1UL) & (UITouchPhaseEnded ^ touch.phase) & !(touch_property ^ index) & ((highlighted_property_bit_vector >> index) & 1UL)];
+//                        [button setCenter:^ (CGFloat radians) {
+//                            return CGPointMake(center_point.x - *r * -cos(radians), center_point.y - *r * -sin(radians));
+//                        }(degreesToRadians(rescale(index, 0.0, 4.0, 180.0, 270.0)))];
+//                    });
+//                };
+//            }((ControlView *)view, &radius)))
+//            || ((active_component_bit_vector & ~MASK_ALL)
+//                && reduce(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
+//                dispatch_barrier_async(dispatch_get_main_queue(), ^{
+//                    [button setCenter:^ (CGFloat radians) {
+//                        return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
+//                    }(degreesToRadians(touch_angle))];
+//                });
+//
+//                if (index == CaptureDeviceConfigurationControlPropertyVideoZoomFactor)
+//                    [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat videoZoomFactor){
+//                        return ^ (AVCaptureDevice * capture_device) {
+//                            [capture_device setVideoZoomFactor:videoZoomFactor];
+//                        };
+//                    }(rescale(touch_angle, 180.0, 270.0, 1.0, 9.0))];
+//                else if (index == CaptureDeviceConfigurationControlPropertyLensPosition)
+//                    [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat lensPosition){
+//                        return ^ (AVCaptureDevice * capture_device) {
+//                            [capture_device setFocusModeLockedWithLensPosition:lensPosition completionHandler:nil];
+//                        };
+//                    }(rescale(touch_angle, 180.0, 270.0, 0.0, 1.0))];
+//                else if (index == CaptureDeviceConfigurationControlPropertyTorchLevel)
+//                    [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat torchLevel){
+//                        return ^ (AVCaptureDevice * capture_device) {
+//                            __autoreleasing NSError * error = nil;
+//                            if (([[NSProcessInfo processInfo] thermalState] != NSProcessInfoThermalStateCritical && [[NSProcessInfo processInfo] thermalState] != NSProcessInfoThermalStateSerious)) {
+//                                if (torchLevel != 0)
+//                                    [capture_device setTorchModeOnWithLevel:torchLevel error:&error];
+//                                else
+//                                    [capture_device setTorchMode:AVCaptureTorchModeOff];
+//                            }
+//                        };
+//                    }(rescale(touch_angle, 180.0, 270.0, 0.0, 1.0))];
+//                else if (index == CaptureDeviceConfigurationControlPropertyISO)
+//                    [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat ISO){
+//                        return ^ (AVCaptureDevice * capture_device) {
+//                            [capture_device setExposureModeCustomWithDuration:AVCaptureExposureDurationCurrent ISO:ISO completionHandler:nil];
+//                        };
+//                    }(rescale(touch_angle, 180.0, 270.0, [delegate minISO_], [delegate maxISO_]))];
+//                else if (index == CaptureDeviceConfigurationControlPropertyExposureDuration)
+//                    [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat exposureDuration){
+//                        return ^ (AVCaptureDevice * capture_device) {
+//                            static const float kExposureDurationPower = 5;
+//                            static const float kExposureMinimumDuration = 1.0/1000;
+//                            double p = pow( exposureDuration, kExposureDurationPower ); // Apply power function to expand slider's low-end range
+//                            double minDurationSeconds = MAX( CMTimeGetSeconds(capture_device.activeFormat.minExposureDuration ), kExposureMinimumDuration );
+//                            double maxDurationSeconds = 1.0/3.0;//CMTimeGetSeconds( self.videoDevice.activeFormat.maxExposureDuration );
+//                            double newDurationSeconds = p * ( maxDurationSeconds - minDurationSeconds ) + minDurationSeconds; // Scale from 0-1 slider range to actual duration
+//                            [capture_device setExposureModeCustomWithDuration:CMTimeMakeWithSeconds( newDurationSeconds, 1000*1000*1000 )  ISO:AVCaptureISOCurrent completionHandler:nil];
+//                        };
+//                    }(rescale(touch_angle, 180.0, 270.0, 0.0, 1.0))];
+//            }));
+//            [((ControlView *)view) setNeedsDisplay];
+//
+//            ((long)0 || state_setter) && state_setter(^ (long (^ _Nullable set_state)(void)) {
+//                ((active_component_bit_vector & MASK_ALL)
+//                 && filter(buttons)(^ (ControlView * view, CGFloat * r) {
+//                    return ^ (UIButton * _Nonnull button, unsigned int index) {
+//                        dispatch_barrier_async(dispatch_get_main_queue(), ^{
+//                            //                            [button setHighlighted:((active_component_bit_vector >> index) & 1UL) & (UITouchPhaseEnded ^ touch.phase) & !(touch_property ^ index) & ((highlighted_property_bit_vector >> index) & 1UL)];
+//                            [button setCenter:^ (CGFloat radians) {
+//                                return CGPointMake(center_point.x - *r * -cos(radians), center_point.y - *r * -sin(radians));
+//                            }(degreesToRadians(rescale(index, 0.0, 4.0, 180.0, 270.0)))];
+//                        });
+//                    };
+//                }((ControlView *)view, &radius)))
+//                || ((active_component_bit_vector & ~MASK_ALL)
+//                    && reduce(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
+//                    dispatch_barrier_async(dispatch_get_main_queue(), ^{
+//                        [button setCenter:^ (CGFloat radians) {
+//                            return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
+//                        }(degreesToRadians(touch_angle))];
+//                    });
+//
+//                    if (index == CaptureDeviceConfigurationControlPropertyVideoZoomFactor)
+//                        [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat videoZoomFactor){
+//                            return ^ (AVCaptureDevice * capture_device) {
+//                                [capture_device setVideoZoomFactor:videoZoomFactor];
+//                            };
+//                        }(rescale(touch_angle, 180.0, 270.0, 1.0, 9.0))];
+//                    else if (index == CaptureDeviceConfigurationControlPropertyLensPosition)
+//                        [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat lensPosition){
+//                            return ^ (AVCaptureDevice * capture_device) {
+//                                [capture_device setFocusModeLockedWithLensPosition:lensPosition completionHandler:nil];
+//                            };
+//                        }(rescale(touch_angle, 180.0, 270.0, 0.0, 1.0))];
+//                    else if (index == CaptureDeviceConfigurationControlPropertyTorchLevel)
+//                        [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat torchLevel){
+//                            return ^ (AVCaptureDevice * capture_device) {
+//                                __autoreleasing NSError * error = nil;
+//                                if (([[NSProcessInfo processInfo] thermalState] != NSProcessInfoThermalStateCritical && [[NSProcessInfo processInfo] thermalState] != NSProcessInfoThermalStateSerious)) {
+//                                    if (torchLevel != 0)
+//                                        [capture_device setTorchModeOnWithLevel:torchLevel error:&error];
+//                                    else
+//                                        [capture_device setTorchMode:AVCaptureTorchModeOff];
+//                                }
+//                            };
+//                        }(rescale(touch_angle, 180.0, 270.0, 0.0, 1.0))];
+//                    else if (index == CaptureDeviceConfigurationControlPropertyISO)
+//                        [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat ISO){
+//                            return ^ (AVCaptureDevice * capture_device) {
+//                                [capture_device setExposureModeCustomWithDuration:AVCaptureExposureDurationCurrent ISO:ISO completionHandler:nil];
+//                            };
+//                        }(rescale(touch_angle, 180.0, 270.0, [delegate minISO_], [delegate maxISO_]))];
+//                    else if (index == CaptureDeviceConfigurationControlPropertyExposureDuration)
+//                        [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat exposureDuration){
+//                            return ^ (AVCaptureDevice * capture_device) {
+//                                static const float kExposureDurationPower = 5;
+//                                static const float kExposureMinimumDuration = 1.0/1000;
+//                                double p = pow( exposureDuration, kExposureDurationPower ); // Apply power function to expand slider's low-end range
+//                                double minDurationSeconds = MAX( CMTimeGetSeconds(capture_device.activeFormat.minExposureDuration ), kExposureMinimumDuration );
+//                                double maxDurationSeconds = 1.0/3.0;//CMTimeGetSeconds( self.videoDevice.activeFormat.maxExposureDuration );
+//                                double newDurationSeconds = p * ( maxDurationSeconds - minDurationSeconds ) + minDurationSeconds; // Scale from 0-1 slider range to actual duration
+//                                [capture_device setExposureModeCustomWithDuration:CMTimeMakeWithSeconds( newDurationSeconds, 1000*1000*1000 )  ISO:AVCaptureISOCurrent completionHandler:nil];
+//                            };
+//                        }(rescale(touch_angle, 180.0, 270.0, 0.0, 1.0))];
+//                }));
+//
+//                dispatch_async(dispatch_get_main_queue(), ^{
+//                    [((ControlView *)view) setNeedsDisplay];
+//                });
+//            });
+//
             //            dispatch_barrier_sync(enumerator_queue(), ^{
             //                ((long)0 || transition) && transition(center_point, radius); //set_button_state((unsigned int)round(fmaxf(0.0, fminf((unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 4.0)), 4.0))))(center_point, radius);
             //                ((active_component_bit_vector & MASK_ALL)
@@ -603,14 +838,14 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
             //                    });
             //                }));
             //            });
-//            [((ControlView *)view) setNeedsDisplay];
+            //            [((ControlView *)view) setNeedsDisplay];
         };
     };
 };
 
 
 @implementation ControlView {
-        UISelectionFeedbackGenerator * haptic_feedback;
+    UISelectionFeedbackGenerator * haptic_feedback;
 }
 
 - (void)awakeFromNib {
@@ -620,8 +855,8 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
     [self.layer setAffineTransform:CGAffineTransformScale(self.layer.affineTransform, -1, -1)];
     
     [self updateStateLabels];
-        haptic_feedback = [[UISelectionFeedbackGenerator alloc] init];
-        [haptic_feedback prepare];
+    haptic_feedback = [[UISelectionFeedbackGenerator alloc] init];
+    [haptic_feedback prepare];
     
     CGPoint default_center_point = CGPointMake(CGRectGetMaxX(((ControlView *)self).bounds), CGRectGetMaxY(((ControlView *)self).bounds));
     CGFloat default_radius       = CGRectGetMidX(self.bounds);
@@ -649,7 +884,7 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
         [button setUserInteractionEnabled:FALSE];
         void (^eventHandlerBlockTouchUpInside)(void) = ^{
             NSNumber * associatedObject = (NSNumber *)objc_getAssociatedObject (button, (void *)index);
-//            printf("%s\n", [[associatedObject stringValue] UTF8String]);
+            //            printf("%s\n", [[associatedObject stringValue] UTF8String]);
         };
         objc_setAssociatedObject(button, @selector(invoke), eventHandlerBlockTouchUpInside, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
         [button addTarget:eventHandlerBlockTouchUpInside action:@selector(invoke) forControlEvents:UIControlEventTouchUpInside];
@@ -692,8 +927,8 @@ static void (^(^(^touch_handler_init)(ControlView *, id<CaptureDeviceConfigurati
 - (void)drawRect:(CGRect)rect {
     draw_tick_wheel(UIGraphicsGetCurrentContext(), rect);
     // To-Do: only "click" when a new value is selected - not every time drawRect is called
-        [haptic_feedback selectionChanged];
-        [haptic_feedback prepare];
+    [haptic_feedback selectionChanged];
+    [haptic_feedback prepare];
 }
 
 - (void)updateStateLabels {

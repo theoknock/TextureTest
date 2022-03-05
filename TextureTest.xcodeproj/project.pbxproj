@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		B90B097D2793070E0052879E /* Kernels.metal in Sources */ = {isa = PBXBuildFile; fileRef = B90B097C2793070E0052879E /* Kernels.metal */; };
 		B90E67D627A5C6B8004B935F /* ControlView.m in Sources */ = {isa = PBXBuildFile; fileRef = B90E67D527A5C6B8004B935F /* ControlView.m */; };
+		B9BCA52A27D2DB5500B768CE /* transition_block.c in Sources */ = {isa = PBXBuildFile; fileRef = B9BCA52927D2DB5500B768CE /* transition_block.c */; };
 		B9FB8D4A2792DD970088F353 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = B9FB8D492792DD970088F353 /* AppDelegate.m */; };
 		B9FB8D4D2792DD970088F353 /* Renderer.m in Sources */ = {isa = PBXBuildFile; fileRef = B9FB8D4C2792DD970088F353 /* Renderer.m */; };
 		B9FB8D502792DD970088F353 /* GameViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = B9FB8D4F2792DD970088F353 /* GameViewController.m */; };
@@ -26,6 +27,8 @@
 		B90E67D427A5C6B8004B935F /* ControlView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ControlView.h; sourceTree = "<group>"; };
 		B90E67D527A5C6B8004B935F /* ControlView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ControlView.m; sourceTree = "<group>"; wrapsLines = 0; };
 		B94F5B4F27A58AAF00DA42A4 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
+		B9BCA52827D2DB5500B768CE /* transition_block.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = transition_block.h; sourceTree = "<group>"; };
+		B9BCA52927D2DB5500B768CE /* transition_block.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = transition_block.c; sourceTree = "<group>"; };
 		B9D264C827987C38004776B5 /* CodeSnippetReview */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = CodeSnippetReview; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		B9FB8D452792DD970088F353 /* TextureTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TextureTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B9FB8D482792DD970088F353 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -92,6 +95,8 @@
 				B9FB8D4F2792DD970088F353 /* GameViewController.m */,
 				B90E67D427A5C6B8004B935F /* ControlView.h */,
 				B90E67D527A5C6B8004B935F /* ControlView.m */,
+				B9BCA52827D2DB5500B768CE /* transition_block.h */,
+				B9BCA52927D2DB5500B768CE /* transition_block.c */,
 				B90B097C2793070E0052879E /* Kernels.metal */,
 				B90B097E2793074D0052879E /* KernelTypes.h */,
 				B9FB8D512792DD970088F353 /* Shaders.metal */,
@@ -181,6 +186,7 @@
 				B9FB8D522792DD970088F353 /* Shaders.metal in Sources */,
 				B9FB8D4D2792DD970088F353 /* Renderer.m in Sources */,
 				B90E67D627A5C6B8004B935F /* ControlView.m in Sources */,
+				B9BCA52A27D2DB5500B768CE /* transition_block.c in Sources */,
 				B9FB8D502792DD970088F353 /* GameViewController.m in Sources */,
 				B90B097D2793070E0052879E /* Kernels.metal in Sources */,
 				B9FB8D4A2792DD970088F353 /* AppDelegate.m in Sources */,
