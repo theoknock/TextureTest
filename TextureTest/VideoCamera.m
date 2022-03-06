@@ -293,7 +293,14 @@ static void (^(^set_configuration_phase)(UITouchPhase))(void(^)(void)) = ^ (UITo
         case CaptureDeviceConfigurationControlPropertyISO: {
             ^ (CGFloat ISO, void(^configure_phase)(void(^)(void))) {
                 configure_phase(^{
-                    [VideoCamera.captureDevice setExposureModeCustomWithDuration:AVCaptureExposureDurationCurrent ISO:ISO completionHandler:nil];
+                    @try {
+                        [VideoCamera.captureDevice setExposureModeCustomWithDuration:AVCaptureExposureDurationCurrent ISO:ISO completionHandler:nil];
+                    } @catch (NSException *exception) {
+                        [VideoCamera.captureDevice setExposureModeCustomWithDuration:AVCaptureExposureDurationCurrent ISO:AVCaptureISOCurrent completionHandler:nil];
+                    } @finally {
+                        
+                    }
+
                 });
             }(rescale(value, 180.0, 270.0, 0.0, 1.0), set_configuration_phase(phase));
             break;

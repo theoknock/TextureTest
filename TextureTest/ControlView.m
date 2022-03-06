@@ -1121,7 +1121,7 @@ static void (^(^(^touch_handler_init)(ControlView *__strong, __strong id<Capture
                 (UITouchPhaseCancelled ^ configuration_phase) &&
                 ^ {
                     printf("\t\tconfiguration_phase == %lu\n", configuration_phase);
-                    [delegate setCaptureDeviceConfigurationControlProperty:floor(log2(selected_property_bit_vector)) value:touch_angle phase:configuration_phase];
+                    [delegate setCaptureDeviceConfigurationControlProperty:index value:touch_angle phase:configuration_phase];
                     return (long)UITouchPhaseCancelled;
                 }();
             });
