@@ -8,6 +8,7 @@
 #import <Foundation/Foundation.h>
 #import <AVFoundation/AVFoundation.h>
 #import "ControlView.h"
+#import "Renderer.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -24,6 +25,7 @@ extern CGSize videoDimensions;
 - (float)maxISO_;
 - (float)minISO_;
 - (void)setCaptureDeviceConfigurationControlPropertyUsingBlock:(void(^)(AVCaptureDevice *))captureDeviceConfigurationControlPropertyBlock;
+- (void)setCaptureDeviceConfigurationControlProperty:(CaptureDeviceConfigurationControlProperty)property value:(float)value;
 
 @property (class, nonatomic, strong, readwrite) AVCaptureDevice * captureDevice;
 

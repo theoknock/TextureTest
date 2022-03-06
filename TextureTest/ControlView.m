@@ -1115,48 +1115,9 @@ static void (^(^(^touch_handler_init)(ControlView *__strong, __strong id<Capture
                 [button setCenter:^ (CGFloat radians) {
                     return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
                 }(degreesToRadians(touch_angle))];
+                [delegate setCaptureDeviceConfigurationControlProperty:floor(log2(selected_property_bit_vector)) value:touch_angle];
             });
-            
-            if (index == CaptureDeviceConfigurationControlPropertyVideoZoomFactor)
-                [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat videoZoomFactor){
-                    return ^ (AVCaptureDevice * capture_device) {
-                        [capture_device setVideoZoomFactor:videoZoomFactor];
-                    };
-                }(rescale(touch_angle, 180.0, 270.0, 1.0, 9.0))];
-            else if (index == CaptureDeviceConfigurationControlPropertyLensPosition)
-                [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat lensPosition){
-                    return ^ (AVCaptureDevice * capture_device) {
-                        [capture_device setFocusModeLockedWithLensPosition:lensPosition completionHandler:nil];
-                    };
-                }(rescale(touch_angle, 180.0, 270.0, 0.0, 1.0))];
-            else if (index == CaptureDeviceConfigurationControlPropertyTorchLevel)
-                [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat torchLevel){
-                    return ^ (AVCaptureDevice * capture_device) {
-                        __autoreleasing NSError * error = nil;
-                        if (([[NSProcessInfo processInfo] thermalState] != NSProcessInfoThermalStateCritical && [[NSProcessInfo processInfo] thermalState] != NSProcessInfoThermalStateSerious)) {
-                            if (torchLevel != 0)
-                                [capture_device setTorchModeOnWithLevel:torchLevel error:&error];
-                            else
-                                [capture_device setTorchMode:AVCaptureTorchModeOff];
-                        }
-                    };
-                }(rescale(touch_angle, 180.0, 270.0, 0.0, 1.0))];
-            else if (index == CaptureDeviceConfigurationControlPropertyISO)
-                [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat ISO){
-                    return ^ (AVCaptureDevice * capture_device) {
-                        [capture_device setExposureModeCustomWithDuration:AVCaptureExposureDurationCurrent ISO:ISO completionHandler:nil];
-                    };
-                }(rescale(touch_angle, 180.0, 270.0, [delegate minISO_], [delegate maxISO_]))];
-            else if (index == CaptureDeviceConfigurationControlPropertyExposureDuration)
-                [delegate setCaptureDeviceConfigurationControlPropertyUsingBlock:^ (CGFloat exposureDuration){
-                    return ^ (AVCaptureDevice * capture_device) {                        
-                        double p = pow( exposureDuration, kExposureDurationPower ); // Apply power function to expand slider's low-end range
-                        double minDurationSeconds = MAX( CMTimeGetSeconds(capture_device.activeFormat.minExposureDuration ), kExposureMinimumDuration );
-                        double maxDurationSeconds = 1.0/3.0;//CMTimeGetSeconds( self.videoDevice.activeFormat.maxExposureDuration );
-                        double newDurationSeconds = p * ( maxDurationSeconds - minDurationSeconds ) + minDurationSeconds; // Scale from 0-1 slider range to actual duration
-                        [capture_device setExposureModeCustomWithDuration:CMTimeMakeWithSeconds( newDurationSeconds, 1000*1000*1000 )  ISO:AVCaptureISOCurrent completionHandler:nil];
-                    };
-                }(rescale(touch_angle, 180.0, 270.0, 0.0, 1.0))];
+
         }));
         [((ControlView *)view) setNeedsDisplay];
         return (long)active_component_bit_vector;
@@ -1202,7 +1163,6 @@ static void (^(^(^touch_handler_init)(ControlView *__strong, __strong id<Capture
                             double maxDurationSeconds = 1.0/3.0;
                             touch_angle = fmaxf(0.0, fminf(pow(rescale(newDurationSeconds, minDurationSeconds, maxDurationSeconds, 0.0, 1.0), 1.0 / kExposureDurationPower), 1.0));
                             touch_angle = rescale(touch_angle, 0.0, 1.0, 180.0, 270.0);
-                            
                             break;
                         }
                         case CaptureDeviceConfigurationControlPropertyISO:

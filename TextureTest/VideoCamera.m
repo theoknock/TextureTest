@@ -14,7 +14,7 @@ CGSize videoDimensions;
     AVCaptureSession * captureSession;
     AVCaptureDevice * captureDevice;
     AVCaptureDeviceInput * captureInput;
-//    AVCaptureVideoPreviewLayer *previewLayer;
+    //    AVCaptureVideoPreviewLayer *previewLayer;
     AVCaptureVideoDataOutput * captureOutput;
 }
 
@@ -90,14 +90,14 @@ dispatch_queue_t video_data_output_sample_buffer_delegate_queue;
                 if ([captureSession canAddOutput:captureOutput])
                     [captureSession addOutput:captureOutput];
                 
-    //            AVCaptureVideoOrientation __block preferredVideoOrientation = AVCaptureVideoOrientationPortrait;
-    //            UIInterfaceOrientation interfaceOrientation = [[[[UIApplication sharedApplication] windows] firstObject] windowScene].interfaceOrientation;
-    //            if (interfaceOrientation != UIInterfaceOrientationUnknown ) {
-    //                preferredVideoOrientation = (AVCaptureVideoOrientation)interfaceOrientation;
-    //            }
-    //            previewLayer = (AVCaptureVideoPreviewLayer *)self.cameraView.layer;
-    //            previewLayer.session = captureSession;
-    //            previewLayer.connection.videoOrientation = preferredVideoOrientation;
+                //            AVCaptureVideoOrientation __block preferredVideoOrientation = AVCaptureVideoOrientationPortrait;
+                //            UIInterfaceOrientation interfaceOrientation = [[[[UIApplication sharedApplication] windows] firstObject] windowScene].interfaceOrientation;
+                //            if (interfaceOrientation != UIInterfaceOrientationUnknown ) {
+                //                preferredVideoOrientation = (AVCaptureVideoOrientation)interfaceOrientation;
+                //            }
+                //            previewLayer = (AVCaptureVideoPreviewLayer *)self.cameraView.layer;
+                //            previewLayer.session = captureSession;
+                //            previewLayer.connection.videoOrientation = preferredVideoOrientation;
                 
                 AVCaptureConnection *videoDataCaptureConnection = [[AVCaptureConnection alloc] initWithInputPorts:captureInput.ports output:captureOutput];
                 if ([videoDataCaptureConnection isVideoOrientationSupported])
@@ -155,6 +155,86 @@ dispatch_queue_t video_data_output_sample_buffer_delegate_queue;
 
 - (float)minISO_ {
     return VideoCamera.captureDevice.activeFormat.minISO;
+}
+
+static void(^set_capture_device_configuration_control_property)(void(^)(void)) = ^ (void(^captureDeviceConfigurationControlPropertyBlock)(void)) {
+    @try {
+        __autoreleasing NSError *error = NULL;
+        [VideoCamera.captureDevice lockForConfiguration:&error];
+        if (error) {
+            printf("Error == %s\n", [[error debugDescription] UTF8String]);
+            NSException* exception = [NSException
+                                      exceptionWithName:error.domain
+                                      reason:error.localizedDescription
+                                      userInfo:@{@"Error Code" : @(error.code)}];
+            @throw exception;
+        }
+        captureDeviceConfigurationControlPropertyBlock();
+    } @catch (NSException *exception) {
+        NSLog(@"Error configuring camera:\n\t%@\n\t%@\n\t%lu",
+              exception.name,
+              exception.reason,
+              ((NSNumber *)[exception.userInfo valueForKey:@"Error Code"]).unsignedIntegerValue);
+    } @finally {
+        [VideoCamera.captureDevice unlockForConfiguration];
+    }
+};
+
+- (void)setCaptureDeviceConfigurationControlProperty:(CaptureDeviceConfigurationControlProperty)property value:(float)value {
+    switch (property) {
+        case CaptureDeviceConfigurationControlPropertyTorchLevel: {
+            set_capture_device_configuration_control_property(^ (CGFloat torchLevel) {
+                return ^{
+                    __autoreleasing NSError * error = nil;
+                    if (([[NSProcessInfo processInfo] thermalState] != NSProcessInfoThermalStateCritical && [[NSProcessInfo processInfo] thermalState] != NSProcessInfoThermalStateSerious)) {
+                        if (torchLevel != 0)
+                            [VideoCamera.captureDevice setTorchModeOnWithLevel:torchLevel error:&error];
+                        else
+                            [VideoCamera.captureDevice setTorchMode:AVCaptureTorchModeOff];
+                    }
+                };
+            }(rescale(value, 180.0, 270.0, 0.0, 1.0)));
+            break;
+        }
+        case CaptureDeviceConfigurationControlPropertyLensPosition: {
+        set_capture_device_configuration_control_property:^ (CGFloat lensPosition) {
+            return ^{
+                [VideoCamera.captureDevice setFocusModeLockedWithLensPosition:lensPosition completionHandler:nil];
+            };
+        }(rescale(value, 180.0, 270.0, 0.0, 1.0));
+            break;
+        }
+        case CaptureDeviceConfigurationControlPropertyExposureDuration: {
+            set_capture_device_configuration_control_property(^ (CGFloat exposureDuration) {
+                return ^{
+                    double p = pow( exposureDuration, kExposureDurationPower ); // Apply power function to expand slider's low-end range
+                    double minDurationSeconds = MAX( CMTimeGetSeconds(VideoCamera.captureDevice.activeFormat.minExposureDuration ), kExposureMinimumDuration );
+                    double maxDurationSeconds = 1.0/3.0;//CMTimeGetSeconds( self.videoDevice.activeFormat.maxExposureDuration );
+                    double newDurationSeconds = p * ( maxDurationSeconds - minDurationSeconds ) + minDurationSeconds; // Scale from 0-1 slider range to actual duration
+                    [VideoCamera.captureDevice setExposureModeCustomWithDuration:CMTimeMakeWithSeconds( newDurationSeconds, 1000*1000*1000 )  ISO:AVCaptureISOCurrent completionHandler:nil];
+                };
+            }(rescale(value, 180.0, 270.0, 0.0, 1.0)));
+            break;
+        }
+        case CaptureDeviceConfigurationControlPropertyISO: {
+            set_capture_device_configuration_control_property(^ (CGFloat ISO) {
+                return ^{
+                    [VideoCamera.captureDevice setExposureModeCustomWithDuration:AVCaptureExposureDurationCurrent ISO:ISO completionHandler:nil];
+                };
+            }(rescale(value, 180.0, 270.0, 0.0, 1.0)));
+            break;
+        }
+        case CaptureDeviceConfigurationControlPropertyVideoZoomFactor: {
+            set_capture_device_configuration_control_property(^ (CGFloat videoZoomFactor) {
+                return ^{
+                    [VideoCamera.captureDevice setVideoZoomFactor:videoZoomFactor];
+                };
+            }(rescale(value, 180.0, 270.0, 1.0, 9.0)));
+            break;
+        }
+        default:
+            break;
+    }
 }
 
 @end
