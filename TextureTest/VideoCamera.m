@@ -218,8 +218,6 @@ static void (^(^set_configuration_phase)(UITouchPhase))(void(^)(void)) = ^ (UITo
                                                   reason:error.localizedDescription
                                                   userInfo:@{@"Error Code" : @(error.code)}];
                         @throw exception;
-                    } else {
-                        configuration();
                     }
                 } @catch (NSException *exception) {
                     NSLog(@"Error configuring camera:\n\t%@\n\t%@\n\t%lu",
@@ -227,14 +225,12 @@ static void (^(^set_configuration_phase)(UITouchPhase))(void(^)(void)) = ^ (UITo
                           exception.reason,
                           ((NSNumber *)[exception.userInfo valueForKey:@"Error Code"]).unsignedIntegerValue);
                 } @finally {
-                    printf("lock == %ld\n", (long)phase);
-                    
+                    configuration();
                 }
             };
             break;
         }
         case UITouchPhaseEnded: {
-            printf("unlock == %ld\n", (long)phase);
             return ^ (void(^configuration)(void)) {
                 configuration();
                 [VideoCamera.captureDevice unlockForConfiguration];
@@ -243,7 +239,6 @@ static void (^(^set_configuration_phase)(UITouchPhase))(void(^)(void)) = ^ (UITo
             break;
         }
         case UITouchPhaseMoved: {
-            printf("unlock == %ld\n", (long)phase);
             return ^ (void(^configuration)(void)) {
                 configuration();
         
@@ -262,8 +257,8 @@ static void (^(^set_configuration_phase)(UITouchPhase))(void(^)(void)) = ^ (UITo
 - (void)setCaptureDeviceConfigurationControlProperty:(CaptureDeviceConfigurationControlProperty)property value:(float)value phase:(unsigned int)phase {
     switch (property) {
         case CaptureDeviceConfigurationControlPropertyTorchLevel: {
-            ^ (CGFloat torchLevel) {
-                return ^{
+            ^ (CGFloat torchLevel, void(^configure_phase)(void(^)(void))) {
+                configure_phase(^{
                     __autoreleasing NSError * error = nil;
                     if (([[NSProcessInfo processInfo] thermalState] != NSProcessInfoThermalStateCritical && [[NSProcessInfo processInfo] thermalState] != NSProcessInfoThermalStateSerious)) {
                         if (torchLevel != 0)
@@ -271,8 +266,8 @@ static void (^(^set_configuration_phase)(UITouchPhase))(void(^)(void)) = ^ (UITo
                         else
                             [VideoCamera.captureDevice setTorchMode:AVCaptureTorchModeOff];
                     }
-                };
-            }(rescale(value, 180.0, 270.0, 0.0, 1.0));
+                });
+            }(rescale(value, 180.0, 270.0, 0.0, 1.0), set_configuration_phase(phase));
             break;
         }
         case CaptureDeviceConfigurationControlPropertyLensPosition: {
@@ -284,31 +279,31 @@ static void (^(^set_configuration_phase)(UITouchPhase))(void(^)(void)) = ^ (UITo
             break;
         }
         case CaptureDeviceConfigurationControlPropertyExposureDuration: {
-            ^ (CGFloat exposureDuration) {
-                return ^{
+            ^ (CGFloat exposureDuration, void(^configure_phase)(void(^)(void))) {
+                configure_phase(^{
                     double p = pow( exposureDuration, kExposureDurationPower ); // Apply power function to expand slider's low-end range
                     double minDurationSeconds = MAX( CMTimeGetSeconds(VideoCamera.captureDevice.activeFormat.minExposureDuration ), kExposureMinimumDuration );
                     double maxDurationSeconds = 1.0/3.0;//CMTimeGetSeconds( self.videoDevice.activeFormat.maxExposureDuration );
                     double newDurationSeconds = p * ( maxDurationSeconds - minDurationSeconds ) + minDurationSeconds; // Scale from 0-1 slider range to actual duration
                     [VideoCamera.captureDevice setExposureModeCustomWithDuration:CMTimeMakeWithSeconds( newDurationSeconds, 1000*1000*1000 )  ISO:AVCaptureISOCurrent completionHandler:nil];
-                };
-            }(rescale(value, 180.0, 270.0, 0.0, 1.0));
+                });
+            }(rescale(value, 180.0, 270.0, 0.0, 1.0), set_configuration_phase(phase));
             break;
         }
         case CaptureDeviceConfigurationControlPropertyISO: {
-            ^ (CGFloat ISO) {
-                return ^{
+            ^ (CGFloat ISO, void(^configure_phase)(void(^)(void))) {
+                configure_phase(^{
                     [VideoCamera.captureDevice setExposureModeCustomWithDuration:AVCaptureExposureDurationCurrent ISO:ISO completionHandler:nil];
-                };
-            }(rescale(value, 180.0, 270.0, 0.0, 1.0));
+                });
+            }(rescale(value, 180.0, 270.0, 0.0, 1.0), set_configuration_phase(phase));
             break;
         }
         case CaptureDeviceConfigurationControlPropertyVideoZoomFactor: {
-            ^ (CGFloat videoZoomFactor) {
-                return ^{
+            ^ (CGFloat videoZoomFactor, void(^configure_phase)(void(^)(void))) {
+                configure_phase(^{
                     [VideoCamera.captureDevice setVideoZoomFactor:videoZoomFactor];
-                };
-            }(rescale(value, 180.0, 270.0, 1.0, 9.0));
+                });
+            }(rescale(value, 180.0, 270.0, 1.0, 9.0), set_configuration_phase(phase));
             break;
         }
         default:
