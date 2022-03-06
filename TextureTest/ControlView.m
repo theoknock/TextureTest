@@ -1201,9 +1201,7 @@ static void (^(^(^touch_handler_init)(ControlView *__strong, __strong id<Capture
                             double minDurationSeconds = MAX( CMTimeGetSeconds( VideoCamera.captureDevice.activeFormat.minExposureDuration ), kExposureMinimumDuration );
                             double maxDurationSeconds = 1.0/3.0; //CMTimeGetSeconds( self.videoDevice.activeFormat.maxExposureDuration );
                             touch_angle = pow((rescale(newDurationSeconds, minDurationSeconds, maxDurationSeconds, 0.0, 1.0)), 1.0 / kExposureDurationPower);
-                            printf("1\ttouch_angle == %f\t(0.0 --> 1.0)\n", touch_angle);
-                            touch_angle = rescale(touch_angle, 0.0, 1.0, 180.0, 270.0);
-                            printf("3\ttouch_angle == %ft(angle)\n", touch_angle);
+                            touch_angle = MAX(180.0, MIN(rescale(touch_angle, 0.0, 1.0, 180.0, 270.0), 270.0));
                             
                             break;
                         }
