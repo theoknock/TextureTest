@@ -26,7 +26,7 @@ typedef enum : NSUInteger {
 - (float)maxISO_;
 - (float)minISO_;
 - (void)setCaptureDeviceConfigurationControlPropertyUsingBlock:(void(^)(AVCaptureDevice *))captureDeviceConfigurationControlPropertyBlock;
-- (void)setCaptureDeviceConfigurationControlProperty:(CaptureDeviceConfigurationControlProperty)property value:(float)value;
+- (void)setCaptureDeviceConfigurationControlProperty:(CaptureDeviceConfigurationControlProperty)property value:(float)value phase:(unsigned int)phase;
 
 @end
 

@@ -12,6 +12,15 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+
+typedef enum : NSUInteger {
+    CaptureDeviceConfigurationPhaseLock,
+    CaptureDeviceConfigurationPhaseConfigure,
+    CaptureDeviceConfigurationPhaseUnlock
+} CaptureDeviceConfigurationPhase;
+
+
+
 static const float kExposureDurationPower = 5.0;
 static const float kExposureMinimumDuration = 1.0/1000;
 
@@ -24,8 +33,8 @@ extern CGSize videoDimensions;
 
 - (float)maxISO_;
 - (float)minISO_;
-- (void)setCaptureDeviceConfigurationControlPropertyUsingBlock:(void(^)(AVCaptureDevice *))captureDeviceConfigurationControlPropertyBlock;
-- (void)setCaptureDeviceConfigurationControlProperty:(CaptureDeviceConfigurationControlProperty)property value:(float)value;
+- (void)setCaptureDeviceConfigurationControlPropertyUsingBlock:(void(^)(unsigned int))captureDeviceConfigurationControlPropertyBlock;
+- (void)setCaptureDeviceConfigurationControlProperty:(CaptureDeviceConfigurationControlProperty)property value:(float)value phase:(UITouchPhase)phase;
 
 @property (class, nonatomic, strong, readwrite) AVCaptureDevice * captureDevice;
 

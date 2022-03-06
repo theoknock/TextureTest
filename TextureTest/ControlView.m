@@ -753,6 +753,8 @@
 #include <math.h>
 #include <stdatomic.h>
 #include <libkern/OSAtomic.h>
+#import "VideoCamera.h"
+
 
 @import Accelerate;
 @import CoreHaptics;
@@ -1097,9 +1099,9 @@ static void (^(^(^touch_handler_init)(ControlView *__strong, __strong id<Capture
     __block _Atomic CGFloat touch_angle;
     __block CGPoint touch_point;
     __block _Atomic CGFloat radius;
-    static long (^draw_button_arc)(long (^ _Nullable state_setter)(long (^ _Nonnull __strong transition)(void)));
+    static long (^draw_button_arc)(UITouchPhase);
     
-    draw_button_arc = ^ (long (^ _Nullable state_setter)(long (^ _Nonnull __strong transition)(void))) {
+    draw_button_arc =  ^ (UITouchPhase configuration_phase) {
         ((active_component_bit_vector & MASK_ALL)
          && filter(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
                 dispatch_barrier_async(dispatch_get_main_queue(), ^{
@@ -1115,10 +1117,16 @@ static void (^(^(^touch_handler_init)(ControlView *__strong, __strong id<Capture
                 [button setCenter:^ (CGFloat radians) {
                     return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
                 }(degreesToRadians(touch_angle))];
-                [delegate setCaptureDeviceConfigurationControlProperty:floor(log2(selected_property_bit_vector)) value:touch_angle];
+//                printf("\t\tconfiguration_phase == %lu\n", configuration_phase);
+                (UITouchPhaseCancelled ^ configuration_phase) &&
+                ^ {
+                    printf("\t\tconfiguration_phase == %lu\n", configuration_phase);
+                    [delegate setCaptureDeviceConfigurationControlProperty:floor(log2(selected_property_bit_vector)) value:touch_angle phase:configuration_phase];
+                    return (long)UITouchPhaseCancelled;
+                }();
             });
-
         }));
+        
         [((ControlView *)view) setNeedsDisplay];
         return (long)active_component_bit_vector;
     };
@@ -1127,24 +1135,22 @@ static void (^(^(^touch_handler_init)(ControlView *__strong, __strong id<Capture
     
     return ^ (__strong UITouch * _Nullable touch) {
         return ^ (long (^state_setter)(long(^ _Nullable)(void))) {
+            touch_point = [touch locationInView:(ControlView *)view];
+            touch_point.x = fmaxf(0.0, fminf(touch_point.x, CGRectGetMaxX(((ControlView *)view).bounds)));
+            touch_point.y = fmaxf(0.0, fminf(touch_point.y, CGRectGetMaxY(((ControlView *)view).bounds)));
             
-                touch_point = [touch locationInView:(ControlView *)view];
-                touch_point.x = fmaxf(0.0, fminf(touch_point.x, CGRectGetMaxX(((ControlView *)view).bounds)));
-                touch_point.y = fmaxf(0.0, fminf(touch_point.y, CGRectGetMaxY(((ControlView *)view).bounds)));
-                
-                touch_angle = (atan2((touch_point).y - (center_point).y, (touch_point).x - (center_point).x)) * (180.0 / M_PI);
-                if (touch_angle < 0.0) touch_angle += 360.0;
-                touch_angle = fmaxf(180.0, fminf(touch_angle, 270.0));
-                
-                radius = fmaxf(CGRectGetMidX(((ControlView *)view).bounds),
-                               fminf((sqrt(pow(touch_point.x - center_point.x, 2.0) + pow(touch_point.y - center_point.y, 2.0))),
-                                     CGRectGetMaxX(((ControlView *)view).bounds)));
-
-                highlighted_property_bit_vector = (((active_component_bit_vector & MASK_ALL) & 1UL) << ((unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 4.0))));
+            touch_angle = (atan2((touch_point).y - (center_point).y, (touch_point).x - (center_point).x)) * (180.0 / M_PI);
+            if (touch_angle < 0.0) touch_angle += 360.0;
+            touch_angle = fmaxf(180.0, fminf(touch_angle, 270.0));
             
+            radius = fmaxf(CGRectGetMidX(((ControlView *)view).bounds),
+                           fminf((sqrt(pow(touch_point.x - center_point.x, 2.0) + pow(touch_point.y - center_point.y, 2.0))),
+                                 CGRectGetMaxX(((ControlView *)view).bounds)));
             
-            draw_button_arc(nil);
+            highlighted_property_bit_vector = (((active_component_bit_vector & MASK_ALL) & 1UL) << ((unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 4.0))));
             
+            draw_button_arc(touch.phase);
+             
             
             ((long)0 || state_setter) && state_setter(^ long {
                 //                transition_animation(center_point, radius);
@@ -1179,7 +1185,7 @@ static void (^(^(^touch_handler_init)(ControlView *__strong, __strong id<Capture
                     [((ControlView *)view) setNeedsDisplay];
                     return (long)active_component_bit_vector;
                 }()));
-                draw_button_arc(nil);
+                draw_button_arc(UITouchPhaseCancelled);
                 return (long)active_component_bit_vector;
             });
             
