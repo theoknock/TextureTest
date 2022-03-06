@@ -11,7 +11,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-static const float kExposureDurationPower = 5;
+static const float kExposureDurationPower = 5.0;
 static const float kExposureMinimumDuration = 1.0/1000;
 
 extern dispatch_queue_t video_data_output_sample_buffer_delegate_queue;

@@ -1095,8 +1095,8 @@ static void (^ _Nonnull  handle_touch)(long (^)(long(^ _Nullable)(void)));
 static void (^(^(^touch_handler_init)(ControlView *__strong, __strong id<CaptureDeviceConfigurationControlPropertyDelegate>))(UITouch * _Nullable __strong))(long (^)(long(^ _Nullable)(void))) = ^ (ControlView *__strong view, __strong id<CaptureDeviceConfigurationControlPropertyDelegate> delegate) {
     CGPoint center_point = CGPointMake(CGRectGetMaxX(((ControlView *)view).bounds), CGRectGetMaxY(((ControlView *)view).bounds));
     __block _Atomic CGFloat touch_angle;
-    static CGPoint touch_point;
-    static CGFloat radius;
+    __block CGPoint touch_point;
+    __block _Atomic CGFloat radius;
     static long (^draw_button_arc)(long (^ _Nullable state_setter)(long (^ _Nonnull __strong transition)(void)));
     
     draw_button_arc = ^ (long (^ _Nullable state_setter)(long (^ _Nonnull __strong transition)(void))) {
@@ -1200,12 +1200,10 @@ static void (^(^(^touch_handler_init)(ControlView *__strong, __strong id<Capture
                             double newDurationSeconds = CMTimeGetSeconds( VideoCamera.captureDevice.exposureDuration );
                             double minDurationSeconds = MAX( CMTimeGetSeconds( VideoCamera.captureDevice.activeFormat.minExposureDuration ), kExposureMinimumDuration );
                             double maxDurationSeconds = 1.0/3.0; //CMTimeGetSeconds( self.videoDevice.activeFormat.maxExposureDuration );
-                            touch_angle = rescale(newDurationSeconds, minDurationSeconds, maxDurationSeconds, 0.0, 1.0);
-                            printf("1\ttouch_angle == %f\n", touch_angle);
-                            touch_angle = pow(touch_angle, 1.0 / kExposureDurationPower );
-                            printf("2\ttouch_angle == %f\n", touch_angle);
+                            touch_angle = pow((rescale(newDurationSeconds, minDurationSeconds, maxDurationSeconds, 0.0, 1.0)), 1.0 / kExposureDurationPower);
+                            printf("1\ttouch_angle == %f\t(0.0 --> 1.0)\n", touch_angle);
                             touch_angle = rescale(touch_angle, 0.0, 1.0, 180.0, 270.0);
-                            printf("3\ttouch_angle == %f\n", touch_angle);
+                            printf("3\ttouch_angle == %ft(angle)\n", touch_angle);
                             
                             break;
                         }
