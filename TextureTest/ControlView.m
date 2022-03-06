@@ -330,7 +330,7 @@
 //    .frame_ptr  = &frame,
 //    .center_ptr = &center[2],
 //    .radius_ptr = &radius,
-//    .transition_animation  = ^ long (CGPoint center_point, CGFloat radius) { return (long)1; },
+//    .transition_animation  = ^ long (CGPoint center_point, CGFloat radius) { return (long)active_component_bit_vector; },
 //};
 //
 //
@@ -377,7 +377,7 @@
 //        //                        });
 //        //                    };
 //        //                }());
-//        //                return (long)1;
+//        //                return (long)active_component_bit_vector;
 //        //            };
 //        //        }))
 //        //
@@ -395,17 +395,17 @@
 //        //                    });
 //        //                });
 //        ////                [display_link invalidate]; // test -- remove
-//        //                return (long)1;
+//        //                return (long)active_component_bit_vector;
 //        //            };
 //        //        }));
-//        //        return (long)1;
+//        //        return (long)active_component_bit_vector;
 //        //    };
 //        highlighted_property_bit_vector = MASK_NONE;
 //    });
 //
 //    dispatch_barrier_async(enumerator_queue(), ^{ touch_handler(nil); /* the torch-level button does not position correctly when the control returns to the primary state */ });
 //
-//    return (long)1;
+//    return (long)active_component_bit_vector;
 //};
 //
 //static void (^draw_tick_wheel)(CGContextRef, CGRect);
@@ -979,7 +979,7 @@ static void (^(^transition_animation)(CGPoint, CGFloat))(void (^ _Nonnull handle
                     });
                 };
             }());
-            return (long)1;
+            return (long)active_component_bit_vector;
         };
     }))
     
@@ -997,7 +997,7 @@ static void (^(^transition_animation)(CGPoint, CGFloat))(void (^ _Nonnull handle
                 });
             });
             //                [display_link invalidate]; // test -- remove
-            return (long)1;
+            return (long)active_component_bit_vector;
         };
     }));
     
@@ -1159,7 +1159,7 @@ static void (^(^(^touch_handler_init)(ControlView *__strong, __strong id<Capture
                 }(rescale(touch_angle, 180.0, 270.0, 0.0, 1.0))];
         }));
         [((ControlView *)view) setNeedsDisplay];
-        return (long)1;
+        return (long)active_component_bit_vector;
     };
     
     draw_tick_wheel = draw_tick_wheel_init((ControlView *)view, &touch_angle, &radius);
@@ -1199,9 +1199,9 @@ static void (^(^(^touch_handler_init)(ControlView *__strong, __strong id<Capture
                         case CaptureDeviceConfigurationControlPropertyExposureDuration: {
                             double newDurationSeconds = CMTimeGetSeconds( VideoCamera.captureDevice.exposureDuration );
                             double minDurationSeconds = MAX( CMTimeGetSeconds( VideoCamera.captureDevice.activeFormat.minExposureDuration ), kExposureMinimumDuration );
-                            double maxDurationSeconds = 1.0/3.0; //CMTimeGetSeconds( self.videoDevice.activeFormat.maxExposureDuration );
-                            touch_angle = pow((rescale(newDurationSeconds, minDurationSeconds, maxDurationSeconds, 0.0, 1.0)), 1.0 / kExposureDurationPower);
-                            touch_angle = MAX(180.0, MIN(rescale(touch_angle, 0.0, 1.0, 180.0, 270.0), 270.0));
+                            double maxDurationSeconds = 1.0/3.0;
+                            touch_angle = fmaxf(0.0, fminf(pow(rescale(newDurationSeconds, minDurationSeconds, maxDurationSeconds, 0.0, 1.0), 1.0 / kExposureDurationPower), 1.0));
+                            touch_angle = rescale(touch_angle, 0.0, 1.0, 180.0, 270.0);
                             
                             break;
                         }
@@ -1217,10 +1217,10 @@ static void (^(^(^touch_handler_init)(ControlView *__strong, __strong id<Capture
                     }
                     
                     [((ControlView *)view) setNeedsDisplay];
-                    return (long)1;
+                    return (long)active_component_bit_vector;
                 }()));
                 draw_button_arc(nil);
-                return (long)1;
+                return (long)active_component_bit_vector;
             });
             
         };
