@@ -103,7 +103,7 @@ dispatch_queue_t video_data_output_sample_buffer_delegate_queue;
                 if ([videoDataCaptureConnection isVideoOrientationSupported])
                 {
                     [captureOutput setAutomaticallyConfiguresOutputBufferDimensions:FALSE];
-                    [captureOutput setDeliversPreviewSizedOutputBuffers:FALSE];
+                    [captureOutput setDeliversPreviewSizedOutputBuffers:TRUE];
                     [videoDataCaptureConnection setVideoOrientation:AVCaptureVideoOrientationLandscapeLeft];
                     [videoDataCaptureConnection setVideoScaleAndCropFactor:1.0];
                 }
@@ -204,7 +204,7 @@ static void(^set_capture_device_configuration_control_property)(void(^)(void)) =
 };
 
 static void (^(^set_configuration_phase)(UITouchPhase))(void(^)(void)) = ^ (UITouchPhase phase) {
-    printf("\t\tphase == %ld\n", (long)phase);
+//    printf("\t\tphase == %ld\n", (long)phase);
     switch (phase) {
         case UITouchPhaseBegan: {
             return ^ (void(^configuration)(void)) {
@@ -247,7 +247,7 @@ static void (^(^set_configuration_phase)(UITouchPhase))(void(^)(void)) = ^ (UITo
         }
         default: {
             return ^ (void(^configuration)(void)) {
-                printf("UITouchPhase == %u\n", phase);
+//                printf("UITouchPhase == %u\n", phase);
             };
             break;
         }

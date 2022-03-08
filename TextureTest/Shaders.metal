@@ -67,6 +67,16 @@ matrix_float4x4 matrix_perspective_right_hand(float fovyRadians, float aspect, f
     }};
 }
 
+matrix_float4x4 matrix4x4_simplified_rotation(float rotation_angle)
+{
+    return (matrix_float4x4) {{
+        { cos(rotation_angle), -sin(rotation_angle),  0,  0 },
+        { sin(rotation_angle),  cos(rotation_angle),  0,  0 },
+        { 0,   0,  1,  0 },
+        { 0,   0,  0,  1 }
+    }};
+}
+
 
 vertex ColorInOut vertexShader(Vertex in [[stage_in]])
 {
@@ -78,7 +88,7 @@ vertex ColorInOut vertexShader(Vertex in [[stage_in]])
     matrix_float4x4 _projectionMatrix = matrix_perspective_right_hand(65.0f * (M_PI_F / 180.0f), aspect, 0.1f, 100.0f);
 
     vector_float3 rotationAxis = {1, 1, 1};
-    matrix_float4x4 modelMatrix = matrix4x4_rotation((112.5 * M_PI_F / 180.0), rotationAxis);
+    matrix_float4x4 modelMatrix =  matrix4x4_rotation((112.5 * M_PI_F / 180.0), rotationAxis);
     matrix_float4x4 viewMatrix = matrix4x4_translation(0.0, 0.0, -1.0);
 
     matrix_float4x4 _modelViewMatrix = viewMatrix * modelMatrix;

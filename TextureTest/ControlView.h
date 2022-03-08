@@ -8,6 +8,16 @@
 #import <UIKit/UIKit.h>
 #import <AVFoundation/AVFoundation.h>
 @import CoreHaptics;
+@import QuartzCore;
+@import CoreGraphics;
+
+NS_ASSUME_NONNULL_BEGIN
+
+@interface ControlLayer : CAGradientLayer
+
+@end
+
+NS_ASSUME_NONNULL_END
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -26,7 +36,7 @@ typedef enum : NSUInteger {
 - (float)maxISO_;
 - (float)minISO_;
 - (void)setCaptureDeviceConfigurationControlPropertyUsingBlock:(void(^)(AVCaptureDevice *))captureDeviceConfigurationControlPropertyBlock;
-- (void)setCaptureDeviceConfigurationControlProperty:(CaptureDeviceConfigurationControlProperty)property value:(float)value phase:(unsigned int)phase;
+- (void)setCaptureDeviceConfigurationControlProperty:(CaptureDeviceConfigurationControlProperty)property value:(float)value phase:(UITouchPhase)phase;
 
 @end
 

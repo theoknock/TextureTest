@@ -144,8 +144,8 @@
                                               initWithDevice: _device];
     
     MDLMesh *mdlMesh = [MDLMesh newPlaneWithDimensions:(vector_float2){(1.3333333333 * UIScreen.mainScreen.nativeScale), (UIScreen.mainScreen.nativeScale)}
-                                              segments:(vector_uint2){1, 1}
-                                          geometryType:MDLGeometryTypeQuads
+                                              segments:(vector_uint2){2, 2}
+                                          geometryType:MDLGeometryTypeTriangles
                                              allocator:metalAllocator];
     
 //    MDLMesh *mdlMesh = [MDLMesh newBoxWithDimensions:(vector_float3){2, 2, 2}
