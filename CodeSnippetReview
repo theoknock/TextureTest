@@ -149,3 +149,77 @@ bool nth_is_set = (v >> n) & 1;
         if (error)
             NSLog(@"--- Error stopping haptic engine: %@", error.debugDescription);
     }];
+
+/*
+ 
+ */
+
+
+static void (^(^(^(^(^(^(^(^draw_control_init)(__nullable dispatch_block_t))(ArcControlMeasurements * const))(ControlView *__strong))(CGRect))(CAShapeLayer *__strong))(CGContextRef __nullable))(TouchEventHandlerType))(UITouch *);
+static void (^(^(^(^(^(^(^draw_control)(ArcControlMeasurements * const))(ControlView *__strong))(CGRect))(CAShapeLayer *__strong))(CGContextRef __nullable))(TouchEventHandlerType))(UITouch *);
+static void (^(^(^(^(^(^draw_primary_component_init)(ControlView *__strong))(CGRect))(CAShapeLayer *__strong))(CGContextRef __nullable))(TouchEventHandlerType))(UITouch *);
+static void (^(^(^(^(^draw_primary_component)(CGRect))(CAShapeLayer *__strong))(CGContextRef __nullable))(TouchEventHandlerType))(UITouch *);
+static void (^(^(^(^draw_secondary_component_init)(CAShapeLayer *__strong))(CGContextRef __nullable))(TouchEventHandlerType))(UITouch *);
+static void (^(^(^draw_secondary_component)(CGContextRef __nullable))(TouchEventHandlerType))(UITouch *);
+static void (^(^handle_touch_control_event_init)(TouchEventHandlerType))(UITouch *);
+static void (^handle_touch_control_event[TouchEventHandlerTypeDefault])(UITouch *);
+
+static void (^(^(^(^(^(^(^(^draw_control_init)(__nullable dispatch_block_t))(ArcControlMeasurements * const))(ControlView *__strong))(CGRect))(CAShapeLayer *__strong))(CGContextRef __nullable))(TouchEventHandlerType))(UITouch *) =
+
+
+^ (dispatch_block_t init) {
+    if (init) init();
+    return (^ (ArcControlMeasurements * const measurements) {
+        return (^ (ControlView * view) {
+            return (^ (CGRect rect) {
+                UIButton * (^CaptureDeviceConfigurationPropertyButton)(CaptureDeviceConfigurationControlProperty) = CaptureDeviceConfigurationPropertyButtons(CaptureDeviceConfigurationControlPropertyImageValues, view);
+                for (CaptureDeviceConfigurationControlProperty property = CaptureDeviceConfigurationControlPropertyTorchLevel; property <= CaptureDeviceConfigurationControlPropertyZoomFactor; property++) {
+                    UIButton * button = CaptureDeviceConfigurationPropertyButton(property);
+                    CGPoint center = CGPointMake(CGRectGetMidX(rect), CGRectGetMidY(rect));
+                    CGFloat radius = (center.x);
+//                    double x = (center.x + (radius * -cosf(2.0 * M_PI_4 * ((property) / 4.0))));
+//                    double y = (center.y + (radius * -sinf(2.0 * M_PI_4 * ((property) / 4.0))));
+                    double angle = 180.0 + (90.0 * ((property) / 4.0));
+                    UIBezierPath * bezier_quad_curve = [UIBezierPath bezierPathWithArcCenter:CGPointMake(CGRectGetMaxX(rect), CGRectGetMaxY(rect))
+                                                                                      radius:radius
+                                                                                  startAngle:degreesToRadians(angle) endAngle:degreesToRadians(angle)
+                                                                                   clockwise:FALSE];
+                    
+                    [button setCenter:[bezier_quad_curve currentPoint]];
+                    static dispatch_once_t onceToken[5];
+                    dispatch_once(&onceToken[property], ^{
+                        [view addSubview:button];
+                    });
+                }
+                return (^ (CAShapeLayer * __strong layer) {
+                    return (^ (CGContextRef __nullable context) {
+                        return (^ (TouchEventHandlerType touch_event_handler_type) {
+                            [layer setLineWidth:1.0];
+                            UIColor * stroke_color = (touch_event_handler_type == TouchEventHandlerTypeTouchesBegan)
+                            ? [UIColor yellowCollor] : (touch_event_handler_type == TouchEventHandlerTypeTouchesMoved)
+                            ? [UIColor systemGreenColor] : [UIColor blueCollor];
+                            [layer setStrokeColor:stroke_color.CGColor];
+                            [layer setFillColor:[UIColor clearColor].CGColor];
+                            [layer setBackgroundColor:[UIColor clearColor].CGColor];
+                            void(^touch_event_handler)(UITouch *) = ^ (UITouch * touch) {
+                                CGPoint center = CGPointMake(CGRectGetMaxX(rect), CGRectGetMaxY(rect));
+                                CGFloat radius = (center.x);
+                                CGPoint touch_point = [touch preciseLocationInView:touch.view];
+                                CGPoint tp = touch_point;/* CGPointMake(rescale(fmaxf(CGRectGetMinX(rect), fminf(CGRectGetMaxX(rect), touch_point.x)), CGRectGetMinX(rect), CGRectGetMaxX(rect), 0.0, 360.0),
+                                                         rescale(fmaxf(CGRectGetMinY(rect), fminf(CGRectGetMaxY(rect), touch_point.y)), CGRectGetMinY(rect), CGRectGetMaxY(rect), 0.0, 360.0));*/
+                                radius = sqrt(pow(tp.x - center.x, 2.0) + pow(tp.y - center.y, 2.0));
+                                UIBezierPath * bezier_quad_curve = [UIBezierPath bezierPathWithArcCenter:CGPointMake(CGRectGetMaxX(rect), CGRectGetMaxY(rect))
+                                                                                                  radius:radius
+                                                                                              startAngle:degreesToRadians(270.0) endAngle:degreesToRadians(180.0)
+                                                                                               clockwise:FALSE];
+                                [layer setPath:bezier_quad_curve.CGPath];
+                            };
+                            void(^touch_event_handlers[3])(UITouch *) = {touch_event_handler, touch_event_handler, touch_event_handler};
+                            return touch_event_handlers[1];
+                        });
+                    });
+                });
+            });
+        });
+    });
+};
