@@ -1025,10 +1025,6 @@ static void (^(^draw_tick_wheel_init)(ControlView *, _Atomic CGFloat *, _Atomic 
 };
 
 static long (^(^button_drawer)(CFBitVectorRef))(void (^__strong)(UIButton * _Nonnull, unsigned int)) = ^ (CFBitVectorRef bit_mask) {
-    for (int i = 0; i < CFBitVectorGetCount(bit_mask); i++) {
-        printf("%d", CFBitVectorGetBitAtIndex(bit_mask, i));
-    }
-    printf("\n----------------\n");
     return ^ long (void(^draw_buttons)(UIButton * _Nonnull, unsigned int)) {
         size_t iterations = CFBitVectorGetCountOfBit(bit_mask, CFRangeMake(0, 5), 1);
         dispatch_apply(iterations, DISPATCH_APPLY_AUTO, ^(size_t iteration) {
