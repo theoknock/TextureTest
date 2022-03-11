@@ -1084,8 +1084,7 @@ static void (^(^(^touch_handler_init)(ControlView *__strong, __strong id<Capture
     draw_button_arc =  ^ (CFMutableBitVectorRef button_indicies, double position_angle_offset) {
         
         button_drawer(button_indicies)(^ (const UIButton const * button, CFIndex index) {
-            
-            dispatch_barrier_async(dispatch_get_main_queue(), ^{
+            dispatch_async(dispatch_get_main_queue(), ^{
                 CGFloat button_angle = (CFBitVectorGetCountOfBit(button_indicies, CFRangeMake(0, 5), 1) == 1)
                 ? degreesToRadians(position_angle + position_angle_offset)
                 : degreesToRadians(rescale(index, 0.0, 4.0, 180.0, 270.0) + position_angle_offset);
@@ -1249,8 +1248,8 @@ static long (^(^recursion)(long))(long(^(^)(long))(long(^)(long))) = ^ (long a) 
     [self.layer setAffineTransform:CGAffineTransformScale(self.layer.affineTransform, -1, -1)];
     
     [self updateStateLabels];
-    haptic_feedback = [[UISelectionFeedbackGenerator alloc] init];
-    [haptic_feedback prepare];
+//    haptic_feedback = [[UISelectionFeedbackGenerator alloc] init];
+//    [haptic_feedback prepare];
     
     CGPoint default_center_point = CGPointMake(CGRectGetMaxX(((ControlView *)self).bounds), CGRectGetMaxY(((ControlView *)self).bounds));
     CGFloat default_radius       = CGRectGetMidX(self.bounds);
@@ -1321,8 +1320,8 @@ static long (^(^recursion)(long))(long(^(^)(long))(long(^)(long))) = ^ (long a) 
 - (void)drawRect:(CGRect)rect {
     draw_tick_wheel(UIGraphicsGetCurrentContext(), rect);
     // To-Do: only "click" when a new value is selected - not every time drawRect is called
-    [haptic_feedback selectionChanged];
-    [haptic_feedback prepare];
+//    [haptic_feedback selectionChanged];
+//    [haptic_feedback prepare];
 }
 
 - (void)updateStateLabels {
