@@ -1028,15 +1028,7 @@ static long (^(^button_drawer)(CFBitVectorRef))(void (^__strong)(UIButton * _Non
     return ^ long (void(^draw_buttons)(UIButton * _Nonnull, CFIndex)) {
         size_t iterations = CFBitVectorGetCountOfBit(bit_mask, CFRangeMake(0, 5), 1);
         dispatch_apply(iterations, DISPATCH_APPLY_AUTO, ^(size_t iteration) {
-            __block CFIndex button_index;
-            ((((active_component_bit_vector & MASK_ALL) && ^ long {
-                button_index = iteration;
-                return MASK_ALL;
-            }()) ||
-              (((active_component_bit_vector & ~MASK_ALL) && ^ long {
-                button_index = CFBitVectorGetFirstIndexOfBit(bit_mask, CFRangeMake(0, 5), (UInt32)1);
-                return ~MASK_ALL;
-            }()))));
+            CFIndex button_index = (iterations == 1) ? CFBitVectorGetFirstIndexOfBit(bit_mask, CFRangeMake(0, 5), (UInt32)1) : iteration;
             draw_buttons(capture_device_configuration_control_property_button(button_index), button_index);
         });
         
@@ -1075,8 +1067,6 @@ static void (^(^(^touch_handler_init)(ControlView *__strong, __strong id<Capture
 
         button_drawer(indicies)(^ (UIButton * button, CFIndex index) {
              dispatch_barrier_async(dispatch_get_main_queue(), ^{
-                 __block CGFloat button_angle;
-                    
                     ((((active_component_bit_mask & MASK_ALL) && ^ long {
                         [buttons[index] setCenter:^ (CGFloat radians) {
                             return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
