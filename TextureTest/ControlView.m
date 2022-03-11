@@ -89,15 +89,15 @@
 //_Atomic unsigned int selected_property_bit_vector    = MASK_NONE;
 //_Atomic unsigned int hidden_property_bit_vector      = MASK_NONE;
 //
-//static __strong UIButton * _Nonnull buttons[5];
-//static UIButton * (^capture_device_configuration_control_property_button)(CaptureDeviceConfigurationControlProperty) = ^ (CaptureDeviceConfigurationControlProperty property) {
+//static __strong const UIButton * _Nonnull buttons[5];
+//static const UIButton * (^capture_device_configuration_control_property_button)(CaptureDeviceConfigurationControlProperty) = ^ (CaptureDeviceConfigurationControlProperty property) {
 //    dispatch_barrier_async(dispatch_get_main_queue(), ^{
 //        [buttons[property] setSelected:(selected_property_bit_vector >> property) & 1UL];
 //        [buttons[property] setHidden:(hidden_property_bit_vector >> property) & 1UL];
 //        [buttons[property] setHighlighted:(highlighted_property_bit_vector >> property) & 1UL];
 //    });
 //
-//    return (UIButton *)buttons[property];
+//    return (const UIButton *)buttons[property];
 //};
 //
 //static dispatch_queue_t enumerator_queue() {
@@ -110,8 +110,8 @@
 //    return queue;
 //};
 //
-//static void (^(^map)(__strong UIButton * _Nonnull [_Nonnull 5]))(UIButton * (^__strong)(unsigned int)) = ^ (__strong UIButton * _Nonnull button_collection[5]) {
-//    return ^ (UIButton *(^enumeration)(unsigned int)) {
+//static void (^(^map)(__strong const UIButton * _Nonnull [_Nonnull 5]))(const UIButton * (^__strong)(unsigned int)) = ^ (__strong const UIButton * _Nonnull button_collection[5]) {
+//    return ^ (const UIButton *(^enumeration)(unsigned int)) {
 //        dispatch_barrier_async(dispatch_get_main_queue(), ^{
 //            dispatch_apply(5, enumerator_queue(), ^(size_t index) {
 //                dispatch_barrier_async(dispatch_get_main_queue(), ^{
@@ -122,8 +122,8 @@
 //    };
 //};
 //
-//static uint8_t (^(^filter)(__strong UIButton * _Nonnull [_Nonnull 5]))(void (^__strong)(UIButton * _Nonnull, unsigned int)) = ^ (__strong UIButton * _Nonnull button_collection[5]) {
-//    return ^ uint8_t (void(^enumeration)(UIButton * _Nonnull, unsigned int)) {
+//static uint8_t (^(^filter)(__strong const UIButton * _Nonnull [_Nonnull 5]))(void (^__strong)(const UIButton * _Nonnull, unsigned int)) = ^ (__strong const UIButton * _Nonnull button_collection[5]) {
+//    return ^ uint8_t (void(^enumeration)(const UIButton * _Nonnull, unsigned int)) {
 //        dispatch_apply(5, DISPATCH_APPLY_AUTO, ^(size_t index) {
 //            enumeration(capture_device_configuration_control_property_button(index), (unsigned int)index);
 //        });
@@ -266,8 +266,8 @@
 ////    return first_set_bit(extractBit(bit_vector, 5, 1));
 ////};
 //
-//static long (^(^reduce)(__strong UIButton * _Nonnull [_Nonnull 5]))(void (^__strong)(UIButton * _Nonnull, unsigned int)) = ^ (__strong UIButton * _Nonnull button_collection[5]) {
-//    return ^ long (void(^reduction)(UIButton * _Nonnull, unsigned int)) {
+//static long (^(^reduce)(__strong const UIButton * _Nonnull [_Nonnull 5]))(void (^__strong)(const UIButton * _Nonnull, unsigned int)) = ^ (__strong const UIButton * _Nonnull button_collection[5]) {
+//    return ^ long (void(^reduction)(const UIButton * _Nonnull, unsigned int)) {
 //        dispatch_apply(1, DISPATCH_APPLY_AUTO, ^(size_t index) {
 //            unsigned int selected_property_bit_position = first_set_bit(selected_property_bit_vector);
 //            reduction(capture_device_configuration_control_property_button(selected_property_bit_position), selected_property_bit_position);
@@ -369,7 +369,7 @@
 //        //            return ^ long (CADisplayLink * display_link) {
 //        //                CGFloat angle_adj = (360.0 / 30.0) * frame;
 //        //                filter(buttons)(^{
-//        //                    return ^ (UIButton * _Nonnull button, unsigned int index) {
+//        //                    return ^ (const UIButton * _Nonnull button, unsigned int index) {
 //        //                        dispatch_barrier_async(dispatch_get_main_queue(), ^{
 //        //                            [button setCenter:^ (CGFloat radians) {
 //        //                                return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
@@ -387,7 +387,7 @@
 //        //         integrate((long)30)(^ (long frame) {
 //        //            return ^ long (CADisplayLink * display_link) {
 //        //                CGFloat angle_adj = (360.0 / 30.0) * frame;
-//        //                reduce(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
+//        //                reduce(buttons)(^ (const UIButton * _Nonnull button, unsigned int index) {
 //        //                    dispatch_barrier_async(dispatch_get_main_queue(), ^{
 //        //                        [button setCenter:^ (CGFloat radians) {
 //        //                            return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
@@ -477,7 +477,7 @@
 ////            dispatch_barrier_sync(enumerator_queue(), ^{
 //                ((active_component_bit_vector & MASK_ALL)
 //                 && filter(buttons)(^ (ControlView * view, CGFloat * r) {
-//                    return ^ (UIButton * _Nonnull button, unsigned int index) {
+//                    return ^ (const UIButton * _Nonnull button, unsigned int index) {
 //                        dispatch_barrier_async(dispatch_get_main_queue(), ^{
 //                            //                            [button setHighlighted:((active_component_bit_vector >> index) & 1UL) & (UITouchPhaseEnded ^ touch.phase) & !(touch_property ^ index) & ((highlighted_property_bit_vector >> index) & 1UL)];
 //                            [button setCenter:^ (CGFloat radians) {
@@ -487,7 +487,7 @@
 //                    };
 //                }((ControlView *)view, &radius)))
 //                || ((active_component_bit_vector & ~MASK_ALL)
-//                    && reduce(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
+//                    && reduce(buttons)(^ (const UIButton * _Nonnull button, unsigned int index) {
 //                    dispatch_barrier_async(dispatch_get_main_queue(), ^{
 //                        [button setCenter:^ (CGFloat radians) {
 //                            return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
@@ -544,7 +544,7 @@
 //            ((long)0 || state_setter) && state_setter(^ (long (^ _Nullable set_state)(void)) {
 //                    ((active_component_bit_vector & MASK_ALL)
 //                     && filter(buttons)(^ (ControlView * view, CGFloat * r) {
-//                        return ^ (UIButton * _Nonnull button, unsigned int index) {
+//                        return ^ (const UIButton * _Nonnull button, unsigned int index) {
 //                            dispatch_barrier_async(dispatch_get_main_queue(), ^{
 //                                //                            [button setHighlighted:((active_component_bit_vector >> index) & 1UL) & (UITouchPhaseEnded ^ touch.phase) & !(touch_property ^ index) & ((highlighted_property_bit_vector >> index) & 1UL)];
 //                                [button setCenter:^ (CGFloat radians) {
@@ -554,7 +554,7 @@
 //                        };
 //                    }((ControlView *)view, &radius)))
 //                    || ((active_component_bit_vector & ~MASK_ALL)
-//                        && reduce(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
+//                        && reduce(buttons)(^ (const UIButton * _Nonnull button, unsigned int index) {
 //                        dispatch_barrier_async(dispatch_get_main_queue(), ^{
 //                            [button setCenter:^ (CGFloat radians) {
 //                                return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
@@ -614,7 +614,7 @@
 //            //                ((long)0 || transition) && transition(center_point, radius); //set_button_state((unsigned int)round(fmaxf(0.0, fminf((unsigned int)round(rescale(touch_angle, 180.0, 270.0, 0.0, 4.0)), 4.0))))(center_point, radius);
 //            //                ((active_component_bit_vector & MASK_ALL)
 //            //                 && filter(buttons)(^ (ControlView * view, CGFloat * r) {
-//            //                    return ^ (UIButton * _Nonnull button, unsigned int index) {
+//            //                    return ^ (const UIButton * _Nonnull button, unsigned int index) {
 //            //                        dispatch_barrier_async(dispatch_get_main_queue(), ^{
 //            //                            //                            [button setHighlighted:((active_component_bit_vector >> index) & 1UL) & (UITouchPhaseEnded ^ touch.phase) & !(touch_property ^ index) & ((highlighted_property_bit_vector >> index) & 1UL)];
 //            //                            [button setCenter:^ (CGFloat radians) {
@@ -624,7 +624,7 @@
 //            //                    };
 //            //                }((ControlView *)view, &radius)))
 //            //                || ((active_component_bit_vector & ~MASK_ALL)
-//            //                    && reduce(buttons)(^ (UIButton * _Nonnull button, unsigned int index) {
+//            //                    && reduce(buttons)(^ (const UIButton * _Nonnull button, unsigned int index) {
 //            //                    dispatch_barrier_async(dispatch_get_main_queue(), ^{
 //            //                        [button setCenter:^ (CGFloat radians) {
 //            //                            return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
@@ -655,9 +655,9 @@
 //    CGPoint default_center_point = CGPointMake(CGRectGetMaxX(((ControlView *)self).bounds), CGRectGetMaxY(((ControlView *)self).bounds));
 //    CGFloat default_radius       = CGRectGetMidX(self.bounds);
 //
-//    map(buttons)(^ UIButton * (unsigned int index) {
-//        UIButton * button;
-//        [button = [UIButton new] setTag:index];
+//    map(buttons)(^ const UIButton * (unsigned int index) {
+//        const UIButton * button;
+//        [button = [const UIButton new] setTag:index];
 //        [button setImage:[UIImage systemImageNamed:CaptureDeviceConfigurationControlPropertyImageValues[0][index] withConfiguration:CaptureDeviceConfigurationControlPropertySymbolImageConfiguration(CaptureDeviceConfigurationControlStateDeselected)] forState:UIControlStateNormal];
 //        [button setImage:[UIImage systemImageNamed:CaptureDeviceConfigurationControlPropertyImageValues[1][index] withConfiguration:CaptureDeviceConfigurationControlPropertySymbolImageConfiguration(CaptureDeviceConfigurationControlStateSelected)] forState:UIControlStateSelected];
 //        [button setImage:[UIImage systemImageNamed:CaptureDeviceConfigurationControlPropertyImageValues[1][index] withConfiguration:CaptureDeviceConfigurationControlPropertySymbolImageConfiguration(CaptureDeviceConfigurationControlStateHighlighted)] forState:UIControlStateHighlighted];
@@ -832,15 +832,15 @@ _Atomic unsigned int highlighted_property_bit_vector = MASK_NONE;
 _Atomic unsigned int selected_property_bit_vector    = MASK_NONE;
 _Atomic unsigned int hidden_property_bit_vector      = MASK_NONE;
 
-static __strong UIButton * _Nonnull buttons[5];
-static UIButton * (^capture_device_configuration_control_property_button)(CaptureDeviceConfigurationControlProperty) = ^ (CaptureDeviceConfigurationControlProperty property) {
+static __strong const UIButton const * _Nonnull buttons[5];
+static const UIButton const * (^capture_device_configuration_control_property_button)(CaptureDeviceConfigurationControlProperty) = ^ (CaptureDeviceConfigurationControlProperty property) {
     dispatch_barrier_async(dispatch_get_main_queue(), ^{
         [buttons[property] setSelected:(selected_property_bit_vector >> property) & 1UL];
         [buttons[property] setHidden:(hidden_property_bit_vector >> property) & 1UL];
         [buttons[property] setHighlighted:(highlighted_property_bit_vector >> property) & 1UL];
     });
     
-    return (UIButton *)buttons[property];
+    return buttons[property];
 };
 
 static dispatch_queue_t enumerator_queue() {
@@ -853,8 +853,8 @@ static dispatch_queue_t enumerator_queue() {
     return queue;
 };
 
-static void (^(^map)(__strong UIButton * _Nonnull [_Nonnull 5]))(UIButton * (^__strong)(unsigned int)) = ^ (__strong UIButton * _Nonnull button_collection[5]) {
-    return ^ (UIButton *(^enumeration)(unsigned int)) {
+static void (^(^map)(__strong const UIButton const * _Nonnull [_Nonnull 5]))(const UIButton const * (^__strong)(unsigned int)) = ^ (__strong const UIButton const * _Nonnull button_collection[5]) {
+    return ^ (const UIButton const *(^enumeration)(unsigned int)) {
         dispatch_apply(5, DISPATCH_APPLY_AUTO, ^(size_t index) {
             dispatch_barrier_async(dispatch_get_main_queue(), ^{
                 buttons[index] = enumeration((unsigned int)index);
@@ -1027,8 +1027,8 @@ static void (^(^draw_tick_wheel_init)(ControlView *, _Atomic CGFloat *, _Atomic 
     };
 };
 
-static long (^(^button_drawer)(CFBitVectorRef))(void (^__strong)(UIButton * _Nonnull, CFIndex)) = ^ (CFBitVectorRef bit_mask) {
-    return ^ long (void(^draw_buttons)(UIButton * _Nonnull, CFIndex)) {
+static long (^(^button_drawer)(CFBitVectorRef))(void (^__strong)(const UIButton const * _Nonnull, CFIndex)) = ^ (CFBitVectorRef bit_mask) {
+    return ^ long (void(^draw_buttons)(const UIButton const * _Nonnull, CFIndex)) {
         size_t iterations = CFBitVectorGetCountOfBit(bit_mask, CFRangeMake(0, 5), 1);
         dispatch_apply(iterations, DISPATCH_APPLY_AUTO, ^(size_t iteration) {
             CFIndex button_index = (iterations == 1) ? CFBitVectorGetFirstIndexOfBit(bit_mask, CFRangeMake(0, 5), (UInt32)1) : iteration;
@@ -1069,7 +1069,7 @@ static void (^(^(^touch_handler_init)(ControlView *__strong, __strong id<Capture
         for (int i = 0; i < CFBitVectorGetCount(indicies); i++) {
             CFBitVectorSetBitAtIndex(indicies, i, CFBitVectorGetBitAtIndex(active_component_bit_mask, i) ^ isBitSet(selected_property_bit_vector, i));
         }
-        button_drawer(indicies)(^ (UIButton * button, CFIndex index) {
+        button_drawer(indicies)(^ (const UIButton const * button, CFIndex index) {
             dispatch_barrier_async(dispatch_get_main_queue(), ^{
                 CGFloat button_angle = (CFBitVectorGetCountOfBit(indicies, CFRangeMake(0, 5), 1) == 1)
                 ? degreesToRadians(position_angle + position_angle_offset)
@@ -1207,8 +1207,8 @@ static long (^(^recursion)(long))(long(^(^)(long))(long(^)(long))) = ^ (long a) 
     CGPoint default_center_point = CGPointMake(CGRectGetMaxX(((ControlView *)self).bounds), CGRectGetMaxY(((ControlView *)self).bounds));
     CGFloat default_radius       = CGRectGetMidX(self.bounds);
     
-    map(buttons)(^ UIButton * (unsigned int index) {
-        UIButton * button;
+    map(buttons)(^ const UIButton const * (unsigned int index) {
+        const UIButton const * button;
         [button = [UIButton new] setTag:index];
         [button setImage:[UIImage systemImageNamed:CaptureDeviceConfigurationControlPropertyImageValues[0][index] withConfiguration:CaptureDeviceConfigurationControlPropertySymbolImageConfiguration(CaptureDeviceConfigurationControlStateDeselected)] forState:UIControlStateNormal];
         [button setImage:[UIImage systemImageNamed:CaptureDeviceConfigurationControlPropertyImageValues[1][index] withConfiguration:CaptureDeviceConfigurationControlPropertySymbolImageConfiguration(CaptureDeviceConfigurationControlStateSelected)] forState:UIControlStateSelected];
