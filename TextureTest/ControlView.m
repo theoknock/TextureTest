@@ -1080,8 +1080,8 @@ static void (^(^(^touch_handler_init)(ControlView *__strong, __strong id<Capture
     
     draw_tick_wheel = draw_tick_wheel_init((ControlView *)view, &position_angle, &radius);
     
-    static long (^draw_button_arc)(CFMutableBitVectorRef, double, UITouchPhase);
-    draw_button_arc =  ^ (CFMutableBitVectorRef button_indicies, double position_angle_offset, UITouchPhase configuration_phase) {
+    static long (^draw_button_arc)(CFMutableBitVectorRef, double);
+    draw_button_arc =  ^ (CFMutableBitVectorRef button_indicies, double position_angle_offset) {
         
         button_drawer(button_indicies)(^ (const UIButton const * button, CFIndex index) {
             
@@ -1117,17 +1117,21 @@ static void (^(^(^touch_handler_init)(ControlView *__strong, __strong id<Capture
                            fminf((sqrt(pow(touch_point.x - center_point.x, 2.0) + pow(touch_point.y - center_point.y, 2.0))),
                                  CGRectGetMaxX(((ControlView *)view).bounds)));
             
-            (UITouchPhaseEnded ^ touch.phase) && ^{
+            (UITouchPhaseEnded ^ touch.phase) && ^ {
                 CFMutableBitVectorRef active_component_bit_vector_ref = CFBitVectorCreateMutable(kCFAllocatorDefault, 5);
                 bit_vector_ref(&active_component_bit_vector_ref, 5)(^ (uint32_t position) {
                     CFBit bit = (UInt32)((active_component_bit_vector >> 0) & 1UL) ^ !!(floor(log2(selected_property_bit_vector)) == position);
                     return bit;
                 });
-                dispatch_barrier_async(dispatch_get_main_queue(), ^{
-                    draw_button_arc(active_component_bit_vector_ref, 0.0f, touch.phase);
-                    CFShow(active_component_bit_vector_ref);
-                });
-                return (long)touch.phase;
+                
+                return (^{
+                    dispatch_barrier_async(dispatch_get_main_queue(), ^{
+                        draw_button_arc(active_component_bit_vector_ref, 0.0f);
+                    });
+                    return ^{
+                        return touch.phase;
+                    };
+                }()());
             }();
             
             
@@ -1185,7 +1189,15 @@ static void (^(^(^touch_handler_init)(ControlView *__strong, __strong id<Capture
                         CFBit bit = (UInt32)((active_component_bit_mask >> 0) & 1UL) ^ !!(floor(log2(selected_property_bit_vector)) == position) ^ (((pre_animation_frame_count >> 0) & 1UL) << 0);
                         return bit;
                     });
-                    return draw_button_arc(indicies, angle_adj, UITouchPhaseCancelled);
+                    return (^{
+                        dispatch_barrier_async(dispatch_get_main_queue(), ^{
+                            draw_button_arc(indicies, angle_adj);
+                        });
+                        return ^{
+                            return (long)indicies;
+                        };
+                    }()());
+
                 });
                 return (long)active_component_bit_vector;
             });
