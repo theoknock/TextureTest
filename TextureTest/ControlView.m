@@ -1071,7 +1071,7 @@ static void (^(^(^touch_handler_init)(ControlView *__strong, __strong id<Capture
     draw_button_arc =  ^ (long active_component_bit_mask, double position_angle_offset, UITouchPhase configuration_phase) {
         CFMutableBitVectorRef indicies = CFBitVectorCreateMutable(kCFAllocatorDefault, 5);
         CFBitVectorSetCount(indicies, 5);
-        for (int i = 0; i < CFBitVectorGetCount(indicies); i++) CFBitVectorSetBitAtIndex(indicies, i, isBitSet(active_component_bit_vector ^ selected_property_bit_vector, i));
+        for (int i = 0; i < CFBitVectorGetCount(indicies); i++) CFBitVectorSetBitAtIndex(indicies, i, isBitSet(active_component_bit_mask ^ selected_property_bit_vector, i));
 
         button_drawer(indicies)(^ (UIButton * button, unsigned int index) {
             __block CGFloat button_angle;
