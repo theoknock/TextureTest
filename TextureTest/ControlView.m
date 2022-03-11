@@ -827,9 +827,9 @@ const unsigned int capture_device_configuration_control_property_iso_bit = (1UL 
 const unsigned int capture_device_configuration_control_property_video_zoom_factor_bit = (1UL << 4);
 #define MASK_ALL  (capture_device_configuration_control_property_torch_level_bit | capture_device_configuration_control_property_lens_position_bit | capture_device_configuration_control_property_exposure_duration_bit | capture_device_configuration_control_property_iso_bit | capture_device_configuration_control_property_video_zoom_factor_bit)
 #define MASK_NONE ( 0 << 0 |   0 << 1 |   0 << 2 |   0 << 3 |   0 << 4)
-_Atomic unsigned int active_component_bit_vector     = MASK_ALL;
+_Atomic uint8_t active_component_bit_vector     = MASK_ALL;
 _Atomic unsigned int highlighted_property_bit_vector = MASK_NONE;
-_Atomic unsigned int selected_property_bit_vector    = MASK_NONE;
+_Atomic uint8_t selected_property_bit_vector    = MASK_NONE;
 _Atomic unsigned int hidden_property_bit_vector      = MASK_NONE;
 
 static __strong const UIButton const * _Nonnull buttons[5];
@@ -1062,13 +1062,14 @@ static void (^(^(^touch_handler_init)(ControlView *__strong, __strong id<Capture
     
     draw_tick_wheel = draw_tick_wheel_init((ControlView *)view, &position_angle, &radius);
     
-    static long (^draw_button_arc)(CFBitVectorRef, double, UITouchPhase);
-    draw_button_arc =  ^ (CFBitVectorRef active_component_bit_mask, double position_angle_offset, UITouchPhase configuration_phase) {
+    static long (^draw_button_arc)(CFMutableBitVectorRef, double, UITouchPhase);
+    draw_button_arc =  ^ (CFMutableBitVectorRef active_component_bit_mask, double position_angle_offset, UITouchPhase configuration_phase) {
         CFMutableBitVectorRef indicies = CFBitVectorCreateMutable(kCFAllocatorDefault, 5);
         CFBitVectorSetCount(indicies, 5);
         for (int i = 0; i < CFBitVectorGetCount(indicies); i++) {
             CFBitVectorSetBitAtIndex(indicies, i, CFBitVectorGetBitAtIndex(active_component_bit_mask, i) ^ isBitSet(selected_property_bit_vector, i));
         }
+
         button_drawer(indicies)(^ (const UIButton const * button, CFIndex index) {
             dispatch_barrier_async(dispatch_get_main_queue(), ^{
                 CGFloat button_angle = (CFBitVectorGetCountOfBit(indicies, CFRangeMake(0, 5), 1) == 1)
@@ -1105,7 +1106,8 @@ static void (^(^(^touch_handler_init)(ControlView *__strong, __strong id<Capture
             (UITouchPhaseEnded ^ touch.phase) && ^{
                 CFMutableBitVectorRef active_component_bits = CFBitVectorCreateMutable(kCFAllocatorDefault, 5);
                 CFBitVectorSetCount(active_component_bits, 5);
-                CFBitVectorSetBits(active_component_bits, CFRangeMake(0, 5), active_component_bit_vector & MASK_ALL);
+                CFBit bit = isBitSet(active_component_bit_vector, 0);
+                CFBitVectorSetBits(active_component_bits, CFRangeMake(0, 5), bit);
                 draw_button_arc(active_component_bits, 0.0f, touch.phase);
                 return (long)touch.phase;
             }();
