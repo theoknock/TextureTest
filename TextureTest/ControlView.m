@@ -926,19 +926,22 @@ int extractBit(int bit_vector, int length, int position)
 //    return (NSString *)bit_vector_str;
 //};
 
-static long (^(^integrate)(long))(long(^ _Nullable (^__strong)(long))(CADisplayLink *)) = ^ (long duration) {
+static long (^(^integrate)(long))(long(^__strong)(long)) = ^ (long duration) {
     __block typeof(CADisplayLink *) display_link;
     __block _Atomic long frames = ~(1 << (duration + 1));
     __block long frame;
     __block long(^cancel)(CADisplayLink *);
-    return ^ long (long(^ _Nullable (^__strong integrand)(long))(CADisplayLink *)) {
+    return ^ long (long(^__strong integrand)(long)) {
         display_link = [CADisplayLink displayLinkWithTarget:^{
             dispatch_barrier_async(dispatch_get_main_queue(), ^{
                 frames >>= 1;
                 
                 ((frames & 1) && ^ long {
                     frame = floor(log2(frames));
-                    ((long)0 || (cancel = (integrand(frame)))) && cancel(display_link); // runs a cancel handler if one was provided
+//                    static long (^(^integrate)(long))(long(^ _Nullable (^__strong)(long))(CADisplayLink *)) = ^ (long duration) {
+//                        return ^ long (long(^ _Nullable (^__strong integrand)(long))(CADisplayLink *)) {
+//                    ((long)0 || (cancel = (integrand(frame)))) && cancel(display_link); // runs a cancel handler if one was provided
+                    integrand(frame);
                     return active_component_bit_vector;
                 }())
                 
@@ -1066,11 +1069,6 @@ static void (^(^(^touch_handler_init)(ControlView *__strong, __strong id<Capture
         for (int i = 0; i < CFBitVectorGetCount(indicies); i++) {
             CFBitVectorSetBitAtIndex(indicies, i, CFBitVectorGetBitAtIndex(active_component_bit_mask, i) ^ isBitSet(selected_property_bit_vector, i));
         }
-        printf("\n!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
-        CFShow(active_component_bit_mask);
-        CFShow(indicies);
-        printf("\n!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
-        printf("\n");
         button_drawer(indicies)(^ (UIButton * button, CFIndex index) {
             dispatch_barrier_async(dispatch_get_main_queue(), ^{
                 CGFloat button_angle = (CFBitVectorGetCountOfBit(indicies, CFRangeMake(0, 5), 1) == 1)
@@ -1148,21 +1146,15 @@ static void (^(^(^touch_handler_init)(ControlView *__strong, __strong id<Capture
                 __block long pre_animation_frame_count = ((~(1UL << duration_midpoint + 1) & (-(~(1UL << duration_midpoint + 1)))) << duration_midpoint + 1) - 1;  //
                 __block _Atomic CFMutableBitVectorRef active_component_bits = CFBitVectorCreateMutable(kCFAllocatorDefault, 5);
                 CFBitVectorSetCount(active_component_bits, 5);
-                __block _Atomic long active_component_bit_mask;
-                
-                printf("\n______________\n");
+                __block _Atomic long active_component_bit_mask;;
                 integrate((long)30)(^ (long frame) {
                     active_component_bit_mask = ((pre_animation_frame_count >>= 1UL) & 1UL) ^ (((active_component_bit_vector >> 0) & 1UL) << 0);
                     CFBitVectorSetBits(active_component_bits, CFRangeMake(0, 5), (active_component_bit_mask & MASK_ALL));
-                    printf("H: %d\t\tF: %ld\t\tS: %d\t\tA: %d\n", isBitSet(pre_animation_frame_count, 0), frame, isBitSet(active_component_bit_vector, 0), isBitSet((active_component_bit_mask & MASK_ALL), 0));
-                    
-                    return ^ long (CADisplayLink * display_link) {
-                        CGFloat angle_adj = (360.0 / 30.0) * frame;
-                        draw_button_arc(active_component_bits, angle_adj, UITouchPhaseCancelled);
-                        return (long)active_component_bit_vector;
-                    };
+//                    printf("H: %d\t\tF: %ld\t\tS: %d\t\tA: %d\n", isBitSet(pre_animation_frame_count, 0), frame, isBitSet(active_component_bit_vector, 0), isBitSet((active_component_bit_mask & MASK_ALL), 0));
+                    CGFloat angle_adj = (360.0 / 30.0) * frame;
+                    draw_button_arc(active_component_bits, angle_adj, UITouchPhaseCancelled);
+                    return (long)active_component_bit_vector;
                  });
-                printf("\n______________\n");
 //                draw_button_arc((((active_component_bit_vector >> 0) & 1UL) << 0), 0.0f, UITouchPhaseCancelled);
                 
                 return (long)active_component_bit_vector;
