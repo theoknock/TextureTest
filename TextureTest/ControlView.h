@@ -35,9 +35,6 @@ typedef enum : NSUInteger {
 
 - (float)maxISO_;
 - (float)minISO_;
-@property (nonatomic) void(^captureDeviceConfigurationControlPropertyBlock)(CaptureDeviceConfigurationControlProperty, float, UITouchPhase);
-- (void)setCaptureDeviceConfigurationControlProperty:(CaptureDeviceConfigurationControlProperty)property value:(float)value phase:(UITouchPhase)phase;
-
 @end
 
 static dispatch_queue_t enumerator_queue() {

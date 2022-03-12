@@ -33,8 +33,7 @@ extern CGSize videoDimensions;
 
 - (float)maxISO_;
 - (float)minISO_;
-@property (nonatomic) void(^captureDeviceConfigurationControlPropertyBlock)(CaptureDeviceConfigurationControlProperty, float, UITouchPhase);
-- (void)setCaptureDeviceConfigurationControlProperty:(CaptureDeviceConfigurationControlProperty)property value:(float)value phase:(UITouchPhase)phase;
+@property (class, strong, nonatomic, readonly) void(^captureDeviceConfigurationControlPropertyBlock)(CaptureDeviceConfigurationControlProperty, float, UITouchPhase);
 
 @property (class, nonatomic, strong, readwrite) AVCaptureDevice * captureDevice;
 

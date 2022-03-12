@@ -1020,16 +1020,15 @@ static void (^(^draw_tick_wheel_init)(ControlView *, /* _Atomic */ float *, /* _
     };
 };
 
-static long (^(^(^button_drawer)(CFMutableBitVectorRef *))(void (^__strong)(const UIButton * _Nonnull, CFIndex)))(ControlView *) = ^ (CFMutableBitVectorRef * bit_mask) {
+static long (^(^(^button_drawer)(CFMutableBitVectorRef *))(void (^__strong)(const UIButton * _Nonnull, CFIndex)))(long(^)(void)) = ^ (CFMutableBitVectorRef * bit_mask) {
     return ^ (void(^draw_buttons)(const UIButton * _Nonnull, CFIndex)) {
         size_t iterations = CFBitVectorGetCountOfBit(*bit_mask, CFRangeMake(0, 5), 1);
         dispatch_apply(iterations, DISPATCH_APPLY_AUTO, ^(size_t iteration) {
             CFIndex button_index = (iterations == 1) ? CFBitVectorGetFirstIndexOfBit(*bit_mask, CFRangeMake(0, 5), (UInt32)1) : iteration;
             draw_buttons(capture_device_configuration_control_property_button(button_index), button_index);
         });
-        return ^ (ControlView * view) {
-            [view setNeedsDisplay];
-            return (long)active_component_bit_vector;
+        return ^ (long(^draw_button_completion_handler)(void)) {
+            return draw_button_completion_handler();
         };
     };
 };
@@ -1081,21 +1080,26 @@ static long (^(^(^touch_handler_init)(ControlView *__strong, __strong id<Capture
     [haptic_feedback prepare];
     
     static CFMutableBitVectorRef active_component_bit_vector_ref;
-//    CFBitVectorCreateMutable(kCFAllocatorDefault, 5);
-    static long (^draw_button_arc)(CFMutableBitVectorRef *, double);
-    draw_button_arc =  ^ (CFMutableBitVectorRef * button_indicies, double position_angle_offset) {
+    //    CFBitVectorCreateMutable(kCFAllocatorDefault, 5);
+    static long (^draw_button_arc)(CFMutableBitVectorRef *, double, UITouchPhase);
+    draw_button_arc =  ^ (CFMutableBitVectorRef * button_indicies, double position_angle_offset, UITouchPhase touch_phase) {
         return button_drawer(button_indicies)(^ (const UIButton * button, CFIndex index) {
-//            dispatch_barrier_sync(enumerator_queue(), ^{
-                float button_angle = (CFBitVectorGetCountOfBit(*button_indicies, CFRangeMake(0, 5), 1) == 1)
-                ? degreesToRadians(position_angle + position_angle_offset)
-                : degreesToRadians(rescale(index, 0.0, 4.0, 180.0, 270.0) + position_angle_offset);
-                dispatch_async(dispatch_get_main_queue(), ^{
+            //            dispatch_barrier_sync(enumerator_queue(), ^{
+            float button_angle = (CFBitVectorGetCountOfBit(*button_indicies, CFRangeMake(0, 5), 1) == 1)
+            ? degreesToRadians(position_angle + position_angle_offset)
+            : degreesToRadians(rescale(index, 0.0, 4.0, 180.0, 270.0) + position_angle_offset);
+            dispatch_async(dispatch_get_main_queue(), ^{
                 [buttons[index] setCenter:^ (float radians) {
                     return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
                 }(button_angle)];
-//                });
+                //                });
             });
-        })(((ControlView *)view));
+        })(^{
+            [view setNeedsDisplay];
+            [VideoCamera captureDeviceConfigurationControlPropertyBlock](touch_property, position_angle, touch_phase);
+            return (long)1;
+        });
+    
     };
     
     return ^ (__strong UITouch * _Nullable touch) {
@@ -1107,7 +1111,7 @@ static long (^(^(^touch_handler_init)(ControlView *__strong, __strong id<Capture
                 
                 __block CaptureDeviceConfigurationControlProperty new_touch_property = ((unsigned int)round(rescale(angle_from_point(touch_point), 180.0, 270.0, 0.0, 4.0)));
                 highlighted_property_bit_vector = ((active_component_bit_vector >> new_touch_property) & 1UL) << new_touch_property;
-                if ((new_touch_property != touch_property) && (active_component_bit_vector & MASK_ALL)) {
+                if ((new_touch_property ^ touch_property) && (active_component_bit_vector & MASK_ALL)) {
                     touch_property = new_touch_property;
                     [haptic_feedback selectionChanged];
                     [haptic_feedback prepare];
@@ -1216,7 +1220,7 @@ static long (^(^(^touch_handler_init)(ControlView *__strong, __strong id<Capture
             return draw_button_arc(bit_vector_ref(&active_component_bit_vector_ref, 5)(^ (uint32_t position) {
                 CFBit bit = (UInt32)((active_component_bit_vector >> 0) & 1UL) ^ !!(floor(log2(selected_property_bit_vector)) == position);
                 return bit;
-            }), 0.0f);
+            }), 0.0f, touch.phase);
         };
     };
 };
