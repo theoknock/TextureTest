@@ -1105,13 +1105,14 @@ static long (^(^(^touch_handler_init)(ControlView *__strong, __strong id<Capture
                 touch_point.x = fmaxf(0.0, fminf(touch_point.x, CGRectGetMaxX(((ControlView *)view).bounds)));
                 touch_point.y = fmaxf(0.0, fminf(touch_point.y, CGRectGetMaxY(((ControlView *)view).bounds)));
                 
-                CaptureDeviceConfigurationControlProperty new_touch_property = ((unsigned int)round(rescale(angle_from_point(touch_point), 180.0, 270.0, 0.0, 4.0)));
-                if (new_touch_property != touch_property) {
+                __block CaptureDeviceConfigurationControlProperty new_touch_property = ((unsigned int)round(rescale(angle_from_point(touch_point), 180.0, 270.0, 0.0, 4.0)));
+                highlighted_property_bit_vector = ((active_component_bit_vector >> new_touch_property) & 1UL) << new_touch_property;
+                if ((new_touch_property != touch_property) && (active_component_bit_vector & MASK_ALL)) {
                     touch_property = new_touch_property;
                     [haptic_feedback selectionChanged];
                     [haptic_feedback prepare];
                 }
-                highlighted_property_bit_vector = ((active_component_bit_vector >> new_touch_property) & 1UL) << new_touch_property;
+                
                 
                 
                 radius = fmaxf(CGRectGetMidX(((ControlView *)view).bounds),
