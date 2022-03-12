@@ -7,7 +7,7 @@
 
 #import <simd/simd.h>
 #import <ModelIO/ModelIO.h>
-
+#import "VideoCamera.h"
 #import "Renderer.h"
 
 // Include header shared between C code here, which executes Metal API commands, and .metal files
@@ -232,7 +232,7 @@
 }
 
 - (void)mtkView:(nonnull MTKView *)view drawableSizeWillChange:(CGSize)size {
-    [view setDrawableSize:size];
+    [view setDrawableSize:CGSizeMake(size.width/2.0, size.height/2.0)];
 }
 
 - (void)captureOutput:(AVCaptureOutput *)output didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer fromConnection:(AVCaptureConnection *)connection {

@@ -1055,7 +1055,7 @@ static CFMutableBitVectorRef * (^(^bit_vector_ref)(CFMutableBitVectorRef *, unsi
 
 static long (^(^_Nonnull touch_handler)(__strong UITouch * _Nullable))(const long (^ const _Nullable (*))(long(^ _Nullable)(void)));
 static long (^ _Nonnull  handle_touch)(const long (^ const _Nullable (*))(long(^ _Nullable)(void)));
-static long (^(^(^touch_handler_init)(ControlView *__strong, __strong id<CaptureDeviceConfigurationControlPropertyDelegate>))(UITouch * _Nullable __strong))(const long (^const __autoreleasing (*))(long (^ _Nullable __strong)(void))) = ^ (ControlView *__strong view, __strong id<CaptureDeviceConfigurationControlPropertyDelegate> delegate) {
+static long (^(^(^touch_handler_init)(ControlView *__strong))(UITouch * _Nullable __strong))(const long (^const __autoreleasing (*))(long (^ _Nullable __strong)(void))) = ^ (ControlView *__strong view) {
     const CGPoint center_point = CGPointMake(CGRectGetMaxX(((ControlView *)view).bounds), CGRectGetMaxY(((ControlView *)view).bounds));
     static /* _Atomic */ float position_angle;
     static /* _Atomic */ float (^angle_from_point)(CGPoint);
@@ -1105,7 +1105,7 @@ static long (^(^(^touch_handler_init)(ControlView *__strong, __strong id<Capture
     return ^ (__strong UITouch * _Nullable touch) {
         return ^ (const long (^ const _Nullable (*set_state_ptr))(long(^ _Nullable)(void))) {
             dispatch_barrier_sync(enumerator_queue(), ^{
-                touch_point = [touch locationInView:(ControlView *)view];
+                touch_point = [touch preciseLocationInView:(ControlView *)view];
                 touch_point.x = fmaxf(0.0, fminf(touch_point.x, CGRectGetMaxX(((ControlView *)view).bounds)));
                 touch_point.y = fmaxf(0.0, fminf(touch_point.y, CGRectGetMaxY(((ControlView *)view).bounds)));
                 
@@ -1297,7 +1297,7 @@ static long (^(^recursion)(long))(long(^(^)(long))(long(^)(long))) = ^ (long a) 
         return button;
     });
     
-    touch_handler = touch_handler_init((ControlView *)self, self.captureDeviceConfigurationControlPropertyDelegate); // touch_handler_init(self, self.captureDeviceConfigurationControlPropertyDelegate);
+    touch_handler = touch_handler_init((ControlView *)self); // touch_handler_init(self, self.captureDeviceConfigurationControlPropertyDelegate);
 }
 
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
@@ -1325,9 +1325,9 @@ static long (^(^recursion)(long))(long(^(^)(long))(long(^)(long))) = ^ (long a) 
     //    dispatch_barrier_sync(enumerator_queue(), ^{
     //        [self setUserInteractionEnabled:FALSE];
     //    });
-    dispatch_barrier_async(enumerator_queue(), ^{
+//    dispatch_barrier_async(enumerator_queue(), ^{
         handle_touch(state_setter_ptr);
-    });
+//    });
     //    dispatch_barrier_sync(enumerator_queue(), ^{
     //        [self setUserInteractionEnabled:TRUE];
     //    });

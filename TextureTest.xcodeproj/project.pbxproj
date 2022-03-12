@@ -26,6 +26,7 @@
 		B90B097E2793074D0052879E /* KernelTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = KernelTypes.h; sourceTree = "<group>"; };
 		B90E67D427A5C6B8004B935F /* ControlView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ControlView.h; sourceTree = "<group>"; };
 		B90E67D527A5C6B8004B935F /* ControlView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ControlView.m; sourceTree = "<group>"; wrapsLines = 0; };
+		B94054A727DC3583000C3B2C /* CaptureDeviceConfigurationPropertyUtils.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CaptureDeviceConfigurationPropertyUtils.h; sourceTree = "<group>"; };
 		B94F5B4F27A58AAF00DA42A4 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 		B9BCA52827D2DB5500B768CE /* transition_block.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = transition_block.h; sourceTree = "<group>"; };
 		B9BCA52927D2DB5500B768CE /* transition_block.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = transition_block.c; sourceTree = "<group>"; };
@@ -89,6 +90,7 @@
 			children = (
 				B9FB8D482792DD970088F353 /* AppDelegate.h */,
 				B9FB8D492792DD970088F353 /* AppDelegate.m */,
+				B94054A727DC3583000C3B2C /* CaptureDeviceConfigurationPropertyUtils.h */,
 				B9FB8D4B2792DD970088F353 /* Renderer.h */,
 				B9FB8D4C2792DD970088F353 /* Renderer.m */,
 				B9FB8D4E2792DD970088F353 /* GameViewController.h */,

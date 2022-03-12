@@ -7,8 +7,9 @@
 
 #import <Foundation/Foundation.h>
 #import <AVFoundation/AVFoundation.h>
-#import "ControlView.h"
-#import "Renderer.h"
+
+#import "CaptureDeviceConfigurationPropertyUtils.h"
+@import UIKit;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -27,12 +28,10 @@ static const float kExposureMinimumDuration = 1.0/1000;
 extern dispatch_queue_t video_data_output_sample_buffer_delegate_queue;
 extern CGSize videoDimensions;
 
-@interface VideoCamera : NSObject <CaptureDeviceConfigurationControlPropertyDelegate>
+@interface VideoCamera : NSObject
 
 + (VideoCamera *)setAVCaptureVideoDataOutputSampleBufferDelegate:(id<AVCaptureVideoDataOutputSampleBufferDelegate>)videoOutputDelegate;
 
-- (float)maxISO_;
-- (float)minISO_;
 @property (class, strong, nonatomic, readonly) void(^captureDeviceConfigurationControlPropertyBlock)(CaptureDeviceConfigurationControlProperty, float, UITouchPhase);
 
 @property (class, nonatomic, strong, readwrite) AVCaptureDevice * captureDevice;

@@ -332,14 +332,6 @@ dispatch_queue_t video_data_output_sample_buffer_delegate_queue;
     }
 };
 
-- (float)maxISO_ {
-    return VideoCamera.captureDevice.activeFormat.maxISO;
-}
-
-- (float)minISO_ {
-    return VideoCamera.captureDevice.activeFormat.minISO;
-}
-
 static void (^unlock_for_configuration)(void(^)(void)) = ^ (void(^captureDeviceConfigurationControlPropertyBlock)(void)) {
     @try {
         __autoreleasing NSError *error = NULL;
