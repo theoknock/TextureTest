@@ -843,15 +843,6 @@ static const UIButton * (^capture_device_configuration_control_property_button)(
     return buttons[property];
 };
 
-static dispatch_queue_t enumerator_queue() {
-    static dispatch_queue_t queue;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        queue = dispatch_queue_create("enumerator_queue()", NULL);
-    });
-    
-    return queue;
-};
 
 static void (^(^map)(__strong const UIButton * _Nonnull [_Nonnull 5]))(const UIButton * (^__strong)(unsigned int)) = ^ (__strong const UIButton * _Nonnull button_collection[5]) {
     return ^ (const UIButton *(^enumeration)(unsigned int)) {
@@ -958,7 +949,7 @@ static long (^(^integrate)(long))(long(^__strong)(long)) = ^ (long duration) {
     };
 };
 
-static long (^set_state)(long(^ _Nullable)(void)) = ^ long (long (^ _Nonnull __strong transition)(void)) {
+static const long (^state_setter)(long(^ _Nullable)(void)) = ^ long (long (^ _Nonnull __strong transition)(void)) {
     active_component_bit_vector = ~active_component_bit_vector;
     // converse nonimplication
     uint32_t  selected_property_bit_mask = MASK_NONE;
@@ -988,6 +979,8 @@ static long (^set_state)(long(^ _Nullable)(void)) = ^ long (long (^ _Nonnull __s
     
     return transition();
 };
+
+static const long (^ const (*state_setter_ptr))(long(^ _Nullable)(void)) = &state_setter;
 
 static const void (^draw_tick_wheel)(CGContextRef, CGRect);
 //static const void (^ const (*draw_tick_wheel_ptr))(CGContextRef, CGRect) = &draw_tick_wheel;
@@ -1082,6 +1075,10 @@ static long (^(^(^touch_handler_init)(ControlView *__strong, __strong id<Capture
     static /* _Atomic */ float radius;
     
     draw_tick_wheel = draw_tick_wheel_init((ControlView *)view, &position_angle, &radius);
+    __block CaptureDeviceConfigurationControlProperty touch_property;
+    static UISelectionFeedbackGenerator * haptic_feedback;
+    haptic_feedback = [[UISelectionFeedbackGenerator alloc] init];
+    [haptic_feedback prepare];
     
     static CFMutableBitVectorRef active_component_bit_vector_ref;
 //    CFBitVectorCreateMutable(kCFAllocatorDefault, 5);
@@ -1108,8 +1105,14 @@ static long (^(^(^touch_handler_init)(ControlView *__strong, __strong id<Capture
                 touch_point.x = fmaxf(0.0, fminf(touch_point.x, CGRectGetMaxX(((ControlView *)view).bounds)));
                 touch_point.y = fmaxf(0.0, fminf(touch_point.y, CGRectGetMaxY(((ControlView *)view).bounds)));
                 
-                CaptureDeviceConfigurationControlProperty touch_property = ((unsigned int)round(rescale(angle_from_point(touch_point), 180.0, 270.0, 0.0, 4.0)));
-                highlighted_property_bit_vector = ((active_component_bit_vector >> touch_property) & 1UL) << touch_property;
+                CaptureDeviceConfigurationControlProperty new_touch_property = ((unsigned int)round(rescale(angle_from_point(touch_point), 180.0, 270.0, 0.0, 4.0)));
+                if (new_touch_property != touch_property) {
+                    touch_property = new_touch_property;
+                    [haptic_feedback selectionChanged];
+                    [haptic_feedback prepare];
+                }
+                highlighted_property_bit_vector = ((active_component_bit_vector >> new_touch_property) & 1UL) << new_touch_property;
+                
                 
                 radius = fmaxf(CGRectGetMidX(((ControlView *)view).bounds),
                                fminf((sqrt(pow(touch_point.x - center_point.x, 2.0) + pow(touch_point.y - center_point.y, 2.0))),
@@ -1195,7 +1198,13 @@ static long (^(^(^touch_handler_init)(ControlView *__strong, __strong id<Capture
                 //                }()());
                 
                 
-                return (long)active_component_bit_vector_ref;
+                return ^{
+                    size_t iterations = 5;
+                    dispatch_apply(iterations, DISPATCH_APPLY_AUTO, ^(size_t iteration) {
+                        capture_device_configuration_control_property_button(iteration);
+                    });
+                    return (long)active_component_bit_vector;
+                }();
             });
                 
             });
@@ -1211,9 +1220,7 @@ static long (^(^(^touch_handler_init)(ControlView *__strong, __strong id<Capture
     };
 };
 
-@implementation ControlView {
-    UISelectionFeedbackGenerator * haptic_feedback;
-}
+@implementation ControlView
 
 static int invocation_a = 0x01;
 static int invocation_b;
@@ -1248,8 +1255,6 @@ static long (^(^recursion)(long))(long(^(^)(long))(long(^)(long))) = ^ (long a) 
     [self.layer setAffineTransform:CGAffineTransformScale(self.layer.affineTransform, -1, -1)];
     
     //    [self updateStateLabels];
-    //    haptic_feedback = [[UISelectionFeedbackGenerator alloc] init];
-    //    [haptic_feedback prepare];
     
     CGPoint default_center_point = CGPointMake(CGRectGetMaxX(((ControlView *)self).bounds), CGRectGetMaxY(((ControlView *)self).bounds));
     float default_radius       = CGRectGetMidX(self.bounds);
@@ -1306,7 +1311,7 @@ static long (^(^recursion)(long))(long(^(^)(long))(long(^)(long))) = ^ (long a) 
 
 - (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
     //    dispatch_barrier_async(enumerator_queue(), ^{
-    handle_touch(&set_state);
+    handle_touch(state_setter_ptr);
     //    });
     //    dispatch_barrier_sync(enumerator_queue(), ^{ [self updateStateLabels]; });
 }
@@ -1316,7 +1321,7 @@ static long (^(^recursion)(long))(long(^(^)(long))(long(^)(long))) = ^ (long a) 
     //        [self setUserInteractionEnabled:FALSE];
     //    });
     dispatch_barrier_async(enumerator_queue(), ^{
-        handle_touch(&set_state);
+        handle_touch(state_setter_ptr);
     });
     //    dispatch_barrier_sync(enumerator_queue(), ^{
     //        [self setUserInteractionEnabled:TRUE];
@@ -1325,9 +1330,6 @@ static long (^(^recursion)(long))(long(^(^)(long))(long(^)(long))) = ^ (long a) 
 
 - (void)drawRect:(CGRect)rect {
     draw_tick_wheel(UIGraphicsGetCurrentContext(), rect);
-    // To-Do: only "click" when a new value is selected - not every time drawRect is called
-    //    [haptic_feedback selectionChanged];
-    //    [haptic_feedback prepare];
 }
 
 - (void)updateStateLabels {
