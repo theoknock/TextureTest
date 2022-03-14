@@ -9,7 +9,10 @@
 #import <Metal/Metal.h>
 #import <MetalKit/MetalKit.h>
 #import "Renderer.h"
-#import "ControlView.h"
+//#import "ControlView.h"
+#import "VideoCamera.h"
+
+@class ControlView;
 
 @interface GameViewController : UIViewController
 

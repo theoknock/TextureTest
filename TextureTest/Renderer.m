@@ -7,7 +7,6 @@
 
 #import <simd/simd.h>
 #import <ModelIO/ModelIO.h>
-#import "VideoCamera.h"
 #import "Renderer.h"
 
 // Include header shared between C code here, which executes Metal API commands, and .metal files
@@ -30,7 +29,7 @@
     float _rotation;
 
     MTKMesh *_mesh;
-    void(^create_texture)(CVPixelBufferRef);
+    id<MTLTexture>(^create_texture)(CVPixelBufferRef);
 
 }
 
@@ -57,28 +56,27 @@
             
             CVMetalTextureCacheRef textureCache;
             CVMetalTextureCacheCreate(NULL, cacheAttributes, self->_device, NULL, &textureCache);
-//            CFShow(cacheAttributes);
+            //            CFShow(cacheAttributes);
             CFRelease(textureUsageValue);
             CFRelease(cacheAttributes);
             
-            return ^ (CVPixelBufferRef _Nonnull pixel_buffer) {
+            return ^ id <MTLTexture> (CVPixelBufferRef _Nonnull pixel_buffer) {
+                __autoreleasing id<MTLTexture> texture = nil;
                 @autoreleasepool {
-                    __autoreleasing id<MTLTexture> texture = nil;
                     CVPixelBufferLockBaseAddress(pixel_buffer, kCVPixelBufferLock_ReadOnly);
                     {
                         CVMetalTextureRef metalTextureRef = NULL;
                         CVMetalTextureCacheCreateTextureFromImage(NULL, textureCache, pixel_buffer, cacheAttributes, pixelFormat, CVPixelBufferGetWidth(pixel_buffer), CVPixelBufferGetHeight(pixel_buffer), 0, &metalTextureRef);
-                        _colorMap = CVMetalTextureGetTexture(metalTextureRef);
+                        texture = CVMetalTextureGetTexture(metalTextureRef);
                         CFRelease(metalTextureRef);
                     }
                     CVPixelBufferUnlockBaseAddress(pixel_buffer, kCVPixelBufferLock_ReadOnly);
                 }
+                return texture;
             };
         }();
-        
-        [VideoCamera setAVCaptureVideoDataOutputSampleBufferDelegate:(id<AVCaptureVideoDataOutputSampleBufferDelegate>)self];
     }
-
+    
     return self;
 }
 
@@ -191,10 +189,10 @@
         [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
         renderEncoder.label = @"MyRenderEncoder";
 
-        [renderEncoder pushDebugGroup:@"DrawBox"];
+//        [renderEncoder pushDebugGroup:@"DrawBox"];
 
-        [renderEncoder setFrontFacingWinding:MTLWindingCounterClockwise];
-        [renderEncoder setCullMode:MTLCullModeBack];
+//        [renderEncoder setFrontFacingWinding:MTLWindingCounterClockwise];
+//        [renderEncoder setCullMode:MTLCullModeBack];
         [renderEncoder setRenderPipelineState:_pipelineState];
         [renderEncoder setDepthStencilState:_depthState];
 
@@ -236,7 +234,7 @@
 }
 
 - (void)captureOutput:(AVCaptureOutput *)output didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer fromConnection:(AVCaptureConnection *)connection {
-    create_texture(CMSampleBufferGetImageBuffer(sampleBuffer));
+    _colorMap = create_texture(CMSampleBufferGetImageBuffer(sampleBuffer));
 }
 
 @end

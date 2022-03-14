@@ -8,7 +8,6 @@
 #import <MetalKit/MetalKit.h>
 #import <AVFoundation/AVFoundation.h>
 
-#import "CaptureDeviceConfigurationPropertyUtils.h"
 
 
 

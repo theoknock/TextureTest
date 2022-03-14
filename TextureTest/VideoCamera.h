@@ -8,7 +8,6 @@
 #import <Foundation/Foundation.h>
 #import <AVFoundation/AVFoundation.h>
 
-#import "CaptureDeviceConfigurationPropertyUtils.h"
 @import UIKit;
 
 NS_ASSUME_NONNULL_BEGIN
@@ -32,7 +31,8 @@ extern CGSize videoDimensions;
 
 + (VideoCamera *)setAVCaptureVideoDataOutputSampleBufferDelegate:(id<AVCaptureVideoDataOutputSampleBufferDelegate>)videoOutputDelegate;
 
-@property (class, strong, nonatomic, readonly) void(^captureDeviceConfigurationControlPropertyBlock)(CaptureDeviceConfigurationControlProperty, float, UITouchPhase);
+//@property (class, strong, nonatomic, readonly) long(^captureDeviceConfigurationControlPropertyBlock)(CaptureDeviceConfigurationControlProperty, float, UITouchPhase);
+
 
 @property (class, nonatomic, strong, readwrite) AVCaptureDevice * captureDevice;
 

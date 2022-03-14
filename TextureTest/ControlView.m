@@ -754,6 +754,7 @@
 #include <stdatomic.h>
 #include <libkern/OSAtomic.h>
 #import "VideoCamera.h"
+@import simd;
 
 
 @import Accelerate;
@@ -820,17 +821,6 @@ static UIImage * (^CaptureDeviceConfigurationControlPropertySymbolImage)(Capture
     return [UIImage systemImageNamed:CaptureDeviceConfigurationControlPropertySymbol(property, state) withConfiguration:CaptureDeviceConfigurationControlPropertySymbolImageConfiguration(state)];
 };
 
-const unsigned int capture_device_configuration_control_property_torch_level_bit = (1UL << 0);
-const unsigned int capture_device_configuration_control_property_lens_position_bit = (1UL << 1);
-const unsigned int capture_device_configuration_control_property_exposure_duration_bit = (1UL << 2);
-const unsigned int capture_device_configuration_control_property_iso_bit = (1UL << 3);
-const unsigned int capture_device_configuration_control_property_video_zoom_factor_bit = (1UL << 4);
-#define MASK_ALL  (capture_device_configuration_control_property_torch_level_bit | capture_device_configuration_control_property_lens_position_bit | capture_device_configuration_control_property_exposure_duration_bit | capture_device_configuration_control_property_iso_bit | capture_device_configuration_control_property_video_zoom_factor_bit)
-#define MASK_NONE ( 0 << 0 |   0 << 1 |   0 << 2 |   0 << 3 |   0 << 4)
-/* _Atomic */ uint32_t active_component_bit_vector     = MASK_ALL;
-/* _Atomic */ unsigned int highlighted_property_bit_vector = MASK_NONE;
-/* _Atomic */ uint32_t selected_property_bit_vector    = MASK_NONE;
-/* _Atomic */ unsigned int hidden_property_bit_vector      = MASK_NONE;
 
 static __strong const UIButton * _Nonnull buttons[5];
 static const UIButton * (^capture_device_configuration_control_property_button)(CaptureDeviceConfigurationControlProperty) = ^ (CaptureDeviceConfigurationControlProperty property) {
@@ -956,8 +946,7 @@ static const long (^state_setter)(long(^ _Nullable)(void)) = ^ long (long (^ _No
     uint32_t  highlighted_property_bit_position = floor(log2(highlighted_property_bit_vector));
     selected_property_bit_mask ^= (1UL << highlighted_property_bit_position) & ~active_component_bit_vector;
     selected_property_bit_vector = (selected_property_bit_vector | selected_property_bit_mask) & ~selected_property_bit_vector; // To-Do: OSAtomicOr32(selected_property_bit_mask, &selected_property_bit_vector);...
-    
-    
+
     /*
      // Use these when modifying bit vectors outside of this block
      
@@ -965,13 +954,13 @@ static const long (^state_setter)(long(^ _Nullable)(void)) = ^ long (long (^ _No
      OSAtomicOr32(selected_property_bit_mask, &selected_property_bit_vector);
      
      */
-    
-    
+
     // exclusive disjunction
     hidden_property_bit_vector = ~active_component_bit_vector;
     hidden_property_bit_vector = selected_property_bit_mask & ~active_component_bit_vector;
     hidden_property_bit_vector ^= MASK_ALL;
     hidden_property_bit_vector ^= active_component_bit_vector;
+    
     // highlighted_reset
     highlighted_property_bit_vector = MASK_NONE;
     
@@ -1020,15 +1009,37 @@ static void (^(^draw_tick_wheel_init)(ControlView *, /* _Atomic */ float *, /* _
     };
 };
 
-static long (^(^(^button_drawer)(CFMutableBitVectorRef *))(void (^__strong)(const UIButton * _Nonnull, CFIndex)))(long(^)(void)) = ^ (CFMutableBitVectorRef * bit_mask) {
-    return ^ (void(^draw_buttons)(const UIButton * _Nonnull, CFIndex)) {
+static long (^(^(^button_drawer)(CFMutableBitVectorRef *))(long (^__strong)(const UIButton * _Nonnull, CFIndex)))(long(^)(size_t)) = ^ (CFMutableBitVectorRef * bit_mask) {
+    return ^ (long(^draw_buttons)(const UIButton * _Nonnull, CFIndex)) {
         size_t iterations = CFBitVectorGetCountOfBit(*bit_mask, CFRangeMake(0, 5), 1);
-        dispatch_apply(iterations, DISPATCH_APPLY_AUTO, ^(size_t iteration) {
-            CFIndex button_index = (iterations == 1) ? CFBitVectorGetFirstIndexOfBit(*bit_mask, CFRangeMake(0, 5), (UInt32)1) : iteration;
-            draw_buttons(capture_device_configuration_control_property_button(button_index), button_index);
+        
+        unsigned int (^blck)(unsigned int) = ^ unsigned int (unsigned int index) {
+            printf("index == %d\n", index);
+            capture_device_configuration_control_property_button(index);
+            return 1UL;
+        };
+        
+        dispatch_barrier_async(dispatch_get_main_queue(), ^{
+            static int c = 0;
+            ((active_component_bit_vector << c & 1UL) && blck(c++)) &&
+            ((active_component_bit_vector << c & 1UL) && blck(c++)) &&
+            ((active_component_bit_vector << c & 1UL) && blck(c++)) &&
+            ((active_component_bit_vector << c & 1UL) && blck(c++)) &&
+            ((active_component_bit_vector << c & 1UL) && blck(c));
         });
-        return ^ (long(^draw_button_completion_handler)(void)) {
-            return draw_button_completion_handler();
+        
+        //        typedef unsigned int v5si __attribute__((__vector_size__(sizeof(unsigned int) * 5)));
+        //        v5si mask = (v5si){active_component_bit_vector << 0 & 1UL, active_component_bit_vector << 1 & 1UL, active_component_bit_vector << 2 & 1UL, active_component_bit_vector << 3 & 1UL, active_component_bit_vector << 4 & 1UL};
+        //        (mask & blks);
+        
+        //        dispatch_apply(5, DISPATCH_APPLY_AUTO, ^(size_t iteration) {
+        //            dispatch_barrier_async(dispatch_get_main_queue(), ^{
+        //                CFIndex button_index = ((iterations == 1) & (CFBitVectorGetFirstIndexOfBit(*bit_mask, CFRangeMake(0, 5), (UInt32)1))) || iteration;
+        //                ((button_index == iteration) & draw_buttons(capture_device_configuration_control_property_button(button_index), button_index)) || capture_device_configuration_control_property_button(button_index);
+        //            });
+        //        });
+        return ^ (long(^draw_button_completion_handler)(size_t)) {
+            return draw_button_completion_handler(iterations);
         };
     };
 };
@@ -1037,14 +1048,14 @@ static CFMutableBitVectorRef * (^(^bit_vector_ref)(CFMutableBitVectorRef *, unsi
     /* _Atomic */ __block CFMutableBitVectorRef bv = CFBitVectorCreateMutable(kCFAllocatorDefault, 5);
     CFBitVectorSetCount(bv, count);
     return ^ (CFBit(^bit)(uint32_t)) {
-//        dispatch_barrier_sync(enumerator_queue(), ^{
-            for (uint32_t b = 0; b < count; b++) {
-                CFBit b_t = bit(b);
-                //                printf("bit (%d) == %d\n", b, b_t);
-                CFBitVectorSetBitAtIndex(bv, b, b_t);
-            }
-            
-//        });
+        //        dispatch_barrier_sync(enumerator_queue(), ^{
+        for (uint32_t b = 0; b < count; b++) {
+            CFBit b_t = bit(b);
+            //                printf("bit (%d) == %d\n", b, b_t);
+            CFBitVectorSetBitAtIndex(bv, b, b_t);
+        }
+        
+        //        });
         //        printf("\n\n\n");
         //                CFShow(bv);
         *bv_t = bv;
@@ -1053,9 +1064,10 @@ static CFMutableBitVectorRef * (^(^bit_vector_ref)(CFMutableBitVectorRef *, unsi
 };
 
 
-static long (^(^_Nonnull touch_handler)(__strong UITouch * _Nullable))(const long (^ const _Nullable (*))(long(^ _Nullable)(void)));
-static long (^ _Nonnull  handle_touch)(const long (^ const _Nullable (*))(long(^ _Nullable)(void)));
-static long (^(^(^touch_handler_init)(ControlView *__strong))(UITouch * _Nullable __strong))(const long (^const __autoreleasing (*))(long (^ _Nullable __strong)(void))) = ^ (ControlView *__strong view) {
+static void (^(^_Nonnull touch_handler)(__strong UITouch * _Nullable))(const long (^ const _Nullable (*))(long(^ _Nullable)(void)));
+static void (^ _Nonnull  handle_touch)(const long (^ const _Nullable (*))(long(^ _Nullable)(void)));
+
+static void (^(^(^touch_handler_init)(ControlView *__strong))(UITouch * _Nullable __strong))(const long (^const __autoreleasing            (*))(long (^ _Nullable __strong)(void))) = ^ (ControlView *__strong view) {
     const CGPoint center_point = CGPointMake(CGRectGetMaxX(((ControlView *)view).bounds), CGRectGetMaxY(((ControlView *)view).bounds));
     static /* _Atomic */ float position_angle;
     static /* _Atomic */ float (^angle_from_point)(CGPoint);
@@ -1075,152 +1087,113 @@ static long (^(^(^touch_handler_init)(ControlView *__strong))(UITouch * _Nullabl
     
     draw_tick_wheel = draw_tick_wheel_init((ControlView *)view, &position_angle, &radius);
     __block CaptureDeviceConfigurationControlProperty touch_property;
-    static UISelectionFeedbackGenerator * haptic_feedback;
+    __block UISelectionFeedbackGenerator * haptic_feedback;
     haptic_feedback = [[UISelectionFeedbackGenerator alloc] init];
     [haptic_feedback prepare];
     
-    static CFMutableBitVectorRef active_component_bit_vector_ref;
-    //    CFBitVectorCreateMutable(kCFAllocatorDefault, 5);
-    static long (^draw_button_arc)(CFMutableBitVectorRef *, double, UITouchPhase);
-    draw_button_arc =  ^ (CFMutableBitVectorRef * button_indicies, double position_angle_offset, UITouchPhase touch_phase) {
-        return button_drawer(button_indicies)(^ (const UIButton * button, CFIndex index) {
-            //            dispatch_barrier_sync(enumerator_queue(), ^{
-            float button_angle = (CFBitVectorGetCountOfBit(*button_indicies, CFRangeMake(0, 5), 1) == 1)
-            ? degreesToRadians(position_angle + position_angle_offset)
-            : degreesToRadians(rescale(index, 0.0, 4.0, 180.0, 270.0) + position_angle_offset);
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [buttons[index] setCenter:^ (float radians) {
-                    return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
-                }(button_angle)];
-                //                });
-            });
-        })(^{
-            [view setNeedsDisplay];
-            [VideoCamera captureDeviceConfigurationControlPropertyBlock](touch_property, position_angle, touch_phase);
-            return (long)1;
+    unsigned long (^(^test)(unsigned long))(unsigned long)  = ^  (unsigned long x) {
+        return ^  (unsigned long(^invoke)(unsigned long y)) {
+            return (^{
+                simd_make_ulong8(simd_make_ulong4(((x >> 0) & 1UL) && invoke(0),
+                                                  ((x >> 1) & 1UL) && invoke(1),
+                                                  ((x >> 2) & 1UL) && invoke(2),
+                                                  ((x >> 3) & 1UL) && invoke(3)),
+                                 simd_make_ulong4(((x >> 4) & 1UL) && invoke(4),
+                                                  0,
+                                                  0,
+                                                  0));
+//                (((x >> 0) & 1UL) && invoke(0)) +
+//                (((x >> 1) & 1UL) && invoke(1)) +
+//                (((x >> 2) & 1UL) && invoke(2)) +
+//                (((x >> 3) & 1UL) && invoke(3)) +
+//                (((x >> 4) & 1UL) && invoke(4));
+                printf("\n---------------------\n");
+                return ^{
+                    return invoke;
+                };
+            }()());
+        }(^ unsigned long (unsigned long i) {
+            __block float button_angle;
+            ((active_component_bit_vector & ~MASK_ALL) &
+             ^ long {
+                button_angle = degreesToRadians(position_angle);
+                return ~MASK_ALL;
+            }()
+             ||
+             ^ long {
+                button_angle = degreesToRadians(rescale(i, 0.0, 4.0, 180.0, 270.0));
+                return MASK_ALL;
+            }());
+            [buttons[i] setCenter:^ (float radians) {
+                return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
+            }(button_angle)];
+            capture_device_configuration_control_property_button(i);
+            printf("(%lu)\t%lu\n", i, ((x >> i) & 1UL));
+            return i;
         });
-    
     };
     
+    
+//    __block simd_ulong8 invocation_vector = simd_make_ulong8(simd_make_ulong4(((MASK_ALL >> 0) & 1UL) && invocation_blk(0),
+//                                                                              ((MASK_ALL >> 1) & 1UL) && invocation_blk(1),
+//                                                                              ((MASK_ALL >> 2) & 1UL) && invocation_blk(2),
+//                                                                              ((MASK_ALL >> 3) & 1UL) && invocation_blk(3)),
+//                                                             simd_make_ulong4(((MASK_ALL >> 4) & 1UL) && invocation_blk(4),
+//                                                                              0,
+//                                                                              0,
+//                                                                              0));
+                                                             
     return ^ (__strong UITouch * _Nullable touch) {
         return ^ (const long (^ const _Nullable (*set_state_ptr))(long(^ _Nullable)(void))) {
             dispatch_barrier_sync(enumerator_queue(), ^{
                 touch_point = [touch preciseLocationInView:(ControlView *)view];
-                touch_point.x = fmaxf(0.0, fminf(touch_point.x, CGRectGetMaxX(((ControlView *)view).bounds)));
-                touch_point.y = fmaxf(0.0, fminf(touch_point.y, CGRectGetMaxY(((ControlView *)view).bounds)));
+                touch_point.x = fmaxf(0.0, fminf(touch_point.x, center_point.x));
+                touch_point.y = fmaxf(0.0, fminf(touch_point.y, center_point.y));
                 
-                __block CaptureDeviceConfigurationControlProperty new_touch_property = ((unsigned int)round(rescale(angle_from_point(touch_point), 180.0, 270.0, 0.0, 4.0)));
-                highlighted_property_bit_vector = ((active_component_bit_vector >> new_touch_property) & 1UL) << new_touch_property;
-                if ((new_touch_property ^ touch_property) && (active_component_bit_vector & MASK_ALL)) {
-                    touch_property = new_touch_property;
+                typeof(touch_property) new_touch_property;
+                ((new_touch_property = (unsigned int)round(rescale(angle_from_point(touch_point), 180.0, 270.0, 0.0, 4.0))) ^ touch_property) && (active_component_bit_vector & MASK_ALL) && (highlighted_property_bit_vector = ((active_component_bit_vector & MASK_ALL) && 1UL) << (^ unsigned long {
                     [haptic_feedback selectionChanged];
                     [haptic_feedback prepare];
-                }
-                
-                
-                
-                radius = fmaxf(CGRectGetMidX(((ControlView *)view).bounds),
-                               fminf((sqrt(pow(touch_point.x - center_point.x, 2.0) + pow(touch_point.y - center_point.y, 2.0))),
-                                     CGRectGetMaxX(((ControlView *)view).bounds)));
-            
-            ((long)0 || set_state_ptr) && (*set_state_ptr)(^ long {
-                ((active_component_bit_vector & ~MASK_ALL) && (^{
-                    unsigned int selected_property_bit_position = floor(log2(selected_property_bit_vector));
-                    switch (selected_property_bit_position) {
-                        case CaptureDeviceConfigurationControlPropertyTorchLevel:
-                            position_angle = (rescale(VideoCamera.captureDevice.torchLevel, 0.0, 1.0, 180.0, 270.0));
-                            break;
-                        case CaptureDeviceConfigurationControlPropertyLensPosition:
-                            position_angle = (rescale(VideoCamera.captureDevice.lensPosition, 0.0, 1.0, 180.0, 270.0));
-                            break;
-                        case CaptureDeviceConfigurationControlPropertyExposureDuration: {
-                            double newDurationSeconds = CMTimeGetSeconds( VideoCamera.captureDevice.exposureDuration );
-                            double minDurationSeconds = MAX( CMTimeGetSeconds( VideoCamera.captureDevice.activeFormat.minExposureDuration ), kExposureMinimumDuration );
-                            double maxDurationSeconds = 1.0/3.0;
-                            double normalized_duration = fmaxf(0.0, fminf(pow(rescale(newDurationSeconds, minDurationSeconds, maxDurationSeconds, 0.0, 1.0), 1.0 / kExposureDurationPower), 1.0));
-                            position_angle = rescale(normalized_duration, 0.0, 1.0, 180.0, 270.0);
-                            break;
-                        }
-                        case CaptureDeviceConfigurationControlPropertyISO:
-                            position_angle = (rescale(VideoCamera.captureDevice.ISO, VideoCamera.captureDevice.activeFormat.minISO, VideoCamera.captureDevice.activeFormat.maxISO, 180.0, 270.0));
-                            break;
-                        case CaptureDeviceConfigurationControlPropertyVideoZoomFactor:
-                            position_angle = (rescale(VideoCamera.captureDevice.videoZoomFactor, 1.0, 9.0, 180.0, 270.0));
-                            break;
-                        default:
-                            return MASK_ALL;
-                            break;
-                    }
-                    return ~MASK_ALL;
+                    return (unsigned long)(touch_property = new_touch_property);
                 }()));
-            
-                //                /* _Atomic */ __block CFMutableBitVectorRef active_component_bits = CFBitVectorCreateMutable(kCFAllocatorDefault, 5);__block
-                //                 unsigned int duration_midpoint = 15;
-                //                __block long pre_animation_frame_count = ((~(1UL << duration_midpoint + 1) & (-(~(1UL << duration_midpoint + 1)))) << duration_midpoint + 1) - 1;  //
-                //                /* _Atomic */ __block long active_component_bit_mask = ~active_component_bit_vector;
-                //
-                //                /* _Atomic */ CFMutableBitVectorRef selected = CFBitVectorCreateMutable(kCFAllocatorDefault, 5);
-                //                bit_vector_ref(&selected, 5)(^ (uint32_t position) {
-                //                    CFBit bit = (floor(log2(selected_property_bit_vector)) == position);
-                //                    return bit;
-                //                });
-                //                /* _Atomic */ CFMutableBitVectorRef indicies = CFBitVectorCreateMutable(kCFAllocatorDefault, 5);
-                //                integrate((long)30)(^ (long frame) {
-                //                    pre_animation_frame_count >>= 1UL;
-                //                    active_component_bit_mask = (((pre_animation_frame_count >> 0) & 1UL) << 0) ^ (((active_component_bit_vector >> 0) & 1UL) << 0);
-                //                    bit_vector_ref(&active_component_bits, 5)(^ (uint32_t position) {
-                //                        CFBit bit = (UInt32)(active_component_bit_mask & MASK_ALL);
-                //                        return bit;
-                //                    });
-                //
-                //                    //                      printf("H: %d\t\tF: %ld\t\tS: %d\t\tA: %d\n", isBitSet(pre_animation_frame_count, 0), frame, isBitSet(active_component_bit_vector, 0), isBitSet((active_component_bit_mask & MASK_ALL), 0));
-                //                    float angle_adj = (360.0 / 30.0) * frame;
-                //                    bit_vector_ref(&indicies, 5)(^ (uint32_t position) {
-                //                        CFBit bit = (UInt32)((active_component_bit_mask >> 0) & 1UL) ^ !!(floor(log2(selected_property_bit_vector)) == position) ^ (((pre_animation_frame_count >> 0) & 1UL) << 0);
-                //                        return bit;
-                //                    });
-                //                    return (^{
-                //                        dispatch_barrier_async(dispatch_get_main_queue(), ^{
-                //                            draw_button_arc(indicies, angle_adj);
-                //                        });
-                //                        return ^{
-                //                            return (long)indicies;
-                //                        };
-                //                    }()());
-                //
-                //                });
-                //
-                //                return (^{
-                //                    dispatch_barrier_async(dispatch_get_main_queue(), ^{
-                //                        draw_button_arc(bit_vector_ref(&active_component_bit_vector_ref, 5)(^ (uint32_t position) {
-                //                            CFBit bit = (UInt32)((active_component_bit_vector >> 0) & 1UL) ^ !!(floor(log2(selected_property_bit_vector)) == position);
-                //                            return bit;
-                //                        }), 0.0f);
-                //                    });
-                //                    return ^{
-                //                        return (long)active_component_bit_vector_ref;
-                //                    };
-                //                }()());
                 
+                radius = fmaxf(CGRectGetMidX(((ControlView *)view).bounds), fminf((sqrt(pow(touch_point.x - center_point.x, 2.0) + pow(touch_point.y - center_point.y, 2.0))), center_point.x));
                 
-                return ^{
-                    size_t iterations = 5;
-                    dispatch_apply(iterations, DISPATCH_APPLY_AUTO, ^(size_t iteration) {
-                        capture_device_configuration_control_property_button(iteration);
-                    });
-                    return (long)active_component_bit_vector;
-                }();
+                test((~selected_property_bit_vector & active_component_bit_vector) ^ selected_property_bit_vector);
+                
+                ((long)0 || set_state_ptr) && ((*set_state_ptr)(^ long {
+                    ((active_component_bit_vector & ~MASK_ALL) && (^{
+                        unsigned int selected_property_bit_position = floor(log2(selected_property_bit_vector));
+                        switch (selected_property_bit_position) {
+                            case CaptureDeviceConfigurationControlPropertyTorchLevel:
+                                position_angle = (rescale(VideoCamera.captureDevice.torchLevel, 0.0, 1.0, 180.0, 270.0));
+                                break;
+                            case CaptureDeviceConfigurationControlPropertyLensPosition:
+                                position_angle = (rescale(VideoCamera.captureDevice.lensPosition, 0.0, 1.0, 180.0, 270.0));
+                                break;
+                            case CaptureDeviceConfigurationControlPropertyExposureDuration: {
+                                double newDurationSeconds = CMTimeGetSeconds( VideoCamera.captureDevice.exposureDuration );
+                                double minDurationSeconds = MAX(CMTimeGetSeconds( VideoCamera.captureDevice.activeFormat.minExposureDuration ), kExposureMinimumDuration);
+                                double maxDurationSeconds = 1.0/3.0;
+                                double normalized_duration = fmaxf(0.0, fminf(pow(rescale(newDurationSeconds, minDurationSeconds, maxDurationSeconds, 0.0, 1.0), 1.0 / kExposureDurationPower), 1.0));
+                                position_angle = rescale(normalized_duration, 0.0, 1.0, 180.0, 270.0);
+                                break;
+                            }
+                            case CaptureDeviceConfigurationControlPropertyISO:
+                                position_angle = (rescale(VideoCamera.captureDevice.ISO, VideoCamera.captureDevice.activeFormat.minISO, VideoCamera.captureDevice.activeFormat.maxISO, 180.0, 270.0));
+                                break;
+                            case CaptureDeviceConfigurationControlPropertyVideoZoomFactor:
+                                position_angle = (rescale(VideoCamera.captureDevice.videoZoomFactor, 1.0, 9.0, 180.0, 270.0));
+                                break;
+                            default:
+                                return MASK_ALL;
+                                break;
+                        }
+                        return ~MASK_ALL;
+                    }()));
+                    return (long)test((~selected_property_bit_vector & active_component_bit_vector) ^ selected_property_bit_vector);
+                }));
             });
-                
-            });
-            //                CFBit bit = isBitSet(active_component_bit_vector, 0);
-            //                CFBitVectorSetBits(active_component_bits, CFRangeMake(0, 5), bit);
-            //                draw_button_arc(active_component_bits, 0.0f, UITouchPhaseCancelled);
-            //
-            return draw_button_arc(bit_vector_ref(&active_component_bit_vector_ref, 5)(^ (uint32_t position) {
-                CFBit bit = (UInt32)((active_component_bit_vector >> 0) & 1UL) ^ !!(floor(log2(selected_property_bit_vector)) == position);
-                return bit;
-            }), 0.0f, touch.phase);
         };
     };
 };
@@ -1297,7 +1270,7 @@ static long (^(^recursion)(long))(long(^(^)(long))(long(^)(long))) = ^ (long a) 
         return button;
     });
     
-    touch_handler = touch_handler_init((ControlView *)self); // touch_handler_init(self, self.captureDeviceConfigurationControlPropertyDelegate);
+    touch_handler = touch_handler_init((ControlView *)self);
 }
 
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {

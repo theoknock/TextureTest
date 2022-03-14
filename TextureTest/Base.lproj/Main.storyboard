@@ -163,7 +163,7 @@
                         </constraints>
                     </view>
                     <connections>
-                        <outlet property="controlView" destination="7uW-EJ-Fip" id="tPx-dX-5la"/>
+                        <outlet property="controlView" destination="7uW-EJ-Fip" id="ASa-5P-F1J"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="SZV-WD-TEh" sceneMemberID="firstResponder"/>
