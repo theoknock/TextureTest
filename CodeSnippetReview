@@ -239,11 +239,11 @@ static void (^(^(^(^(^(^(^(^draw_control_init)(__nullable dispatch_block_t))(Arc
  //                    pre_animation_frame_count >>= 1UL;
  //                    active_component_bit_mask = (((pre_animation_frame_count >> 0) & 1UL) << 0) ^ (((active_component_bit_vector >> 0) & 1UL) << 0);
  //                    bit_vector_ref(&active_component_bits, 5)(^ (uint32_t position) {
- //                        CFBit bit = (UInt32)(active_component_bit_mask & MASK_ALL);
+ //                        CFBit bit = (UInt32)(active_component_bit_mask & BUTTON_ARC_COMPONENT_MASK);
  //                        return bit;
  //                    });
  //
- //                    //                      printf("H: %d\t\tF: %ld\t\tS: %d\t\tA: %d\n", isBitSet(pre_animation_frame_count, 0), frame, isBitSet(active_component_bit_vector, 0), isBitSet((active_component_bit_mask & MASK_ALL), 0));
+ //                    //                      printf("H: %d\t\tF: %ld\t\tS: %d\t\tA: %d\n", isBitSet(pre_animation_frame_count, 0), frame, isBitSet(active_component_bit_vector, 0), isBitSet((active_component_bit_mask & BUTTON_ARC_COMPONENT_MASK), 0));
  //                    float angle_adj = (360.0 / 30.0) * frame;
  //                    bit_vector_ref(&indicies, 5)(^ (uint32_t position) {
  //                        CFBit bit = (UInt32)((active_component_bit_mask >> 0) & 1UL) ^ !!(floor(log2(selected_property_bit_vector)) == position) ^ (((pre_animation_frame_count >> 0) & 1UL) << 0);

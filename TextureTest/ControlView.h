@@ -47,14 +47,14 @@ static dispatch_queue_t _Nonnull enumerator_queue() {
     return queue;
 };
 
-#define MASK_ALL  ( 1 << 0 |   1 << 1 |   1 << 2 |   1 << 3 |   1 << 4)
-#define MASK_NONE ( 0 << 0 |   0 << 1 |   0 << 2 |   0 << 3 |   0 << 4)
+#define BUTTON_ARC_COMPONENT_MASK  ( 1 << 0 |   1 << 1 |   1 << 2 |   1 << 3 |   1 << 4)
+#define TICK_WHEEL_COMPONENT_MASK ( 0 << 0 |   0 << 1 |   0 << 2 |   0 << 3 |   0 << 4)
 
 
-unsigned long active_component_bit_vector     = MASK_ALL;
-unsigned long highlighted_property_bit_vector = MASK_NONE;
-unsigned long selected_property_bit_vector    = MASK_NONE;
-unsigned long hidden_property_bit_vector      = MASK_NONE;
+unsigned long active_component_bit_vector     = BUTTON_ARC_COMPONENT_MASK;
+unsigned long highlighted_property_bit_vector = TICK_WHEEL_COMPONENT_MASK;
+unsigned long selected_property_bit_vector    = TICK_WHEEL_COMPONENT_MASK;
+unsigned long hidden_property_bit_vector      = TICK_WHEEL_COMPONENT_MASK;
 
 @interface ControlView : UIView
 
