@@ -974,7 +974,7 @@ static const long (^state_setter)(long(^ _Nullable)(void)) = ^ long (long (^ _No
     hidden_property_bit_vector = (~selected_property_bit_vector & active_component_bit_vector);
 
     // highlighted
-    highlighted_property_bit_vector = TICK_WHEEL_COMPONENT_MASK;
+    highlighted_property_bit_vector = active_component_bit_vector ^ active_component_bit_vector;
     
     // active_component
     active_component_bit_vector = ~active_component_bit_vector;
