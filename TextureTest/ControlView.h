@@ -14,6 +14,9 @@
 @import QuartzCore;
 @import CoreGraphics;
 
+#include <stdatomic.h>
+#include <libkern/OSAtomic.h>
+
 NS_ASSUME_NONNULL_BEGIN
 
 
@@ -24,11 +27,10 @@ static float (^degreesToRadians)(float) = ^ float (float degrees) {
 
 static float (^ _Nonnull rescale)(float, float, float, float, float) = ^ float (float old_value, float old_min, float old_max, float new_min, float new_max) {
     float scaled_value = (new_max - new_min) * (old_value - old_min) / (old_max - old_min) + new_min;
-//    printf("scaled_value == %f\n", scaled_value);
     return scaled_value;
 };
 
-typedef enum : NSUInteger {
+typedef enum : unsigned long {
     CaptureDeviceConfigurationControlPropertyTorchLevel,
     CaptureDeviceConfigurationControlPropertyLensPosition,
     CaptureDeviceConfigurationControlPropertyExposureDuration,
@@ -47,14 +49,21 @@ static dispatch_queue_t _Nonnull enumerator_queue() {
     return queue;
 };
 
-#define BUTTON_ARC_COMPONENT_MASK  ( 1 << 0 |   1 << 1 |   1 << 2 |   1 << 3 |   1 << 4)
-#define TICK_WHEEL_COMPONENT_MASK ( 0 << 0 |   0 << 1 |   0 << 2 |   0 << 3 |   0 << 4)
+#define BUTTON_ARC_COMPONENT_BIT_MASK ( 1UL << 0 |   1UL << 1 |   1UL << 2 |   1UL << 3 |   1UL << 4 )
+#define TICK_WHEEL_COMPONENT_BIT_MASK ( 0UL << 0 |   0UL << 1 |   0UL << 2 |   0UL << 3 |   0UL << 4 )
+#define TRUE_BIT ( 1UL << 0 );
+#define FALSE_BIT (TRUE_BIT ^ TRUE_BIT)
 
+unsigned long active_component_bit_vector = ( 1UL << 0 |   1UL << 1 |   1UL << 2 |   1UL << 3 |   1UL << 4 );
 
-unsigned long active_component_bit_vector     = BUTTON_ARC_COMPONENT_MASK;
-unsigned long highlighted_property_bit_vector = TICK_WHEEL_COMPONENT_MASK;
-unsigned long selected_property_bit_vector    = TICK_WHEEL_COMPONENT_MASK;
-unsigned long hidden_property_bit_vector      = TICK_WHEEL_COMPONENT_MASK;
+//#define BUTTON_ARC_COMPONENT_ACTIVE ( active_component_bit_vector & BUTTON_ARC_COMPONENT_BIT_MASK )
+//#define TICK_WHEEL_COMPONENT_ACTIVE ( active_component_bit_vector ^ BUTTON_ARC_COMPONENT_BIT_MASK )
+//#define BUTTON_ARC_COMPONENT_INACTIVE ( active_component_bit_vector ^ BUTTON_ARC_COMPONENT_BIT_MASK )
+//#define TICK_WHEEL_COMPONENT_INACTIVE ( active_component_bit_vector ^ TICK_WHEEL_COMPONENT_BIT_MASK )
+
+unsigned long highlighted_property_bit_vector = ( 0UL << 0 |   0UL << 1 |   0UL << 2 |   0UL << 3 |   0UL << 4 );
+unsigned long selected_property_bit_vector    = ( 0UL << 0 |   0UL << 1 |   0UL << 2 |   0UL << 3 |   0UL << 4 );
+unsigned long hidden_property_bit_vector      = ( 0UL << 0 |   0UL << 1 |   0UL << 2 |   0UL << 3 |   0UL << 4 );
 
 @interface ControlView : UIView
 

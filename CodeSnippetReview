@@ -239,11 +239,11 @@ static void (^(^(^(^(^(^(^(^draw_control_init)(__nullable dispatch_block_t))(Arc
  //                    pre_animation_frame_count >>= 1UL;
  //                    active_component_bit_mask = (((pre_animation_frame_count >> 0) & 1UL) << 0) ^ (((active_component_bit_vector >> 0) & 1UL) << 0);
  //                    bit_vector_ref(&active_component_bits, 5)(^ (uint32_t position) {
- //                        CFBit bit = (UInt32)(active_component_bit_mask & BUTTON_ARC_COMPONENT_MASK);
+ //                        CFBit bit = (UInt32)(active_component_bit_mask & BUTTON_ARC_COMPONENT_BIT_MASK);
  //                        return bit;
  //                    });
  //
- //                    //                      printf("H: %d\t\tF: %ld\t\tS: %d\t\tA: %d\n", isBitSet(pre_animation_frame_count, 0), frame, isBitSet(active_component_bit_vector, 0), isBitSet((active_component_bit_mask & BUTTON_ARC_COMPONENT_MASK), 0));
+ //                    //                      printf("H: %d\t\tF: %ld\t\tS: %d\t\tA: %d\n", isBitSet(pre_animation_frame_count, 0), frame, isBitSet(active_component_bit_vector, 0), isBitSet((active_component_bit_mask & BUTTON_ARC_COMPONENT_BIT_MASK), 0));
  //                    float angle_adj = (360.0 / 30.0) * frame;
  //                    bit_vector_ref(&indicies, 5)(^ (uint32_t position) {
  //                        CFBit bit = (UInt32)((active_component_bit_mask >> 0) & 1UL) ^ !!(floor(log2(selected_property_bit_vector)) == position) ^ (((pre_animation_frame_count >> 0) & 1UL) << 0);
@@ -271,3 +271,13 @@ static void (^(^(^(^(^(^(^(^draw_control_init)(__nullable dispatch_block_t))(Arc
  //                        return (long)active_component_bit_vector_ref;
  //                    };
  //                }()());
+
+
+__block volatile atomic_uint_fast8_t touch_property = ATOMIC_VAR_INIT(0);
+typeof(touch_property) * touch_property_t = &touch_property;
+
+uint_fast8_t current_touch_property     = (unsigned long)round(rescale(position_angle, 180.0, 270.0, 0.0, 4.0));
+uint_fast8_t * current_touch_property_t = &current_touch_property;
+
+atomic_compare_exchange_weak(touch_property_t, new_touch_property_t, new_touch_property); // atomic_exchange(touch_property_t, new_touch_property) ^ new_touch_property);
+OSAtomicCompareAndSwapLong((highlighted_property_bit_vector << touch_property), (highlighted_property_bit_vector << new_touch_property), &touch_property);
