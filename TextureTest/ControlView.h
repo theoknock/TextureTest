@@ -19,7 +19,9 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-
+static const float kPi_f      = (float)(M_PI);
+static const float k1Div180_f = 1.0f / 180.0f;
+static const float kRadians_f = k1Div180_f * kPi_f;
 
 static float (^degreesToRadians)(float) = ^ float (float degrees) {
     return (degrees * M_PI / 180.0);

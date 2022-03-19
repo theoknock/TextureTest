@@ -17,7 +17,7 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <view opaque="NO" contentMode="scaleAspectFit" translatesAutoresizingMaskIntoConstraints="NO" id="7uW-EJ-Fip" customClass="ControlView">
-                                <rect key="frame" x="20" y="44" width="374" height="414"/>
+                                <rect key="frame" x="20" y="448" width="374" height="414"/>
                                 <subviews>
                                     <stackView hidden="YES" opaque="NO" alpha="0.0" contentMode="scaleToFill" fixedFrame="YES" distribution="fillEqually" translatesAutoresizingMaskIntoConstraints="NO" id="GJP-Sq-w0U">
                                         <rect key="frame" x="99" y="145" width="176" height="124"/>
@@ -157,7 +157,7 @@
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                         <constraints>
                             <constraint firstItem="7uW-EJ-Fip" firstAttribute="leading" secondItem="3se-qz-xqx" secondAttribute="leadingMargin" id="53M-uM-bRt"/>
-                            <constraint firstItem="7uW-EJ-Fip" firstAttribute="top" secondItem="3se-qz-xqx" secondAttribute="topMargin" id="e91-KP-kci"/>
+                            <constraint firstItem="7uW-EJ-Fip" firstAttribute="bottom" secondItem="3se-qz-xqx" secondAttribute="bottomMargin" id="e91-KP-kci"/>
                             <constraint firstItem="7uW-EJ-Fip" firstAttribute="trailing" secondItem="3se-qz-xqx" secondAttribute="trailingMargin" id="oKv-dw-cgl"/>
                             <constraint firstItem="7uW-EJ-Fip" firstAttribute="height" secondItem="rZh-zQ-HcR" secondAttribute="width" id="xCU-zi-xuG"/>
                         </constraints>

@@ -8,7 +8,6 @@
 #import "GameViewController.h"
 #import "Renderer.h"
 
-
 @implementation GameViewController
 {
     MTKView *_view;
@@ -20,8 +19,6 @@
     [super viewDidLoad];
     
     _view = (MTKView *)self.view;
-    [_view.layer setAffineTransform:CGAffineTransformMakeRotation(0)];
-    [_view.layer setAffineTransform:CGAffineTransformScale(_view.layer.affineTransform, -1, -1)];
     _view.device = MTLCreateSystemDefaultDevice();
     _view.backgroundColor = UIColor.blackColor;
     
@@ -36,7 +33,9 @@
     
     [_renderer mtkView:_view drawableSizeWillChange:_view.drawableSize];
     printf("%s\n   ", [NSStringFromCGSize(_view.drawableSize) UTF8String]);
-    
+    printf("%f\n", _view.layer.contentsScale);
+    printf("%f\n", _view.drawableSize.width / _view.drawableSize.height);
+    printf("%f\n", _view.drawableSize.height / _view.drawableSize.width);
     _view.delegate = _renderer;
     [VideoCamera setAVCaptureVideoDataOutputSampleBufferDelegate:(id<AVCaptureVideoDataOutputSampleBufferDelegate>)_renderer];
 }
