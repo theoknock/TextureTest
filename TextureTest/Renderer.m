@@ -336,7 +336,7 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
         //        id<MTLLibrary> defaultLibrary = [_device newDefaultLibrary];
         id<MTLFunction> vertexFunction = [defaultLibrary newFunctionWithName:@"vertexShader"];
         id<MTLFunction> fragmentFunction = [defaultLibrary newFunctionWithName:@"samplingShader"];
-        id<MTLFunction> computeKernel = [defaultLibrary newFunctionWithName:@"grayscaleKernel"];
+        id<MTLFunction> computeKernel = [defaultLibrary newFunctionWithName:@"sobelEdgeDetectionKernel"];
         
         // Set up a descriptor for creating a pipeline state object
         MTLRenderPipelineDescriptor *pipelineStateDescriptor = [[MTLRenderPipelineDescriptor alloc] init];
