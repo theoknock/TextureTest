@@ -12,6 +12,21 @@
 // Include header shared between C code here, which executes Metal API commands, and .metal files
 #import "ShaderTypes.h"
 
+@interface Renderer ()
+
+@property (strong, nonatomic, readwrite) __block id<MTLDevice>  device;
+//@property (strong, nonatomic, readwrite) __block id<MTLCommandQueue> commandQueue;
+@property (strong, nonatomic, readwrite) __block id<MTLCaptureScope> captureScope;
+
+@property (strong, nonatomic, readwrite) __block id<MTLLibrary> library;
+@property (strong, nonatomic, readwrite) __block NSMutableDictionary<NSString *, id<MTLFunction>> * functions;
+@property (strong, nonatomic, readwrite) __block id<MTLComputePipelineState> computePipelineState;
+@property (nonatomic, readwrite) __block MTLSize gridSize;
+@property (nonatomic, readwrite) __block MTLSize threadgroupsPerGrid;
+@property (nonatomic, readwrite) __block MTLSize threadsPerThreadgroup;
+
+@end
+
 @implementation Renderer
 {
     id <MTLDevice> _device;
@@ -20,6 +35,7 @@
     id <MTLRenderPipelineState> _pipelineState;
     id <MTLDepthStencilState> _depthState;
     id <MTLTexture> _colorMap;
+    id<MTLTexture> computeTexture;
 //    MTLVertexDescriptor *_mtlVertexDescriptor;
 //    uint8_t _uniformBufferIndex;
 //    matrix_float4x4 _projectionMatrix;
@@ -239,6 +255,64 @@
 //    [view setDrawableSize:CGSizeMake(size.width/view.layer.contentsScale, size.height/view.layer.contentsScale)];
 //}
 
+@synthesize computePipelineState = _computePipelineState,
+gridSize = _gridSize,
+threadgroupsPerGrid = _threadgroupsPerGrid,
+threadsPerThreadgroup = _threadsPerThreadgroup;
+
+static id<MTLComputePipelineState>(^newDefaultComputePipelineState)(id<MTLDevice>, id<MTLFunction>, MTLSize, MTLSize *, MTLSize *) = ^ id<MTLComputePipelineState>(id<MTLDevice> device, id<MTLFunction> compute_function, MTLSize grid_size, MTLSize * threadsPerThreadgroup, MTLSize * threadgroupsPerGrid) {
+    __autoreleasing NSError *error = nil;
+    id<MTLComputePipelineState> computePipelineState = [device newComputePipelineStateWithFunction:compute_function error:&error];
+    
+    NSUInteger w = computePipelineState.threadExecutionWidth;
+    NSUInteger h = computePipelineState.maxTotalThreadsPerThreadgroup / w;
+    * threadsPerThreadgroup = MTLSizeMake(w, h, 1);
+    * threadgroupsPerGrid = MTLSizeMake((grid_size.width + w - 1)  / w,
+                                      (grid_size.height + h - 1) / h,
+                                      1);
+    
+    if (error) {
+        [NSException raise:@"Error creating compute pipeline state\t" format:@"%@", [error localizedDescription]];
+        return nil;
+    }
+    
+    return computePipelineState;
+};
+
+- (id<MTLComputePipelineState>)computePipelineState {
+    return _computePipelineState;
+}
+
+- (void)setComputePipelineState:(id<MTLComputePipelineState>)computePipelineState {
+    _computePipelineState = (!computePipelineState || computePipelineState == NULL)
+    ? newDefaultComputePipelineState(_device, [_functions valueForKey:@"YCbCrColorConversion"], _gridSize, &_threadsPerThreadgroup, &_threadgroupsPerGrid)
+    : computePipelineState;
+}
+
+- (MTLSize)gridSize {
+    return _gridSize;
+}
+
+- (void)setGridSize:(MTLSize)gridSize {
+    _gridSize = gridSize;
+}
+
+- (MTLSize)threadsPerThreadgroup {
+    return _threadsPerThreadgroup;
+}
+
+- (void)setThreadsPerThreadgroup:(MTLSize)threadsPerThreadgroup {
+    _threadsPerThreadgroup = threadsPerThreadgroup;
+}
+
+- (MTLSize)threadgroupsPerGrid {
+    return _threadgroupsPerGrid;
+}
+
+- (void)setThreadgroupsPerGrid:(MTLSize)threadgroupsPerGrid {
+    _threadgroupsPerGrid = threadgroupsPerGrid;
+}
+
 - (nonnull instancetype)initWithMetalKitView:(nonnull MTKView *)mtkView
 {
     self = [super init];
@@ -249,6 +323,8 @@
         mtkView.colorPixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
         mtkView.sampleCount = 1;
         
+        id<MTLLibrary> defaultLibrary = [mtkView.preferredDevice newDefaultLibrary];
+    
         create_texture = ^{
             MTLPixelFormat pixelFormat = mtkView.colorPixelFormat;
             CFStringRef textureCacheKeys[2] = { kCVMetalTextureCacheMaximumTextureAgeKey, kCVMetalTextureUsage };
@@ -267,6 +343,7 @@
             CFRelease(cacheAttributes);
             
             return ^ id<MTLTexture> (CVPixelBufferRef _Nonnull pixel_buffer) {
+                
                 __autoreleasing id<MTLTexture> texture = nil;
                 @autoreleasepool {
                     CVPixelBufferLockBaseAddress(pixel_buffer, kCVPixelBufferLock_ReadOnly);
@@ -308,9 +385,10 @@
         /// Create the render pipeline.
 
         // Load the shaders from the default library
-        id<MTLLibrary> defaultLibrary = [_device newDefaultLibrary];
+//        id<MTLLibrary> defaultLibrary = [_device newDefaultLibrary];
         id<MTLFunction> vertexFunction = [defaultLibrary newFunctionWithName:@"vertexShader"];
         id<MTLFunction> fragmentFunction = [defaultLibrary newFunctionWithName:@"samplingShader"];
+        id<MTLFunction> computeKernel = [defaultLibrary newFunctionWithName:@"grayscaleKernel"];
 
         // Set up a descriptor for creating a pipeline state object
         MTLRenderPipelineDescriptor *pipelineStateDescriptor = [[MTLRenderPipelineDescriptor alloc] init];
@@ -322,7 +400,7 @@
         pipelineStateDescriptor.depthAttachmentPixelFormat = mtkView.depthStencilPixelFormat;
         pipelineStateDescriptor.stencilAttachmentPixelFormat = mtkView.depthStencilPixelFormat;
         
-        NSError *error = NULL;
+        __autoreleasing NSError * error = nil;
         _pipelineState = [_device newRenderPipelineStateWithDescriptor:pipelineStateDescriptor error:&error];
         if (!_pipelineState)
         {
@@ -333,11 +411,34 @@
         depthStateDesc.depthCompareFunction = MTLCompareFunctionLess;
         depthStateDesc.depthWriteEnabled = YES;
         _depthState = [_device newDepthStencilStateWithDescriptor:depthStateDesc];
+    
+        _computePipelineState = [_device newComputePipelineStateWithFunction:computeKernel error:&error];
+        NSAssert(_computePipelineState, @"Failed to create compute pipeline state: %@", error);
         
-
+        NSUInteger w = _computePipelineState.threadExecutionWidth;
+        NSUInteger h = _computePipelineState.maxTotalThreadsPerThreadgroup / w;
+        _threadsPerThreadgroup = MTLSizeMake(w, h, 1);
+        _threadgroupsPerGrid   = MTLSizeMake((3840 + w - 1) / w,
+                                                    (2160  + h - 1) / h,
+                                                    1);
+        NSLog(@"threadsPerThreadgroup: %lu x %lu\tthreadgroupsPerGrid: %lu x %lu",
+              _threadsPerThreadgroup.width,
+              _threadsPerThreadgroup.height,
+              _threadgroupsPerGrid.width,
+              _threadgroupsPerGrid.height);
+        
+        MTLTextureDescriptor * descriptor = [MTLTextureDescriptor
+                                             texture2DDescriptorWithPixelFormat:mtkView.colorPixelFormat
+                                             width:3840
+                                             height:2160
+                                             mipmapped:FALSE];
+        [descriptor setUsage:MTLTextureUsageShaderWrite | MTLTextureUsageShaderRead];
+        computeTexture = [_device newTextureWithDescriptor:descriptor];
+        
+        
         _commandQueue = [_device newCommandQueue];
     }
-
+    
     return self;
 }
 
@@ -351,12 +452,30 @@
 /// Called whenever the view needs to render a frame
 - (void)drawInMTKView:(nonnull MTKView *)view
 {
-    // Create a new command buffer for each render pass to the current drawable
-    id<MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
-    commandBuffer.label = @"DrawTextureCommandBuffer";
+    
+    id<CAMetalDrawable> currentDrawable = view.currentDrawable;
+         id<MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
+         commandBuffer.label = @"MyCommand";
+         
+         id<MTLComputeCommandEncoder> computeEncoder = [commandBuffer computeCommandEncoder];
+    [computeEncoder setComputePipelineState:_computePipelineState];
+         [computeEncoder setTexture:_colorMap
+                            atIndex:0];
+         [computeEncoder setTexture:computeTexture
+                            atIndex:1];
+         [computeEncoder dispatchThreadgroups:_threadgroupsPerGrid
+                        threadsPerThreadgroup:_threadsPerThreadgroup];
+         [computeEncoder endEncoding];
+    
+commandBuffer.label = @"DrawTextureCommandBuffer";
 
     // Obtain a renderPassDescriptor generated from the view's drawable textures
-    MTLRenderPassDescriptor *renderPassDescriptor = view.currentRenderPassDescriptor;
+    __autoreleasing MTLRenderPassDescriptor *renderPassDescriptor = view.currentRenderPassDescriptor;
+    renderPassDescriptor.colorAttachments[0].texture = view.currentDrawable.texture;
+    renderPassDescriptor.colorAttachments[0].loadAction = MTLLoadActionClear;
+    renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(0.0,0.0,0.0,1.0);
+    renderPassDescriptor.colorAttachments[0].storeAction = MTLStoreActionStore;
+    
 
     if(renderPassDescriptor != nil)
     {
@@ -381,7 +500,7 @@
         // Set the texture object.  The AAPLTextureIndexBaseColor enum value corresponds
         ///  to the 'colorMap' argument in the 'samplingShader' function because its
         //   texture attribute qualifier also uses AAPLTextureIndexBaseColor for its index.
-        [renderEncoder setFragmentTexture:_colorMap
+        [renderEncoder setFragmentTexture:computeTexture
                                   atIndex:AAPLTextureIndexBaseColor];
 
         // Draw the triangles.

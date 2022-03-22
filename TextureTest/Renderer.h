@@ -13,5 +13,11 @@
 
 -(nonnull instancetype)initWithMetalKitView:(nonnull MTKView *)view;
 
+@property (strong, nonatomic, readonly) id<MTLComputePipelineState> computePipelineState;
+@property (nonatomic, readonly) MTLSize gridSize;
+@property (nonatomic, readonly) MTLSize threadgroupsPerGrid;
+@property (nonatomic, readonly) MTLSize threadsPerThreadgroup;
+
+
 @end
 
