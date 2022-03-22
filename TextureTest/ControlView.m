@@ -348,11 +348,12 @@ static void (^(^(^touch_handler_init)(const ControlView * __strong))(__strong UI
     return ^ (__strong UITouch * _Nullable touch) {
         return ^ (const long (^const __autoreleasing (*state_setter_t))(long (^ _Nullable __strong)(void))) {
             ^ (CGPoint touch_point) {
+                // To-Do: Adjust touch_point according to a varying center_point
                 touch_point.x = fmaxf(0.0, fminf(touch_point.x, center_point.x));
                 touch_point.y = fmaxf(0.0, fminf(touch_point.y, center_point.y));
                 radius_from_point(touch_point);
                 angle_from_point(touch_point);
-            }([touch preciseLocationInView:(ControlView *)view]);
+            }([touch locationInView:(ControlView *)view]);
             
             typeof(touch_property) new_touch_property;
             (active_component_bit_vector & BUTTON_ARC_COMPONENT_BIT_MASK) && ((new_touch_property = (unsigned int)round(rescale(angle, 180.0, 270.0, 0.0, 4.0))) ^ touch_property) && (highlighted_property_bit_vector = (1UL << (^ unsigned long {
