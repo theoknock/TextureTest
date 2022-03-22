@@ -10,33 +10,26 @@
 
 @implementation GameViewController
 {
-    MTKView *_view;
     Renderer *_renderer;
 }
 
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+
+    self.mtkView.backgroundColor = UIColor.blackColor;
+    [self.mtkView setDevice:self.mtkView.preferredDevice];
+    [self.mtkView setFramebufferOnly:FALSE];
     
-    _view = (MTKView *)self.view;
-    _view.device = MTLCreateSystemDefaultDevice();
-    _view.backgroundColor = UIColor.blackColor;
+    _renderer = [[Renderer alloc] initWithMetalKitView:self.mtkView];
     
-    if(!_view.device)
-    {
-        NSLog(@"Metal is not supported on this device");
-        self.view = [[UIView alloc] initWithFrame:self.view.frame];
-        return;
-    }
+    [_renderer mtkView:self.mtkView drawableSizeWillChange:self.mtkView.drawableSize];
+    printf("%s\n   ", [NSStringFromCGSize(self.mtkView.drawableSize) UTF8String]);
+    printf("%f\n", self.mtkView.layer.contentsScale);
+    printf("%f\n", self.mtkView.drawableSize.width / self.mtkView.drawableSize.height);
+    printf("%f\n", self.mtkView.drawableSize.height / self.mtkView.drawableSize.width);
+    self.mtkView.delegate = _renderer;
     
-    _renderer = [[Renderer alloc] initWithMetalKitView:_view];
-    
-    [_renderer mtkView:_view drawableSizeWillChange:_view.drawableSize];
-    printf("%s\n   ", [NSStringFromCGSize(_view.drawableSize) UTF8String]);
-    printf("%f\n", _view.layer.contentsScale);
-    printf("%f\n", _view.drawableSize.width / _view.drawableSize.height);
-    printf("%f\n", _view.drawableSize.height / _view.drawableSize.width);
-    _view.delegate = _renderer;
     [VideoCamera setAVCaptureVideoDataOutputSampleBufferDelegate:(id<AVCaptureVideoDataOutputSampleBufferDelegate>)_renderer];
 }
 

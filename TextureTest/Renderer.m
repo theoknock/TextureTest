@@ -266,7 +266,7 @@
             CFRelease(textureUsageValue);
             CFRelease(cacheAttributes);
             
-            return ^ id <MTLTexture> (CVPixelBufferRef _Nonnull pixel_buffer) {
+            return ^ id<MTLTexture> (CVPixelBufferRef _Nonnull pixel_buffer) {
                 __autoreleasing id<MTLTexture> texture = nil;
                 @autoreleasepool {
                     CVPixelBufferLockBaseAddress(pixel_buffer, kCVPixelBufferLock_ReadOnly);
@@ -284,10 +284,10 @@
 
         // Set up a simple MTLBuffer with vertices which include texture coordinates
         const float dim_a  = CGRectGetMaxX(UIScreen.mainScreen.bounds);
-        const float dim_b  = CGRectGetMaxX(UIScreen.mainScreen.bounds) * (3840.f/2160.f);
+        const float dim_b  = CGRectGetMaxX(UIScreen.mainScreen.bounds) * (3840.f/2160.f); // CMVideoDimensions(height,width) // CVPixelBufferGetHeight(pixel_buffer), CVPixelBufferGetWidth(pixel_buffer)
         AAPLVertex quadVertices[] =
         {
-            // Pixel positions, Texture coordinates
+        //    Pixel positions       Texture coordinates
             { {  dim_b,  -dim_a },  { 1.f, 1.f } },
             { { -dim_b,  -dim_a },  { 0.f, 1.f } },
             { { -dim_b,   dim_a },  { 0.f, 0.f } },
@@ -346,7 +346,6 @@
     // Save the size of the drawable to pass to the vertex shader.
     _viewportSize.x = size.width;
     _viewportSize.y = size.height;
-    [view setDrawableSize:size];
 }
 
 /// Called whenever the view needs to render a frame

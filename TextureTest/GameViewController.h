@@ -17,5 +17,6 @@
 @interface GameViewController : UIViewController
 
 @property (strong, nonatomic) IBOutlet ControlView *controlView;
+@property (strong, nonatomic) IBOutlet MTKView *mtkView;
 
 @end

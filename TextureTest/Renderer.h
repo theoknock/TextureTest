@@ -7,6 +7,7 @@
 
 #import <MetalKit/MetalKit.h>
 #import <AVFoundation/AVFoundation.h>
+#import "VideoCamera.h"
 
 @interface Renderer : NSObject <MTKViewDelegate, AVCaptureVideoDataOutputSampleBufferDelegate>
 

@@ -5,21 +5,11 @@
 //  Created by Xcode Developer on 1/14/22.
 //
 
-#import <Foundation/Foundation.h>
-#import <AVFoundation/AVFoundation.h>
-
+@import Foundation;
 @import UIKit;
+@import AVFoundation;
 
 NS_ASSUME_NONNULL_BEGIN
-
-
-typedef enum : NSUInteger {
-    CaptureDeviceConfigurationPhaseLock,
-    CaptureDeviceConfigurationPhaseConfigure,
-    CaptureDeviceConfigurationPhaseUnlock
-} CaptureDeviceConfigurationPhase;
-
-
 
 static const float kExposureDurationPower = 5.0;
 static const float kExposureMinimumDuration = 1.0/1000;
@@ -32,7 +22,6 @@ extern CGSize videoDimensions;
 + (VideoCamera *)setAVCaptureVideoDataOutputSampleBufferDelegate:(id<AVCaptureVideoDataOutputSampleBufferDelegate>)videoOutputDelegate;
 
 //@property (class, strong, nonatomic, readonly) long(^captureDeviceConfigurationControlPropertyBlock)(CaptureDeviceConfigurationControlProperty, float, UITouchPhase);
-
 
 @property (class, nonatomic, strong, readwrite) AVCaptureDevice * captureDevice;
 
