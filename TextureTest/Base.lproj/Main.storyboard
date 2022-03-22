@@ -16,8 +16,8 @@
                         <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <subviews>
-                            <mtkView contentMode="scaleToFill" colorPixelFormat="BGRA8Unorm" depthStencilPixelFormat="Depth32Float" translatesAutoresizingMaskIntoConstraints="NO" id="JsS-qo-bbp">
-                                <rect key="frame" x="0.0" y="44" width="414" height="818"/>
+                            <mtkView contentMode="scaleAspectFit" colorPixelFormat="BGRA8Unorm_sRGB" depthStencilPixelFormat="Depth32Float" translatesAutoresizingMaskIntoConstraints="NO" id="JsS-qo-bbp">
+                                <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                             </mtkView>
                             <view opaque="NO" contentMode="scaleAspectFit" translatesAutoresizingMaskIntoConstraints="NO" id="7uW-EJ-Fip" customClass="ControlView">
                                 <rect key="frame" x="0.0" y="448" width="414" height="414"/>
@@ -162,14 +162,12 @@
                         <viewLayoutGuide key="safeArea" id="Zni-1Q-DHl"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                         <constraints>
-                            <constraint firstItem="JsS-qo-bbp" firstAttribute="bottom" secondItem="Zni-1Q-DHl" secondAttribute="bottom" id="40C-JU-c5Y"/>
-                            <constraint firstItem="JsS-qo-bbp" firstAttribute="centerY" secondItem="Zni-1Q-DHl" secondAttribute="centerY" id="6IH-Er-f33"/>
+                            <constraint firstItem="JsS-qo-bbp" firstAttribute="bottom" secondItem="PlH-bq-DWk" secondAttribute="bottom" id="40C-JU-c5Y"/>
                             <constraint firstItem="7uW-EJ-Fip" firstAttribute="bottom" secondItem="Zni-1Q-DHl" secondAttribute="bottom" id="7ky-se-m8G"/>
-                            <constraint firstItem="JsS-qo-bbp" firstAttribute="centerX" secondItem="Zni-1Q-DHl" secondAttribute="centerX" id="GGR-ap-yx3"/>
                             <constraint firstItem="7uW-EJ-Fip" firstAttribute="leading" secondItem="Zni-1Q-DHl" secondAttribute="leading" id="c46-5q-gSg"/>
-                            <constraint firstItem="JsS-qo-bbp" firstAttribute="leading" secondItem="Zni-1Q-DHl" secondAttribute="leading" id="fmf-Yg-5WF"/>
-                            <constraint firstItem="JsS-qo-bbp" firstAttribute="top" secondItem="Zni-1Q-DHl" secondAttribute="top" id="nVs-68-sVv"/>
-                            <constraint firstItem="JsS-qo-bbp" firstAttribute="trailing" secondItem="Zni-1Q-DHl" secondAttribute="trailing" id="rEe-U1-ipK"/>
+                            <constraint firstItem="JsS-qo-bbp" firstAttribute="leading" secondItem="PlH-bq-DWk" secondAttribute="leading" id="fmf-Yg-5WF"/>
+                            <constraint firstItem="JsS-qo-bbp" firstAttribute="top" secondItem="PlH-bq-DWk" secondAttribute="top" id="nVs-68-sVv"/>
+                            <constraint firstItem="JsS-qo-bbp" firstAttribute="trailing" secondItem="PlH-bq-DWk" secondAttribute="trailing" id="rEe-U1-ipK"/>
                             <constraint firstItem="7uW-EJ-Fip" firstAttribute="trailing" secondItem="Zni-1Q-DHl" secondAttribute="trailing" id="x4R-a1-piF"/>
                         </constraints>
                     </view>

@@ -260,59 +260,6 @@ gridSize = _gridSize,
 threadgroupsPerGrid = _threadgroupsPerGrid,
 threadsPerThreadgroup = _threadsPerThreadgroup;
 
-static id<MTLComputePipelineState>(^newDefaultComputePipelineState)(id<MTLDevice>, id<MTLFunction>, MTLSize, MTLSize *, MTLSize *) = ^ id<MTLComputePipelineState>(id<MTLDevice> device, id<MTLFunction> compute_function, MTLSize grid_size, MTLSize * threadsPerThreadgroup, MTLSize * threadgroupsPerGrid) {
-    __autoreleasing NSError *error = nil;
-    id<MTLComputePipelineState> computePipelineState = [device newComputePipelineStateWithFunction:compute_function error:&error];
-    
-    NSUInteger w = computePipelineState.threadExecutionWidth;
-    NSUInteger h = computePipelineState.maxTotalThreadsPerThreadgroup / w;
-    * threadsPerThreadgroup = MTLSizeMake(w, h, 1);
-    * threadgroupsPerGrid = MTLSizeMake((grid_size.width + w - 1)  / w,
-                                      (grid_size.height + h - 1) / h,
-                                      1);
-    
-    if (error) {
-        [NSException raise:@"Error creating compute pipeline state\t" format:@"%@", [error localizedDescription]];
-        return nil;
-    }
-    
-    return computePipelineState;
-};
-
-- (id<MTLComputePipelineState>)computePipelineState {
-    return _computePipelineState;
-}
-
-- (void)setComputePipelineState:(id<MTLComputePipelineState>)computePipelineState {
-    _computePipelineState = (!computePipelineState || computePipelineState == NULL)
-    ? newDefaultComputePipelineState(_device, [_functions valueForKey:@"YCbCrColorConversion"], _gridSize, &_threadsPerThreadgroup, &_threadgroupsPerGrid)
-    : computePipelineState;
-}
-
-- (MTLSize)gridSize {
-    return _gridSize;
-}
-
-- (void)setGridSize:(MTLSize)gridSize {
-    _gridSize = gridSize;
-}
-
-- (MTLSize)threadsPerThreadgroup {
-    return _threadsPerThreadgroup;
-}
-
-- (void)setThreadsPerThreadgroup:(MTLSize)threadsPerThreadgroup {
-    _threadsPerThreadgroup = threadsPerThreadgroup;
-}
-
-- (MTLSize)threadgroupsPerGrid {
-    return _threadgroupsPerGrid;
-}
-
-- (void)setThreadgroupsPerGrid:(MTLSize)threadgroupsPerGrid {
-    _threadgroupsPerGrid = threadgroupsPerGrid;
-}
-
 - (nonnull instancetype)initWithMetalKitView:(nonnull MTKView *)mtkView
 {
     self = [super init];
@@ -408,7 +355,7 @@ static id<MTLComputePipelineState>(^newDefaultComputePipelineState)(id<MTLDevice
         }
         
         MTLDepthStencilDescriptor *depthStateDesc = [[MTLDepthStencilDescriptor alloc] init];
-        depthStateDesc.depthCompareFunction = MTLCompareFunctionLess;
+        depthStateDesc.depthCompareFunction = MTLCompareFunctionAlways;
         depthStateDesc.depthWriteEnabled = YES;
         _depthState = [_device newDepthStencilStateWithDescriptor:depthStateDesc];
     
@@ -421,6 +368,7 @@ static id<MTLComputePipelineState>(^newDefaultComputePipelineState)(id<MTLDevice
         _threadgroupsPerGrid   = MTLSizeMake((3840 + w - 1) / w,
                                                     (2160  + h - 1) / h,
                                                     1);
+  
         NSLog(@"threadsPerThreadgroup: %lu x %lu\tthreadgroupsPerGrid: %lu x %lu",
               _threadsPerThreadgroup.width,
               _threadsPerThreadgroup.height,
@@ -429,12 +377,12 @@ static id<MTLComputePipelineState>(^newDefaultComputePipelineState)(id<MTLDevice
         
         MTLTextureDescriptor * descriptor = [MTLTextureDescriptor
                                              texture2DDescriptorWithPixelFormat:mtkView.colorPixelFormat
-                                             width:3840
-                                             height:2160
+                                             width:2160
+                                             height:1284
                                              mipmapped:FALSE];
-        [descriptor setUsage:MTLTextureUsageShaderWrite | MTLTextureUsageShaderRead];
+        [descriptor setUsage:MTLTextureUsageShaderWrite | MTLTextureUsageShaderRead | MTLTextureUsageRenderTarget];
         computeTexture = [_device newTextureWithDescriptor:descriptor];
-        
+
         
         _commandQueue = [_device newCommandQueue];
     }
@@ -453,67 +401,61 @@ static id<MTLComputePipelineState>(^newDefaultComputePipelineState)(id<MTLDevice
 - (void)drawInMTKView:(nonnull MTKView *)view
 {
     
-    id<CAMetalDrawable> currentDrawable = view.currentDrawable;
-         id<MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
-         commandBuffer.label = @"MyCommand";
-         
-         id<MTLComputeCommandEncoder> computeEncoder = [commandBuffer computeCommandEncoder];
+    id<MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
+    commandBuffer.label = @"MyCommand";
+    
+    //    [commandBuffer enqueue];
+    id<MTLComputeCommandEncoder> computeEncoder = [commandBuffer computeCommandEncoder];
     [computeEncoder setComputePipelineState:_computePipelineState];
-         [computeEncoder setTexture:_colorMap
-                            atIndex:0];
-         [computeEncoder setTexture:computeTexture
-                            atIndex:1];
-         [computeEncoder dispatchThreadgroups:_threadgroupsPerGrid
-                        threadsPerThreadgroup:_threadsPerThreadgroup];
-         [computeEncoder endEncoding];
+    [computeEncoder setTexture:_colorMap
+                       atIndex:0];
+    [computeEncoder setTexture:computeTexture atIndex:1];
+    [computeEncoder dispatchThreadgroups:_threadgroupsPerGrid
+                   threadsPerThreadgroup:_threadsPerThreadgroup];
+    [computeEncoder endEncoding];
     
-commandBuffer.label = @"DrawTextureCommandBuffer";
-
+    commandBuffer.label = @"DrawTextureCommandBuffer";
+    
     // Obtain a renderPassDescriptor generated from the view's drawable textures
-    __autoreleasing MTLRenderPassDescriptor *renderPassDescriptor = view.currentRenderPassDescriptor;
-    renderPassDescriptor.colorAttachments[0].texture = view.currentDrawable.texture;
-    renderPassDescriptor.colorAttachments[0].loadAction = MTLLoadActionClear;
-    renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(0.0,0.0,0.0,1.0);
-    renderPassDescriptor.colorAttachments[0].storeAction = MTLStoreActionStore;
+    __autoreleasing MTLRenderPassDescriptor *renderPassDescriptor = [view currentRenderPassDescriptor];
     
-
     if(renderPassDescriptor != nil)
     {
         id<MTLRenderCommandEncoder> renderEncoder =
         [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
         renderEncoder.label = @"DrawTextureRenderEncoder";
-
+        
         // Set the region of the drawable to draw into.
         [renderEncoder setViewport:(MTLViewport){0.0, 0.0, _viewportSize.x, _viewportSize.y, -1.0, 1.0 }];
-
+        
         [renderEncoder setRenderPipelineState:_pipelineState];
         [renderEncoder setDepthStencilState:_depthState];
-
+        
         [renderEncoder setVertexBuffer:_vertices
                                 offset:0
-                              atIndex:AAPLVertexInputIndexVertices];
-
+                               atIndex:AAPLVertexInputIndexVertices];
+        
         [renderEncoder setVertexBytes:&_viewportSize
                                length:sizeof(_viewportSize)
                               atIndex:AAPLVertexInputIndexViewportSize];
-
+        
         // Set the texture object.  The AAPLTextureIndexBaseColor enum value corresponds
         ///  to the 'colorMap' argument in the 'samplingShader' function because its
         //   texture attribute qualifier also uses AAPLTextureIndexBaseColor for its index.
-        [renderEncoder setFragmentTexture:computeTexture
+        [renderEncoder setFragmentTexture:computeTexture //view.currentDrawable.texture
                                   atIndex:AAPLTextureIndexBaseColor];
-
+        
         // Draw the triangles.
         [renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle
                           vertexStart:0
-                          vertexCount:_numVertices];
-
+                          vertexCount:6];
+        
         [renderEncoder endEncoding];
-
+        
         // Schedule a present once the framebuffer is complete using the current drawable
         [commandBuffer presentDrawable:view.currentDrawable];
     }
-
+    
     // Finalize rendering here & push the command buffer to the GPU
     [commandBuffer commit];
 }
