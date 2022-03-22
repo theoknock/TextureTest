@@ -63,8 +63,38 @@ grayscaleKernel(
         return;
     }
 
-    half4 inColor  = inTexture.read(gid);
-    half  gray     = dot(inColor.rgb, kRec709Luma);
-    outTexture.write(half4(gray, gray, gray, 1.0), gid);
+    half4 inputImageTexture  = inTexture.read(gid);
+//    half  gray     = dot(inColor.rgb, kRec709Luma);
+//    outTexture.write(half4(gray, gray, gray, 1.0), gid);
+    
+    
+    
+    
+    uint2 textureCoordinate = gid;
+    uint2 leftTextureCoordinate = gid + uint2(-1, 0);
+    uint2 rightTextureCoordinate = gid + uint2(0, 1);
+    uint2 topTextureCoordinate = gid + uint2(0, -1);
+    uint2 topLeftTextureCoordinate = gid + uint2(-1, -1);
+    uint2 topRightTextureCoordinate = gid + uint2(1, -1);
+    uint2 bottomTextureCoordinate = gid + uint2(0, 1);
+    uint2 bottomLeftTextureCoordinate = gid + uint2(-1, 1);
+    uint2 bottomRightTextureCoordinate = gid + uint2(1, 1);
+    float edgeStrength = 5;
+//    half4 inputImageTexture;
+    half bottomLeftIntensity = (inTexture.read(bottomLeftTextureCoordinate)).r; // inTexture.read(bottomLeftTextureCoordinate);
+    float topRightIntensity = (inTexture.read(topRightTextureCoordinate)).r;
+    float topLeftIntensity = (inTexture.read(topLeftTextureCoordinate)).r;
+    float bottomRightIntensity = (inTexture.read(bottomRightTextureCoordinate)).r;
+    float leftIntensity = (inTexture.read(leftTextureCoordinate)).r;
+    float rightIntensity = (inTexture.read(rightTextureCoordinate)).r;
+    float bottomIntensity = (inTexture.read(bottomTextureCoordinate)).r;
+    float topIntensity = (inTexture.read(topTextureCoordinate)).r;
+    float h = -topLeftIntensity - 2.0 * topIntensity - topRightIntensity + bottomLeftIntensity + 2.0 * bottomIntensity + bottomRightIntensity;
+    float v = -bottomLeftIntensity - 2.0 * leftIntensity - topLeftIntensity + bottomRightIntensity + 2.0 * rightIntensity + topRightIntensity;
+    float mag = 1.0 - (length(float2(h, v)) * edgeStrength);
+    
+    outTexture.write(half4(mag, mag, mag, 1.0), gid);
+    
+    
 }
 
