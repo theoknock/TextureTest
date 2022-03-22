@@ -335,8 +335,6 @@ static void (^(^(^touch_handler_init)(const ControlView * __strong))(__strong UI
             dispatch_async(dispatch_get_main_queue(), ^{
                 ((active_component_bit_vector & BUTTON_ARC_COMPONENT_BIT_MASK) && angle_from_point(point_from_angle(rescale(i, 0.0, 4.0, 180.0, 270.0))));
                 [buttons[i] setCenter:point_from_angle(angle)];
-                printf("point == %s\n",
-                       [NSStringFromCGPoint(point_from_angle((((active_component_bit_vector & BUTTON_ARC_COMPONENT_BIT_MASK) && angle) || ((active_component_bit_vector ^ BUTTON_ARC_COMPONENT_BIT_MASK) && rescale(i, 0.0, 4.0, 180.0, 270.0))))) UTF8String]);
                 [buttons[i] setHighlighted:(highlighted_property_bit_vector >> i) & 1UL];
                 [buttons[i] setSelected:(selected_property_bit_vector >> i) & 1UL];
                 [buttons[i] setHidden:(hidden_property_bit_vector >> i) & 1UL];
@@ -352,26 +350,8 @@ static void (^(^(^touch_handler_init)(const ControlView * __strong))(__strong UI
             ^ (CGPoint touch_point) {
                 touch_point.x = fmaxf(0.0, fminf(touch_point.x, center_point.x));
                 touch_point.y = fmaxf(0.0, fminf(touch_point.y, center_point.y));
-                
-                
-//                if (radius > center_point.x - CGRectGetWidth(buttons[CaptureDeviceConfigurationControlPropertyTorchLevel].frame)) {
-//                    center_point = CGPointMake(CGRectGetMinX(view.bounds), CGRectGetMaxY(view.bounds));
-//                    radius_from_point_init(&radius)(&center_point)(center_point.x, CGRectGetMidX(view.bounds))
-//                    (^ (float * result, CGPoint * origin, float min, float max, CGPoint intersection) {
-//                        *result = sqrt(pow(intersection.x - (*origin).x, 2.0) + pow(intersection.y - (*origin).y, 2.0));
-//                        *result = fmaxf(min, fminf(*result, max));
-//                    });
-////                    angle_from_point_init(&angle)(&center_point)(270.f, 360.f)
-////                    (^ (float * result, CGPoint * origin, float min, float max, CGPoint intersection) {
-////                        *result = (atan2(intersection.y - (*origin).y, intersection.x - (*origin).x)) * (min / M_PI);
-////                        *result = (!(*result < 0.0) ?: (*result += 360.0));
-////                        *result = fmaxf(min, fminf(*result, max));
-////                    });
-//                }
                 radius_from_point(touch_point);
-                printf("radius == %f\n", radius);
                 angle_from_point(touch_point);
-                printf("angle == %f\n", angle);
             }([touch preciseLocationInView:(ControlView *)view]);
             
             typeof(touch_property) new_touch_property;
