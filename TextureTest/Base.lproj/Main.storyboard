@@ -20,7 +20,7 @@
                                 <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                             </mtkView>
                             <view opaque="NO" contentMode="scaleAspectFit" translatesAutoresizingMaskIntoConstraints="NO" id="7uW-EJ-Fip" customClass="ControlView">
-                                <rect key="frame" x="0.0" y="448" width="414" height="414"/>
+                                <rect key="frame" x="20" y="488" width="374" height="374"/>
                                 <subviews>
                                     <stackView hidden="YES" opaque="NO" alpha="0.0" contentMode="scaleToFill" fixedFrame="YES" distribution="fillEqually" translatesAutoresizingMaskIntoConstraints="NO" id="GJP-Sq-w0U">
                                         <rect key="frame" x="99" y="145" width="176" height="124"/>
@@ -149,7 +149,7 @@
                                 </subviews>
                                 <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <constraints>
-                                    <constraint firstAttribute="height" secondItem="7uW-EJ-Fip" secondAttribute="width" multiplier="1:1" id="mzA-Pg-1F2"/>
+                                    <constraint firstAttribute="height" secondItem="7uW-EJ-Fip" secondAttribute="width" multiplier="1:1" id="4NE-4a-5oX"/>
                                 </constraints>
                                 <connections>
                                     <outlet property="hiddenBitVectorLabel" destination="3aS-Oj-R50" id="y7m-Eq-pkW"/>
@@ -162,13 +162,14 @@
                         <viewLayoutGuide key="safeArea" id="Zni-1Q-DHl"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                         <constraints>
+                            <constraint firstItem="7uW-EJ-Fip" firstAttribute="leading" secondItem="PlH-bq-DWk" secondAttribute="leadingMargin" id="1J3-Bw-aHw"/>
                             <constraint firstItem="JsS-qo-bbp" firstAttribute="bottom" secondItem="PlH-bq-DWk" secondAttribute="bottom" id="40C-JU-c5Y"/>
-                            <constraint firstItem="7uW-EJ-Fip" firstAttribute="bottom" secondItem="Zni-1Q-DHl" secondAttribute="bottom" id="7ky-se-m8G"/>
-                            <constraint firstItem="7uW-EJ-Fip" firstAttribute="leading" secondItem="Zni-1Q-DHl" secondAttribute="leading" id="c46-5q-gSg"/>
+                            <constraint firstItem="7uW-EJ-Fip" firstAttribute="bottom" secondItem="PlH-bq-DWk" secondAttribute="bottomMargin" id="7ky-se-m8G"/>
                             <constraint firstItem="JsS-qo-bbp" firstAttribute="leading" secondItem="PlH-bq-DWk" secondAttribute="leading" id="fmf-Yg-5WF"/>
                             <constraint firstItem="JsS-qo-bbp" firstAttribute="top" secondItem="PlH-bq-DWk" secondAttribute="top" id="nVs-68-sVv"/>
                             <constraint firstItem="JsS-qo-bbp" firstAttribute="trailing" secondItem="PlH-bq-DWk" secondAttribute="trailing" id="rEe-U1-ipK"/>
-                            <constraint firstItem="7uW-EJ-Fip" firstAttribute="trailing" secondItem="Zni-1Q-DHl" secondAttribute="trailing" id="x4R-a1-piF"/>
+                            <constraint firstItem="7uW-EJ-Fip" firstAttribute="width" relation="lessThanOrEqual" secondItem="PlH-bq-DWk" secondAttribute="width" id="vjo-4d-Chl"/>
+                            <constraint firstItem="7uW-EJ-Fip" firstAttribute="trailing" secondItem="PlH-bq-DWk" secondAttribute="trailingMargin" id="x4R-a1-piF"/>
                         </constraints>
                     </view>
                     <connections>

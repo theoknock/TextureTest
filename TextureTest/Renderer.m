@@ -35,12 +35,13 @@
     id <MTLRenderPipelineState> _pipelineState;
     id <MTLDepthStencilState> _depthState;
     id <MTLTexture> _colorMap;
+    id <MTLTexture> _colorMapPrev;
     id<MTLTexture> computeTexture;
-//    MTLVertexDescriptor *_mtlVertexDescriptor;
-//    uint8_t _uniformBufferIndex;
-//    matrix_float4x4 _projectionMatrix;
-//    float _rotation;
-//    MTKMesh *_mesh;
+    //    MTLVertexDescriptor *_mtlVertexDescriptor;
+    //    uint8_t _uniformBufferIndex;
+    //    matrix_float4x4 _projectionMatrix;
+    //    float _rotation;
+    //    MTKMesh *_mesh;
     
     id<MTLTexture>(^create_texture)(CVPixelBufferRef);
     
@@ -271,7 +272,7 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
         mtkView.sampleCount = 1;
         
         id<MTLLibrary> defaultLibrary = [mtkView.preferredDevice newDefaultLibrary];
-    
+        
         create_texture = ^{
             MTLPixelFormat pixelFormat = mtkView.colorPixelFormat;
             CFStringRef textureCacheKeys[2] = { kCVMetalTextureCacheMaximumTextureAgeKey, kCVMetalTextureUsage };
@@ -305,38 +306,38 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
                 return texture;
             };
         }();
-
+        
         // Set up a simple MTLBuffer with vertices which include texture coordinates
         const float dim_a  = CGRectGetMaxX(UIScreen.mainScreen.bounds);
         const float dim_b  = CGRectGetMaxX(UIScreen.mainScreen.bounds) * (3840.f/2160.f); // CMVideoDimensions(height,width) // CVPixelBufferGetHeight(pixel_buffer), CVPixelBufferGetWidth(pixel_buffer)
         AAPLVertex quadVertices[] =
         {
-        //    Pixel positions       Texture coordinates
+            //    Pixel positions       Texture coordinates
             { {  dim_b,  -dim_a },  { 1.f, 1.f } },
             { { -dim_b,  -dim_a },  { 0.f, 1.f } },
             { { -dim_b,   dim_a },  { 0.f, 0.f } },
-
+            
             { {  dim_b,  -dim_a },  { 1.f, 1.f } },
             { { -dim_b,   dim_a },  { 0.f, 0.f } },
             { {  dim_b,   dim_a },  { 1.f, 0.f } },
         };
-
+        
         // Create a vertex buffer, and initialize it with the quadVertices array
         _vertices = [_device newBufferWithBytes:quadVertices
                                          length:sizeof(quadVertices)
                                         options:MTLResourceStorageModeShared];
-
+        
         // Calculate the number of vertices by dividing the byte length by the size of each vertex
         _numVertices = sizeof(quadVertices) / sizeof(AAPLVertex);
-
+        
         /// Create the render pipeline.
-
+        
         // Load the shaders from the default library
-//        id<MTLLibrary> defaultLibrary = [_device newDefaultLibrary];
+        //        id<MTLLibrary> defaultLibrary = [_device newDefaultLibrary];
         id<MTLFunction> vertexFunction = [defaultLibrary newFunctionWithName:@"vertexShader"];
         id<MTLFunction> fragmentFunction = [defaultLibrary newFunctionWithName:@"samplingShader"];
         id<MTLFunction> computeKernel = [defaultLibrary newFunctionWithName:@"grayscaleKernel"];
-
+        
         // Set up a descriptor for creating a pipeline state object
         MTLRenderPipelineDescriptor *pipelineStateDescriptor = [[MTLRenderPipelineDescriptor alloc] init];
         pipelineStateDescriptor.label = @"MyPipeline";
@@ -358,7 +359,7 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
         depthStateDesc.depthCompareFunction = MTLCompareFunctionAlways;
         depthStateDesc.depthWriteEnabled = YES;
         _depthState = [_device newDepthStencilStateWithDescriptor:depthStateDesc];
-    
+        
         _computePipelineState = [_device newComputePipelineStateWithFunction:computeKernel error:&error];
         NSAssert(_computePipelineState, @"Failed to create compute pipeline state: %@", error);
         
@@ -366,9 +367,9 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
         NSUInteger h = _computePipelineState.maxTotalThreadsPerThreadgroup / w;
         _threadsPerThreadgroup = MTLSizeMake(w, h, 1);
         _threadgroupsPerGrid   = MTLSizeMake((3840 + w - 1) / w,
-                                                    (2160  + h - 1) / h,
-                                                    1);
-  
+                                             (2160  + h - 1) / h,
+                                             1);
+        
         NSLog(@"threadsPerThreadgroup: %lu x %lu\tthreadgroupsPerGrid: %lu x %lu",
               _threadsPerThreadgroup.width,
               _threadsPerThreadgroup.height,
@@ -382,7 +383,7 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
                                              mipmapped:FALSE];
         [descriptor setUsage:MTLTextureUsageShaderWrite | MTLTextureUsageShaderRead | MTLTextureUsageRenderTarget];
         computeTexture = [_device newTextureWithDescriptor:descriptor];
-
+        
         
         _commandQueue = [_device newCommandQueue];
     }
@@ -410,6 +411,8 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
     [computeEncoder setTexture:_colorMap
                        atIndex:0];
     [computeEncoder setTexture:computeTexture atIndex:1];
+    [computeEncoder setTexture:_colorMapPrev
+                       atIndex:2];
     [computeEncoder dispatchThreadgroups:_threadgroupsPerGrid
                    threadsPerThreadgroup:_threadsPerThreadgroup];
     [computeEncoder endEncoding];
@@ -461,7 +464,7 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
 }
 
 - (void)captureOutput:(AVCaptureOutput *)output didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer fromConnection:(AVCaptureConnection *)connection {
-    _colorMap = create_texture(CMSampleBufferGetImageBuffer(sampleBuffer));
+    _colorMap = create_texture(CMSampleBufferGetImageBuffer(sampleBuffer)); // before overwriting _colorMap, copy it to another texture (for differencing)
 }
 
 @end
