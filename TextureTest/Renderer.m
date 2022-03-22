@@ -384,6 +384,14 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
         [descriptor setUsage:MTLTextureUsageShaderWrite | MTLTextureUsageShaderRead | MTLTextureUsageRenderTarget];
         computeTexture = [_device newTextureWithDescriptor:descriptor];
         
+        MTLTextureDescriptor * descriptorP = [MTLTextureDescriptor
+                                             texture2DDescriptorWithPixelFormat:mtkView.colorPixelFormat
+                                             width:2282
+                                             height:1284
+                                             mipmapped:FALSE];
+        [descriptorP setUsage:MTLTextureUsageShaderWrite | MTLTextureUsageShaderRead | MTLTextureUsageRenderTarget];
+        _colorMapPrev = [_device newTextureWithDescriptor:descriptorP];
+        
         
         _commandQueue = [_device newCommandQueue];
     }
@@ -459,12 +467,17 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
         [commandBuffer presentDrawable:view.currentDrawable];
     }
     
+    id<MTLBlitCommandEncoder> copier = [commandBuffer blitCommandEncoder];
+    [copier copyFromTexture:_colorMap toTexture:_colorMapPrev];
+    [copier endEncoding];
+    
     // Finalize rendering here & push the command buffer to the GPU
     [commandBuffer commit];
 }
 
 - (void)captureOutput:(AVCaptureOutput *)output didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer fromConnection:(AVCaptureConnection *)connection {
     _colorMap = create_texture(CMSampleBufferGetImageBuffer(sampleBuffer)); // before overwriting _colorMap, copy it to another texture (for differencing)
+                                                                            // Try create_texture on _colorMapP, using it one frame after _colorMap
 }
 
 @end

@@ -66,12 +66,12 @@ grayscaleKernel(
 
    
     half4 inputImageTexture  = inTexture.read(gid);
-//    half4 inputImageTextureP  = inTextureP.read(gid);
-//    half4 outputImageTexture = half4(2.0, 2.0, 2.0, 1.0) * (inputImageTextureP - inputImageTexture);
+    half4 inputImageTextureP  = inTextureP.read(gid);
+    half4 outputImageTexture = (inputImageTextureP - inputImageTexture);
 //    half  gray     = dot(inputImageTexture.rgb, kRec709Luma);
 //    half  grayP     = dot(inputImageTextureP.rgb, kRec709Luma);
 //    gray = (grayP - gray) + 1.0;
-    outTexture.write(half4(inputImageTexture.r, inputImageTexture.g, inputImageTexture.b, 1.0), gid);
+    outTexture.write(half4(outputImageTexture.r, outputImageTexture.g, outputImageTexture.b, 1.0), gid);
     
 //    inputImageTexture = half4(gray, gray, gray, 1.0);
 //
