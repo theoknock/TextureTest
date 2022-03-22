@@ -319,6 +319,7 @@ static void (^(^(^touch_handler_init)(const ControlView * __strong))(__strong UI
                     [buttons[i] setHighlighted:(highlighted_property_bit_vector >> i) & 1UL];
                     [buttons[i] setSelected:(selected_property_bit_vector >> i) & 1UL];
                     [buttons[i] setHidden:(hidden_property_bit_vector >> i) & 1UL];
+//                    if (radius < CGRectGetMidX(((ControlView *)view).bounds)) radius = 0;
                     return CGPointMake(center_point.x - radius * -cos(radians), center_point.y - radius * -sin(radians));
                 }(angle * kRadians_f)];
             });
