@@ -104,21 +104,22 @@ static const UIButton * (^capture_device_configuration_control_property_button)(
 static void (^(^map)(__strong const UIButton * _Nonnull [_Nonnull 5], ControlView * __strong))(const UIButton * (^__strong)(unsigned int)) = ^ (__strong UIButton * _Nonnull button_collection[5], const ControlView * __strong view) {
     // TO-DO: Set button center points to arc center point and animate to default button center points (per index); use the angle stored in the angle object associated with the button
     animator = [[UIDynamicAnimator alloc] initWithReferenceView:view];
-    gravity = [[UIGravityBehavior alloc] initWithItems:@[]];
-    collision = [[UICollisionBehavior alloc] initWithItems:@[]];
+//    gravity = [[UIGravityBehavior alloc] initWithItems:@[]];
+//    collision = [[UICollisionBehavior alloc] initWithItems:@[]];
     [collision setTranslatesReferenceBoundsIntoBoundary:TRUE];
     return ^ (const UIButton *(^enumeration)(unsigned int)) {
         dispatch_apply(5, DISPATCH_APPLY_AUTO, ^(size_t index) {
             dispatch_barrier_async(dispatch_get_main_queue(), ^{
                 buttons[index] = enumeration((unsigned int)index);
                 snap[index] = [[UISnapBehavior alloc] initWithItem:buttons[index] snapToPoint:CGPointMake(CGRectGetMaxX(view.bounds), CGRectGetMaxY(view.bounds))];
-                [gravity addItem:buttons[index]];
-                [collision addItem:buttons[index]];
+//                [gravity addItem:buttons[index]];
+//                [collision addItem:buttons[index]];
                 [animator addBehavior:snap[index]];
             });
         });
-        [animator addBehavior:gravity];
-        [animator addBehavior:collision];
+//        [animator addBehavior:gravity];
+//        [animator addBehavior:collision];
+        [animator removeAllBehaviors];
     };
 };
 
