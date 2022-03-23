@@ -37,6 +37,7 @@
     id <MTLTexture> _colorMap;
     id <MTLTexture> _colorMapPrev;
     id<MTLTexture> computeTexture;
+    
     //    MTLVertexDescriptor *_mtlVertexDescriptor;
     //    uint8_t _uniformBufferIndex;
     //    matrix_float4x4 _projectionMatrix;
@@ -44,6 +45,7 @@
     //    MTKMesh *_mesh;
     
     id<MTLTexture>(^create_texture)(CVPixelBufferRef);
+    void(^render_texture)(id<MTLTexture>);
     
     // The Metal buffer that holds the vertex data.
     id<MTLBuffer> _vertices;
@@ -303,9 +305,15 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
                     }
                     CVPixelBufferUnlockBaseAddress(pixel_buffer, kCVPixelBufferLock_ReadOnly);
                 }
+                
                 return texture;
             };
         }();
+        
+        render_texture = ^ (id<MTLTexture> texture) {
+            _colorMap = texture;
+            [mtkView draw];
+        };
         
         // Set up a simple MTLBuffer with vertices which include texture coordinates
         const float dim_a  = CGRectGetMaxX(UIScreen.mainScreen.bounds);
@@ -336,7 +344,8 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
         //        id<MTLLibrary> defaultLibrary = [_device newDefaultLibrary];
         id<MTLFunction> vertexFunction = [defaultLibrary newFunctionWithName:@"vertexShader"];
         id<MTLFunction> fragmentFunction = [defaultLibrary newFunctionWithName:@"samplingShader"];
-        id<MTLFunction> computeKernel = [defaultLibrary newFunctionWithName:@"sobelEdgeDetectionKernel"];
+        id<MTLFunction> computeKernel = [defaultLibrary newFunctionWithName:@"frameDifferencingBasicKernel"];
+        id<MTLFunction> computeKernel2 = [defaultLibrary newFunctionWithName:@"divideInverseKernel"];
         
         // Set up a descriptor for creating a pipeline state object
         MTLRenderPipelineDescriptor *pipelineStateDescriptor = [[MTLRenderPipelineDescriptor alloc] init];
@@ -347,6 +356,13 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
         pipelineStateDescriptor.colorAttachments[0].pixelFormat = mtkView.colorPixelFormat;
         pipelineStateDescriptor.depthAttachmentPixelFormat = mtkView.depthStencilPixelFormat;
         pipelineStateDescriptor.stencilAttachmentPixelFormat = mtkView.depthStencilPixelFormat;
+        pipelineStateDescriptor.colorAttachments[0].blendingEnabled = YES;
+        pipelineStateDescriptor.colorAttachments[0].rgbBlendOperation = MTLBlendOperationAdd;
+        pipelineStateDescriptor.colorAttachments[0].alphaBlendOperation = MTLBlendOperationAdd;
+        pipelineStateDescriptor.colorAttachments[0].sourceRGBBlendFactor = MTLBlendFactorSourceAlpha;
+        pipelineStateDescriptor.colorAttachments[0].sourceAlphaBlendFactor = MTLBlendFactorSourceAlpha;
+        pipelineStateDescriptor.colorAttachments[0].destinationRGBBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
+        pipelineStateDescriptor.colorAttachments[0].destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
         
         __autoreleasing NSError * error = nil;
         _pipelineState = [_device newRenderPipelineStateWithDescriptor:pipelineStateDescriptor error:&error];
@@ -409,6 +425,7 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
 /// Called whenever the view needs to render a frame
 - (void)drawInMTKView:(nonnull MTKView *)view
 {
+    @autoreleasepool {
     
     id<MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
     commandBuffer.label = @"MyCommand";
@@ -469,14 +486,16 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
     
     id<MTLBlitCommandEncoder> copier = [commandBuffer blitCommandEncoder];
     [copier copyFromTexture:_colorMap toTexture:_colorMapPrev];
+        [copier optimizeContentsForGPUAccess:_colorMapPrev];
     [copier endEncoding];
     
     // Finalize rendering here & push the command buffer to the GPU
     [commandBuffer commit];
+    }
 }
 
 - (void)captureOutput:(AVCaptureOutput *)output didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer fromConnection:(AVCaptureConnection *)connection {
-    _colorMap = create_texture(CMSampleBufferGetImageBuffer(sampleBuffer)); // before overwriting _colorMap, copy it to another texture (for differencing)
+    render_texture(create_texture(CMSampleBufferGetImageBuffer(sampleBuffer))); // before overwriting _colorMap, copy it to another texture (for differencing)
                                                                             // Try create_texture on _colorMapP, using it one frame after _colorMap
 }
 

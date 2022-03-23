@@ -16,7 +16,7 @@
                         <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <subviews>
-                            <mtkView contentMode="scaleAspectFit" colorPixelFormat="BGRA8Unorm_sRGB" depthStencilPixelFormat="Depth32Float" translatesAutoresizingMaskIntoConstraints="NO" id="JsS-qo-bbp">
+                            <mtkView contentMode="scaleAspectFit" colorPixelFormat="BGRA8Unorm_sRGB" depthStencilPixelFormat="Depth32Float" preferredFramesPerSecond="30" paused="YES" enableSetNeedsDisplay="YES" translatesAutoresizingMaskIntoConstraints="NO" id="JsS-qo-bbp">
                                 <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                             </mtkView>
                             <view opaque="NO" contentMode="scaleAspectFit" translatesAutoresizingMaskIntoConstraints="NO" id="7uW-EJ-Fip" customClass="ControlView">
