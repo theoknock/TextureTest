@@ -401,10 +401,10 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
         computeTexture = [_device newTextureWithDescriptor:descriptor];
         
         MTLTextureDescriptor * descriptorP = [MTLTextureDescriptor
-                                             texture2DDescriptorWithPixelFormat:mtkView.colorPixelFormat
-                                             width:2282
-                                             height:1284
-                                             mipmapped:FALSE];
+                                              texture2DDescriptorWithPixelFormat:mtkView.colorPixelFormat
+                                              width:2282
+                                              height:1284
+                                              mipmapped:FALSE];
         [descriptorP setUsage:MTLTextureUsageShaderWrite | MTLTextureUsageShaderRead | MTLTextureUsageRenderTarget];
         _colorMapPrev = [_device newTextureWithDescriptor:descriptorP];
         
@@ -426,77 +426,79 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
 - (void)drawInMTKView:(nonnull MTKView *)view
 {
     @autoreleasepool {
-    
-    id<MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
-    commandBuffer.label = @"MyCommand";
-    
-    //    [commandBuffer enqueue];
-    id<MTLComputeCommandEncoder> computeEncoder = [commandBuffer computeCommandEncoder];
-    [computeEncoder setComputePipelineState:_computePipelineState];
-    [computeEncoder setTexture:_colorMap
-                       atIndex:0];
-    [computeEncoder setTexture:computeTexture atIndex:1];
-    [computeEncoder setTexture:_colorMapPrev
-                       atIndex:2];
-    [computeEncoder dispatchThreadgroups:_threadgroupsPerGrid
-                   threadsPerThreadgroup:_threadsPerThreadgroup];
-    [computeEncoder endEncoding];
-    
-    commandBuffer.label = @"DrawTextureCommandBuffer";
-    
-    // Obtain a renderPassDescriptor generated from the view's drawable textures
-    __autoreleasing MTLRenderPassDescriptor *renderPassDescriptor = [view currentRenderPassDescriptor];
-    
-    if(renderPassDescriptor != nil)
-    {
-        id<MTLRenderCommandEncoder> renderEncoder =
-        [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
-        renderEncoder.label = @"DrawTextureRenderEncoder";
         
-        // Set the region of the drawable to draw into.
-        [renderEncoder setViewport:(MTLViewport){0.0, 0.0, _viewportSize.x, _viewportSize.y, -1.0, 1.0 }];
+        __block id<MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
+        commandBuffer.label = @"MyCommand";
         
-        [renderEncoder setRenderPipelineState:_pipelineState];
-        [renderEncoder setDepthStencilState:_depthState];
+        //    [commandBuffer enqueue];
+        id<MTLComputeCommandEncoder> computeEncoder = [commandBuffer computeCommandEncoder];
+        [computeEncoder setComputePipelineState:_computePipelineState];
+        [computeEncoder setTexture:_colorMap
+                           atIndex:0];
+        [computeEncoder setTexture:computeTexture atIndex:1];
+        [computeEncoder setTexture:_colorMapPrev
+                           atIndex:2];
+        [computeEncoder dispatchThreadgroups:_threadgroupsPerGrid
+                       threadsPerThreadgroup:_threadsPerThreadgroup];
+        [computeEncoder endEncoding];
         
-        [renderEncoder setVertexBuffer:_vertices
-                                offset:0
-                               atIndex:AAPLVertexInputIndexVertices];
+        commandBuffer.label = @"DrawTextureCommandBuffer";
         
-        [renderEncoder setVertexBytes:&_viewportSize
-                               length:sizeof(_viewportSize)
-                              atIndex:AAPLVertexInputIndexViewportSize];
+        // Obtain a renderPassDescriptor generated from the view's drawable textures
+        __autoreleasing MTLRenderPassDescriptor *renderPassDescriptor = [view currentRenderPassDescriptor];
         
-        // Set the texture object.  The AAPLTextureIndexBaseColor enum value corresponds
-        ///  to the 'colorMap' argument in the 'samplingShader' function because its
-        //   texture attribute qualifier also uses AAPLTextureIndexBaseColor for its index.
-        [renderEncoder setFragmentTexture:computeTexture //view.currentDrawable.texture
-                                  atIndex:AAPLTextureIndexBaseColor];
+        if(renderPassDescriptor != nil)
+        {
+            id<MTLRenderCommandEncoder> renderEncoder =
+            [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
+            renderEncoder.label = @"DrawTextureRenderEncoder";
+            
+            // Set the region of the drawable to draw into.
+            [renderEncoder setViewport:(MTLViewport){0.0, 0.0, _viewportSize.x, _viewportSize.y, -1.0, 1.0 }];
+            
+            [renderEncoder setRenderPipelineState:_pipelineState];
+            [renderEncoder setDepthStencilState:_depthState];
+            
+            [renderEncoder setVertexBuffer:_vertices
+                                    offset:0
+                                   atIndex:AAPLVertexInputIndexVertices];
+            
+            [renderEncoder setVertexBytes:&_viewportSize
+                                   length:sizeof(_viewportSize)
+                                  atIndex:AAPLVertexInputIndexViewportSize];
+            
+            // Set the texture object.  The AAPLTextureIndexBaseColor enum value corresponds
+            ///  to the 'colorMap' argument in the 'samplingShader' function because its
+            //   texture attribute qualifier also uses AAPLTextureIndexBaseColor for its index.
+            [renderEncoder setFragmentTexture:computeTexture //view.currentDrawable.texture
+                                      atIndex:AAPLTextureIndexBaseColor];
+            
+            // Draw the triangles.
+            [renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle
+                              vertexStart:0
+                              vertexCount:6];
+            
+            [renderEncoder endEncoding];
+            
+            
+        }
         
-        // Draw the triangles.
-        [renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle
-                          vertexStart:0
-                          vertexCount:6];
-        
-        [renderEncoder endEncoding];
+        id<MTLBlitCommandEncoder> copier = [commandBuffer blitCommandEncoder];
+        [copier copyFromTexture:_colorMap toTexture:_colorMapPrev];
+        [copier optimizeContentsForGPUAccess:_colorMapPrev];
+        [copier endEncoding];
         
         // Schedule a present once the framebuffer is complete using the current drawable
-        [commandBuffer presentDrawable:view.currentDrawable];
-    }
-    
-    id<MTLBlitCommandEncoder> copier = [commandBuffer blitCommandEncoder];
-    [copier copyFromTexture:_colorMap toTexture:_colorMapPrev];
-        [copier optimizeContentsForGPUAccess:_colorMapPrev];
-    [copier endEncoding];
-    
-    // Finalize rendering here & push the command buffer to the GPU
-    [commandBuffer commit];
+            [commandBuffer presentDrawable:view.currentDrawable];
+        
+        // Finalize rendering here & push the command buffer to the GPU
+        [commandBuffer commit];
     }
 }
 
 - (void)captureOutput:(AVCaptureOutput *)output didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer fromConnection:(AVCaptureConnection *)connection {
     render_texture(create_texture(CMSampleBufferGetImageBuffer(sampleBuffer))); // before overwriting _colorMap, copy it to another texture (for differencing)
-                                                                            // Try create_texture on _colorMapP, using it one frame after _colorMap
+    // Try create_texture on _colorMapP, using it one frame after _colorMap
 }
 
 @end

@@ -84,7 +84,11 @@ static UIImage * (^CaptureDeviceConfigurationControlPropertySymbolImage)(Capture
     return [UIImage systemImageNamed:CaptureDeviceConfigurationControlPropertySymbol(property, state) withConfiguration:CaptureDeviceConfigurationControlPropertySymbolImageConfiguration(state)];
 };
 
-
+static CGPoint center_point;
+static UISnapBehavior * snap[5];
+static UICollisionBehavior * collision;
+static UIDynamicAnimator * animator;
+static UIGravityBehavior * gravity;
 static __strong const UIButton * _Nonnull buttons[5];
 static const UIButton * (^capture_device_configuration_control_property_button)(CaptureDeviceConfigurationControlProperty) = ^ (CaptureDeviceConfigurationControlProperty property) {
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -97,13 +101,24 @@ static const UIButton * (^capture_device_configuration_control_property_button)(
 };
 
 
-static void (^(^map)(__strong const UIButton * _Nonnull [_Nonnull 5]))(const UIButton * (^__strong)(unsigned int)) = ^ (__strong const UIButton * _Nonnull button_collection[5]) {
+static void (^(^map)(__strong const UIButton * _Nonnull [_Nonnull 5], ControlView * __strong))(const UIButton * (^__strong)(unsigned int)) = ^ (__strong UIButton * _Nonnull button_collection[5], const ControlView * __strong view) {
+    // TO-DO: Set button center points to arc center point and animate to default button center points (per index); use the angle stored in the angle object associated with the button
+    animator = [[UIDynamicAnimator alloc] initWithReferenceView:view];
+    gravity = [[UIGravityBehavior alloc] initWithItems:@[]];
+    collision = [[UICollisionBehavior alloc] initWithItems:@[]];
+    [collision setTranslatesReferenceBoundsIntoBoundary:TRUE];
     return ^ (const UIButton *(^enumeration)(unsigned int)) {
         dispatch_apply(5, DISPATCH_APPLY_AUTO, ^(size_t index) {
             dispatch_barrier_async(dispatch_get_main_queue(), ^{
                 buttons[index] = enumeration((unsigned int)index);
+                snap[index] = [[UISnapBehavior alloc] initWithItem:buttons[index] snapToPoint:CGPointMake(CGRectGetMaxX(view.bounds), CGRectGetMaxY(view.bounds))];
+                [gravity addItem:buttons[index]];
+                [collision addItem:buttons[index]];
+                [animator addBehavior:snap[index]];
             });
         });
+        [animator addBehavior:gravity];
+        [animator addBehavior:collision];
     };
 };
 
@@ -224,7 +239,6 @@ static const long (^ const (* restrict state_setter_ptr))(long(^ _Nullable)(void
 static void (^(^_Nonnull touch_handler)(__strong UITouch * _Nullable))(const long (^const __autoreleasing (*))(long (^ _Nullable __strong)(void)));
 static void (^ _Nonnull  handle_touch)(const long (^const __autoreleasing (*))(long (^ _Nullable __strong)(void)));
 static void (^(^(^touch_handler_init)(const ControlView * __strong))(__strong UITouch * _Nullable))(const long (^const __autoreleasing (*))(long (^ _Nullable __strong)(void))) = ^ (const ControlView * __strong view) {
-    static CGPoint center_point;
     center_point = CGPointMake(CGRectGetMaxX(((ControlView *)view).bounds), CGRectGetMaxY(((ControlView *)view).bounds));
     
     // To-Do: Reuse the following code in the next two blocks (i.e., create a computation block template)
@@ -269,6 +283,7 @@ static void (^(^(^touch_handler_init)(const ControlView * __strong))(__strong UI
     (^ (float * result, CGPoint * origin, float min, float max, CGPoint intersection) {
         *result = sqrt(pow(intersection.x - (*origin).x, 2.0) + pow(intersection.y - (*origin).y, 2.0));
         *result = fmaxf(min, fminf(*result, max));
+//        (!(*result >= CGRectGetMidX(((ControlView *)view).bounds))) ?: unmap(buttons, view)();
     });
     
     CGPoint (^point_from_angle)(float) = ^ (CGPoint * origin_point) {
@@ -454,7 +469,7 @@ unsigned long (^(^bits)(unsigned long))(unsigned long)  = ^ (unsigned long x) {
     CGPoint default_center_point = CGPointMake(CGRectGetMaxX(((ControlView *)self).bounds), CGRectGetMaxY(((ControlView *)self).bounds));
     float default_radius       = CGRectGetMidX(self.bounds);
     
-    map(buttons)(^ const UIButton * (unsigned int index) {
+    map(buttons, self)(^ const UIButton * (unsigned int index) {
         const UIButton * button;
         [button = [UIButton new] setTag:index];
         [button setImage:[UIImage systemImageNamed:CaptureDeviceConfigurationControlPropertyImageValues[0][index] withConfiguration:CaptureDeviceConfigurationControlPropertySymbolImageConfiguration(CaptureDeviceConfigurationControlStateDeselected)] forState:UIControlStateNormal];
@@ -477,13 +492,27 @@ unsigned long (^(^bits)(unsigned long))(unsigned long)  = ^ (unsigned long x) {
         };
         objc_setAssociatedObject(button, @selector(invoke), eventHandlerBlockTouchUpInside, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
         [button addTarget:eventHandlerBlockTouchUpInside action:@selector(invoke) forControlEvents:UIControlEventTouchUpInside];
-        [self addSubview:button];
+        
         angle = angle * kRadians_f;
         [button setCenter:[[UIBezierPath bezierPathWithArcCenter:default_center_point radius:default_radius startAngle:angle endAngle:angle clockwise:FALSE] currentPoint]];
+        
+        [self addSubview:button];
+        
         return button;
     });
     
     touch_handler = touch_handler_init((ControlView *)self);
+}
+
+-(void)collisionBehavior:(UICollisionBehavior *)behavior beganContactForItem:(id)item withBoundaryIdentifier:(id)identifier atPoint:(CGPoint)p{
+    
+    printf("%s", __PRETTY_FUNCTION__);
+}
+ 
+ 
+-(void)collisionBehavior:(UICollisionBehavior *)behavior endedContactForItem:(id)item withBoundaryIdentifier:(id)identifier{
+    
+    printf("%s", __PRETTY_FUNCTION__);
 }
 
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {

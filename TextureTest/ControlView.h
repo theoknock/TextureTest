@@ -67,7 +67,7 @@ unsigned long highlighted_property_bit_vector = ( 0UL << 0 |   0UL << 1 |   0UL 
 unsigned long selected_property_bit_vector    = ( 0UL << 0 |   0UL << 1 |   0UL << 2 |   0UL << 3 |   0UL << 4 );
 unsigned long hidden_property_bit_vector      = ( 0UL << 0 |   0UL << 1 |   0UL << 2 |   0UL << 3 |   0UL << 4 );
 
-@interface ControlView : UIView
+@interface ControlView : UIView <UICollisionBehaviorDelegate, UIDynamicAnimatorDelegate, UIDynamicItem>
 
 @property (strong, nonatomic) IBOutlet UILabel *stateBitVectorLabel;
 @property (strong, nonatomic) IBOutlet UILabel *highlightedBitVectorLabel;
