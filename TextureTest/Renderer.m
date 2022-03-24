@@ -36,13 +36,7 @@
     id <MTLDepthStencilState> _depthState;
     id <MTLTexture> _colorMap;
     id <MTLTexture> _colorMapPrev;
-    id<MTLTexture> computeTexture;
-    
-    //    MTLVertexDescriptor *_mtlVertexDescriptor;
-    //    uint8_t _uniformBufferIndex;
-    //    matrix_float4x4 _projectionMatrix;
-    //    float _rotation;
-    //    MTKMesh *_mesh;
+    id<MTLTexture> compute_texture_p;
     
     id<MTLTexture>(^create_texture)(CVPixelBufferRef);
     void(^render_texture)(id<MTLTexture>);
@@ -345,7 +339,7 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
         id<MTLFunction> vertexFunction = [defaultLibrary newFunctionWithName:@"vertexShader"];
         id<MTLFunction> fragmentFunction = [defaultLibrary newFunctionWithName:@"samplingShader"];
         id<MTLFunction> computeKernel = [defaultLibrary newFunctionWithName:@"frameDifferencingBasicKernel"];
-        id<MTLFunction> computeKernel2 = [defaultLibrary newFunctionWithName:@"divideInverseKernel"];
+
         
         // Set up a descriptor for creating a pipeline state object
         MTLRenderPipelineDescriptor *pipelineStateDescriptor = [[MTLRenderPipelineDescriptor alloc] init];
@@ -398,7 +392,7 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
                                              height:1284
                                              mipmapped:FALSE];
         [descriptor setUsage:MTLTextureUsageShaderWrite | MTLTextureUsageShaderRead | MTLTextureUsageRenderTarget];
-        computeTexture = [_device newTextureWithDescriptor:descriptor];
+        compute_texture_p = [_device newTextureWithDescriptor:descriptor];
         
         MTLTextureDescriptor * descriptorP = [MTLTextureDescriptor
                                               texture2DDescriptorWithPixelFormat:mtkView.colorPixelFormat
@@ -435,7 +429,7 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
         [computeEncoder setComputePipelineState:_computePipelineState];
         [computeEncoder setTexture:_colorMap
                            atIndex:0];
-        [computeEncoder setTexture:computeTexture atIndex:1];
+        [computeEncoder setTexture:compute_texture_p atIndex:1];
         [computeEncoder setTexture:_colorMapPrev
                            atIndex:2];
         [computeEncoder dispatchThreadgroups:_threadgroupsPerGrid
@@ -470,7 +464,7 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
             // Set the texture object.  The AAPLTextureIndexBaseColor enum value corresponds
             ///  to the 'colorMap' argument in the 'samplingShader' function because its
             //   texture attribute qualifier also uses AAPLTextureIndexBaseColor for its index.
-            [renderEncoder setFragmentTexture:computeTexture //view.currentDrawable.texture
+            [renderEncoder setFragmentTexture:compute_texture_p //view.currentDrawable.texture
                                       atIndex:AAPLTextureIndexBaseColor];
             
             // Draw the triangles.

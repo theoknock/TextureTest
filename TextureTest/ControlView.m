@@ -366,7 +366,6 @@ static void (^(^(^touch_handler_init)(const ControlView * __strong))(__strong UI
     return ^ (__strong UITouch * _Nullable touch) {
         return ^ (const long (^const __autoreleasing (*state_setter_t))(long (^ _Nullable __strong)(void))) {
             ^ (CGPoint touch_point) {
-                // To-Do: Adjust touch_point according to a varying center_point
                 touch_point.x = fmaxf(0.0, fminf(touch_point.x, center_point.x));
                 touch_point.y = fmaxf(0.0, fminf(touch_point.y, center_point.y));
                 radius_from_point(touch_point);

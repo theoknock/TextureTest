@@ -48,7 +48,6 @@ samplingShader(RasterizerData in [[stage_in]],
     return float4(colorSample);
 }
 
-constant half3 kRec709Luma = half3(0.2126, 0.7152, 0.0722);
 
 // Brightens dark images by dividing the texture by its inverse without burning out the highlights (clamp)
 // To-Do: an overlay blend mode kernel
@@ -144,7 +143,7 @@ frameDifferencingKernel(
     outTexture.write(half4(averageDifference.r, averageDifference.g, averageDifference.b, 1.0), gid);
 }
 
-
+constant half3 kRec709Luma = half3(0.2126, 0.7152, 0.0722);
 kernel void
 frameDifferencingBasicKernel(
                              texture2d<half, access::read>  inTexture  [[ texture(0) ]],
@@ -158,7 +157,17 @@ frameDifferencingBasicKernel(
         return;
     }
     
-    half4 normalImageTexture = inTexture.read(gid);
-    half outputImageTexture = abs(dot(inTexture.read(gid).rgb, kRec709Luma) - dot(inTextureP.read(gid).rgb, kRec709Luma));
-    outTexture.write(half4(normalImageTexture.r, normalImageTexture.g, normalImageTexture.b, outputImageTexture), gid);
+    half4 texture = inTexture.read(gid);
+    half4 texture_p = inTextureP.read(gid);
+    half4 diff_texture = abs(texture_p - texture);
+    clamp(diff_texture, 0.0, 1.0);
+    half gray_texture = dot(diff_texture.rgb, kRec709Luma);
+    half gamma_texture = 1.0 - pow((1.0 - gray_texture), 1.5); // invert, gamma to stretch whites (really black), invert again
+    half4 out_texture = half4(diff_texture.r + gamma_texture, diff_texture.g + gamma_texture, diff_texture.b + gamma_texture, 1.0);
+    clamp(out_texture, 0.0, 1.0);
+//    half4 out_texture = half4(texture.r, texture.g, texture.b, out_alpha);
+//    out_texture = pow(1.0 - out_texture, 3.0);
+//    out_texture /= 1.0 - out_texture;
+    
+    outTexture.write(out_texture, gid);
 }
