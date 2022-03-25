@@ -53,7 +53,7 @@ static dispatch_queue_t _Nonnull enumerator_queue() {
 
 #define BUTTON_ARC_COMPONENT_BIT_MASK ( 1UL << 0 |   1UL << 1 |   1UL << 2 |   1UL << 3 |   1UL << 4 )
 #define TICK_WHEEL_COMPONENT_BIT_MASK ( 0UL << 0 |   0UL << 1 |   0UL << 2 |   0UL << 3 |   0UL << 4 )
-#define TRUE_BIT ( 1UL << 0 );
+#define TRUE_BIT ( 1UL << 0 )
 #define FALSE_BIT (TRUE_BIT ^ TRUE_BIT)
 
 unsigned long active_component_bit_vector = ( 1UL << 0 |   1UL << 1 |   1UL << 2 |   1UL << 3 |   1UL << 4 );

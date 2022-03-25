@@ -233,7 +233,6 @@ static const long (^(^(^state_setter)(long(^ _Nullable)(void)))(long(^ _Nullable
 static const long (^(^(^__strong * restrict state_setter_ptr)(long (^ _Nullable __strong)(void)))(long (^ _Nullable __strong)(void)))(long (^ _Nullable __strong)(void)) = &state_setter;
 static const long (^(^_Nonnull touch_handler)(__strong UITouch * _Nullable))(const long (^(^(^__strong * restrict state_setter_ptr)(long (^ _Nullable __strong)(void)))(long (^ _Nullable __strong)(void)))(long (^ _Nullable __strong)(void)));
 static const long (^ _Nonnull  handle_touch)(const long (^(^(^__strong * restrict state_setter_ptr)(long (^ _Nullable __strong)(void)))(long (^ _Nullable __strong)(void)))(long (^ _Nullable __strong)(void)));
-//'long (^(^(^)(const ControlView *__strong))(UITouch * _Nullable __strong))(const long (^(^(^__strong *restrict)(long (^__strong _Nullable)(void)))(long (^__strong _Nullable)(void)))(long (^__strong _Nullable)(void)))'
 static long (^(^(^touch_handler_init)(const ControlView * __strong))(__strong UITouch * _Nullable))(const long (^(^(^__strong * restrict state_setter_ptr)(long (^ _Nullable __strong)(void)))(long (^ _Nullable __strong)(void)))(long (^ _Nullable __strong)(void))) = ^ (const ControlView * __strong view) {
     center_point = CGPointMake(CGRectGetMaxX(((ControlView *)view).bounds), CGRectGetMaxY(((ControlView *)view).bounds));
     
@@ -274,6 +273,13 @@ static long (^(^(^touch_handler_init)(const ControlView * __strong))(__strong UI
         return (active_component_bit_vector & BUTTON_ARC_COMPONENT_BIT_MASK);
     });
     
+    static void (^radius_from_point)(CGPoint);
+    radius_from_point = radius_from_point_init(&radius)(&center_point)(CGRectGetMidX(((ControlView *)view).bounds), center_point.x)
+    (^ (float * result, CGPoint * origin, float min, float max, CGPoint intersection) {
+        *result = sqrt(pow(intersection.x - (*origin).x, 2.0) + pow(intersection.y - (*origin).y, 2.0));
+        *result = fmaxf(min, fminf(*result, max));
+    });
+    
     CGPoint (^point_from_angle)(float) = ^ (CGPoint * origin_point) {
         return ^ (float bounds_min, float bounds_max) {
             return ^ (CGPoint(^calculation)(CGPoint *, float, float, float *, float)) {
@@ -285,13 +291,6 @@ static long (^(^(^touch_handler_init)(const ControlView * __strong))(__strong UI
         };
     }(&center_point)(180.f, 270.f)(^ (CGPoint * origin, float min, float max, float * r, float radians) {
         return CGPointMake((*origin).x - *r * -cos(radians), (*origin).y - *r * -sin(radians));
-    });
-    
-    static void (^radius_from_point)(CGPoint);
-    radius_from_point = radius_from_point_init(&radius)(&center_point)(CGRectGetMidX(((ControlView *)view).bounds), center_point.x)
-    (^ (float * result, CGPoint * origin, float min, float max, CGPoint intersection) {
-        *result = sqrt(pow(intersection.x - (*origin).x, 2.0) + pow(intersection.y - (*origin).y, 2.0));
-        *result = fmaxf(min, fminf(*result, max));
     });
     
     static long (^animate)(long(^)(UIDynamicAnimator *, UISnapBehavior *, size_t));
@@ -348,33 +347,44 @@ static long (^(^(^touch_handler_init)(const ControlView * __strong))(__strong UI
     haptic_feedback = [[UISelectionFeedbackGenerator alloc] init];
     [haptic_feedback prepare];
     
-    unsigned long (^(^test)(unsigned long))(unsigned long)  = ^  (unsigned long x) {
-        return ^  (unsigned long(^invoke)(unsigned long y)) {
+    unsigned long (^(^test)(UITouchPhase))(const UIButton __strong * _Nonnull)  = ^ (UITouchPhase touch_phase) {
+        unsigned long button_indicies = ((~selected_property_bit_vector & active_component_bit_vector) ^ selected_property_bit_vector);
+//        __block UIDynamicAnimator * dynamic_animator = [[UIDynamicAnimator alloc] initWithReferenceView:view];
+//        __block UISnapBehavior * snap_behavior;
+//        [snap_behavior setDamping:1.0];
+        return ^  (unsigned long(^invoke)(const UIButton __strong * _Nonnull)) {
             return (^{
-                (((x >> 0) & 1UL) && invoke(0)) +
-                (((x >> 1) & 1UL) && invoke(1)) +
-                (((x >> 2) & 1UL) && invoke(2)) +
-                (((x >> 3) & 1UL) && invoke(3)) +
-                (((x >> 4) & 1UL) && invoke(4));
+//                [dynamic_animator removeAllBehaviors];
+                (((button_indicies >> 0) & 1UL) && invoke(buttons[0])) +
+                (((button_indicies >> 1) & 1UL) && invoke(buttons[1])) +
+                (((button_indicies >> 2) & 1UL) && invoke(buttons[2])) +
+                (((button_indicies >> 3) & 1UL) && invoke(buttons[3])) +
+                (((button_indicies >> 4) & 1UL) && invoke(buttons[4]));
                 return ^{
                     return invoke;
                 };
             }()());
-        }(^ unsigned long (unsigned long i) {
+        }(^ unsigned long (const UIButton __strong * _Nonnull button) {
             dispatch_async(dispatch_get_main_queue(), ^{
-                ((active_component_bit_vector & BUTTON_ARC_COMPONENT_BIT_MASK) && angle_from_point(point_from_angle(rescale(i, 0.0, 4.0, 180.0, 270.0))));
-                [buttons[i] setCenter:point_from_angle(angle)];
-                [buttons[i] setHighlighted:(highlighted_property_bit_vector >> i) & 1UL];
-                [buttons[i] setSelected:(selected_property_bit_vector >> i) & 1UL];
-                [buttons[i] setHidden:(hidden_property_bit_vector >> i) & 1UL];
+                [button setHighlighted:(highlighted_property_bit_vector >> button.tag) & 1UL];
+                [button setSelected:(selected_property_bit_vector >> button.tag) & 1UL];
+                [button setHidden:(hidden_property_bit_vector >> button.tag) & 1UL];
+                ((active_component_bit_vector & BUTTON_ARC_COMPONENT_BIT_MASK) && angle_from_point(point_from_angle(rescale(button.tag, 0.0, 4.0, 180.0, 270.0))));
+                CGPoint button_center = point_from_angle(angle);
+//                (touch_phase & UITouchPhaseBegan && ^{
+//                    snap_behavior = [[UISnapBehavior alloc] initWithItem:button snapToPoint:button_center];
+//                    [dynamic_animator addBehavior:snap_behavior];
+//                    return TRUE_BIT;
+//                });
+                [button setCenter:button_center];
             });
-            return i;
+            return button.tag;
         });
     };
     
     __block unsigned long touch_property;
     
-    return ^ (__strong UITouch * _Nullable touch) {
+    return ^ (__strong UITouch * _Nullable touch) { // handle_touch:
         return ^ (const long (^(^(^__strong * restrict state_setter_t)(long (^ _Nullable __strong)(void)))(long (^ _Nullable __strong)(void)))(long (^ _Nullable __strong)(void))) {
             ^ (CGPoint touch_point) {
                 touch_point.x = fmaxf(0.0, fminf(touch_point.x, center_point.x));
@@ -390,7 +400,7 @@ static long (^(^(^touch_handler_init)(const ControlView * __strong))(__strong UI
                 return (unsigned long)(touch_property = new_touch_property);
             }())));
             
-            test((~selected_property_bit_vector & active_component_bit_vector) ^ selected_property_bit_vector);
+            test(touch.phase);
             ((active_component_bit_vector & ~BUTTON_ARC_COMPONENT_BIT_MASK) && (^ unsigned long {
                 [(ControlView *)view setNeedsDisplay];
                 return TRUE_BIT;
@@ -471,7 +481,7 @@ static long (^(^(^touch_handler_init)(const ControlView * __strong))(__strong UI
                 return (long)TRUE_BIT;
             }));
             [(ControlView *)view setNeedsDisplay];
-            return (long)test((~selected_property_bit_vector & active_component_bit_vector) ^ selected_property_bit_vector);
+            return (long)test(touch.phase);
         };
     };
 };
