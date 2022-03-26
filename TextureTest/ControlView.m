@@ -173,21 +173,24 @@ int extractBit(int bit_vector, int length, int position)
 //    return (NSString *)bit_vector_str;
 //};
 
+static typeof(CADisplayLink *) display_link;
 static long (^(^integrate)(long))(long(^__strong)(long)) = ^ (long duration) {
-    __block typeof(CADisplayLink *) display_link;
+    [display_link invalidate];
     __block /* _Atomic */ long frames = ~(1 << (duration + 1));
     __block long frame;
     //    __block long(^cancel)(CADisplayLink *);
     //    return ^ long (long(^__strong integrand)(long)) {
     return ^ long (long(^__strong integrand)(long)) {
         display_link = [CADisplayLink displayLinkWithTarget:^{
-            dispatch_barrier_async(dispatch_get_main_queue(), ^{
+            dispatch_barrier_async_and_wait(enumerator_queue(), ^{
                 frames >>= 1;
                 ((frames & 1) && ^ long {
                     frame = floor(log2(frames));
                     //                    static long (^(^integrate)(long))(long(^ _Nullable (^__strong)(long))(CADisplayLink *)) = ^ (long duration) {
                     //                        return ^ long (long(^ _Nullable (^__strong integrand)(long))(CADisplayLink *)) {
                     //                    ((long)0 || (cancel = (integrand(frame)))) && cancel(display_link); // runs a cancel handler if one was provided
+                    
+//                    dispatch_barrier_async_and_wait(enumerator_queue(), ^{ integrand(frame); });
                     integrand(frame);
                     return active_component_bit_vector;
                 }())
@@ -253,6 +256,7 @@ static long (^(^(^touch_handler_init)(const ControlView * __strong))(__strong UI
     };
     
     static float angle;
+    static float angle_offset;
     static unsigned long (^(^(^(^(^angle_from_point_init)(float *))(CGPoint *))(float, float))(unsigned long(^)(float *, CGPoint *, float, float, CGPoint)))(CGPoint) = ^ (float * restrict result_ptr_t) {
         return ^ (CGPoint * origin_point) {
             return ^ (float bounds_min, float bounds_max) {
@@ -376,7 +380,7 @@ static long (^(^(^touch_handler_init)(const ControlView * __strong))(__strong UI
 //                    [dynamic_animator addBehavior:snap_behavior];
 //                    return TRUE_BIT;
 //                });
-                [button setCenter:point_from_angle(angle)];
+                [button setCenter:point_from_angle(angle + angle_offset)];
             });
             return button.tag;
         });
@@ -407,14 +411,19 @@ static long (^(^(^touch_handler_init)(const ControlView * __strong))(__strong UI
             })());
             
             ((long)0 || state_setter_t) && ((*state_setter_t)(^ long {
-//                ^ (ControlView * control_view) {
-//                    animator = [[UIDynamicAnimator alloc] initWithReferenceView:control_view];
-//                    angle_from_point(center_point);
-//                    radius_from_point(center_point);
-//                    return ^ long (long(^animation)(UIDynamicAnimator *, UISnapBehavior *, size_t)) {
-//                        dispatch_apply(5, DISPATCH_APPLY_AUTO, ^(size_t index) {
-//                            dispatch_barrier_async(dispatch_get_main_queue(), ^{
-//                                animation(animator, snap[index], index);
+                integrate(30)(^ long (long frame) {
+                    angle_offset = ((360.0 / 30) * frame);
+                    test(UITouchPhaseCancelled);
+                    return frame;
+                });
+                //                ^ (ControlView * control_view) {
+                //                    animator = [[UIDynamicAnimator alloc] initWithReferenceView:control_view];
+                //                    angle_from_point(center_point);
+                //                    radius_from_point(center_point);
+                //                    return ^ long (long(^animation)(UIDynamicAnimator *, UISnapBehavior *, size_t)) {
+                //                        dispatch_apply(5, DISPATCH_APPLY_AUTO, ^(size_t index) {
+                //                            dispatch_barrier_async(dispatch_get_main_queue(), ^{
+                //                                animation(animator, snap[index], index);
 //                            });
 //                        });
 //                        [animator removeAllBehaviors];
