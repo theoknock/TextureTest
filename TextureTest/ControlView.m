@@ -199,18 +199,19 @@ static void(^(^(^a)(CADisplayLink *))(unsigned int))(unsigned int) = ^ (CADispla
     }(c);
 };
 
-static unsigned long (^ __strong integrand)(unsigned long, unsigned long *);
-static unsigned long (^(^integrate)(unsigned long))(unsigned long (^ __strong )(unsigned long, unsigned long *)) = ^ (unsigned long frame_count){
+static unsigned long (^ __strong integrand)(unsigned long, BOOL *);
+static unsigned long (^(^integrate)(unsigned long))(unsigned long (^ __strong )(unsigned long, BOOL *)) = ^ (unsigned long frame_count){
     __block typeof(CADisplayLink *) display_link;
     __block unsigned long frames = ~(1 << (frame_count + 1));
     __block unsigned long frame;
-    __block unsigned long STOP = FALSE_BIT;
-    return ^ (unsigned long (^ __strong integrand)(unsigned long, unsigned long *)) {
+    __block BOOL STOP = FALSE;
+    return ^ (unsigned long (^ __strong integrand)(unsigned long, BOOL *)) {
         display_link = [CADisplayLink displayLinkWithTarget:^{
             frames >>= 1;
             ((frames & 1) && (^ long {
                 frame = floor(log2(frames));
-                (STOP && integrand(frame, &STOP)) || (frames & 1) || ^ long {
+                (((frames & 1) & (STOP == FALSE)) && integrand(frame, &STOP)) || ^ long {
+                    printf("End\n");
                     [display_link removeFromRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
                     [display_link invalidate];
                     [display_link setPaused:TRUE];
@@ -602,19 +603,25 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
                 return TRUE_BIT;
             })());
             
-            static float step;
-            step = (360.0 / 60.0);
-            angle_offset = 0;
+            
             ((long)0 || state_setter_t) && ((*state_setter_t)(^ long {
+                float step = (360.0 / 30.0);
+                angle_offset = 0;
                 integrate((unsigned long)30)
-                (^{
-                    return ^ (unsigned long frame, dispatch_queue_t stop_display_link) {
-                        return ^{
-                            printf("1\t\t%lu\n", frame);
-                            return (unsigned long)frame;
-                        };
-                    };
-                }());
+                (^ (unsigned long frame, BOOL * STOP) {
+                    angle_offset += step;
+                    render_button_arc_using_block(^ unsigned long (const UIButton __strong * _Nonnull button) {
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            [button setHighlighted:(highlighted_property_bit_vector >> button.tag) & 1UL];
+                            [button setSelected:(selected_property_bit_vector >> button.tag) & 1UL];
+                            [button setHidden:(hidden_property_bit_vector >> button.tag) & 1UL];
+                            ((active_component_bit_vector & BUTTON_ARC_COMPONENT_BIT_MASK) && angle_from_point(point_from_angle(rescale(button.tag, 0.0, 4.0, 180.0, 270.0))));
+                            [button setCenter:point_from_angle(angle + angle_offset)];
+                        });
+                        return button.tag;
+                    });
+                    return (unsigned long)frame;
+                });
                 //                static float step;
                 //                step = (360.0 / 60.0);
                 //                angle_offset = 0;
