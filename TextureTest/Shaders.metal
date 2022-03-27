@@ -152,10 +152,10 @@ frameDifferencingBasicKernel(
                              uint2                          gid        [[ thread_position_in_grid ]]
                              )
 {
-    if((gid.x >= outTexture.get_width()) || (gid.y >= outTexture.get_height()))
-    {
-        return;
-    }
+//    if((gid.x >= outTexture.get_width()) || (gid.y >= outTexture.get_height()))
+//    {
+//        return;
+//    }
     
     half4 texture = inTexture.read(gid);
     half4 texture_p = inTextureP.read(gid);

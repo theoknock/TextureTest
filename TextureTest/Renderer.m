@@ -38,8 +38,7 @@
     id <MTLTexture> _colorMapPrev;
     id<MTLTexture> compute_texture_p;
     
-    id<MTLTexture>(^create_texture)(CVPixelBufferRef);
-    void(^render_texture)(id<MTLTexture>);
+    void(^draw_texture)(CVPixelBufferRef);
     
     // The Metal buffer that holds the vertex data.
     id<MTLBuffer> _vertices;
@@ -269,7 +268,7 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
         
         id<MTLLibrary> defaultLibrary = [mtkView.preferredDevice newDefaultLibrary];
         
-        create_texture = ^{
+        draw_texture = ^ (MTKView * render_view){
             MTLPixelFormat pixelFormat = mtkView.colorPixelFormat;
             CFStringRef textureCacheKeys[2] = { kCVMetalTextureCacheMaximumTextureAgeKey, kCVMetalTextureUsage };
             float maximumTextureAge = 1.0; //(mtkView.preferredFramesPerSecond);
@@ -281,33 +280,33 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
             CFDictionaryRef cacheAttributes = CFDictionaryCreate(NULL, (const void **)textureCacheKeys, (const void **)textureCacheValues, textureCacheAttributesCount, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
             
             CVMetalTextureCacheRef textureCache;
-            CVMetalTextureCacheCreate(NULL, cacheAttributes, self->_device, NULL, &textureCache);
+            CVMetalTextureCacheCreate(kCFAllocatorDefault, cacheAttributes, self->_device, NULL, &textureCache);
             //            CFShow(cacheAttributes);
             CFRelease(textureUsageValue);
             CFRelease(cacheAttributes);
             
-            return ^ id<MTLTexture> (CVPixelBufferRef _Nonnull pixel_buffer) {
-                
-                __autoreleasing id<MTLTexture> texture = nil;
-                @autoreleasepool {
-                    CVPixelBufferLockBaseAddress(pixel_buffer, kCVPixelBufferLock_ReadOnly);
-                    {
-                        CVMetalTextureRef metalTextureRef = NULL;
-                        CVMetalTextureCacheCreateTextureFromImage(NULL, textureCache, pixel_buffer, cacheAttributes, pixelFormat, CVPixelBufferGetWidth(pixel_buffer), CVPixelBufferGetHeight(pixel_buffer), 0, &metalTextureRef);
-                        texture = CVMetalTextureGetTexture(metalTextureRef);
-                        CFRelease(metalTextureRef);
+            return ^ (CVPixelBufferRef _Nonnull pixel_buffer) {
+                ^ (id<MTLTexture> t) {
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        [render_view performSelectorOnMainThread:@selector(draw) withObject:nil waitUntilDone:TRUE];
+                    });
+                }(self->_colorMap = ^ id<MTLTexture> (CVPixelBufferRef _Nonnull pixel_buffer) {
+                    __autoreleasing id<MTLTexture> texture = nil;
+                    @autoreleasepool {
+                        CVPixelBufferLockBaseAddress(pixel_buffer, kCVPixelBufferLock_ReadOnly);
+                        {
+                            CVMetalTextureRef metalTextureRef = NULL;
+                            CVMetalTextureCacheCreateTextureFromImage(kCFAllocatorDefault, textureCache, pixel_buffer, cacheAttributes, pixelFormat, CVPixelBufferGetWidth(pixel_buffer), CVPixelBufferGetHeight(pixel_buffer), 0, &metalTextureRef);
+                            texture = CVMetalTextureGetTexture(metalTextureRef);
+                            CFRelease(metalTextureRef);
+                        }
+                        CVPixelBufferUnlockBaseAddress(pixel_buffer, kCVPixelBufferLock_ReadOnly);
                     }
-                    CVPixelBufferUnlockBaseAddress(pixel_buffer, kCVPixelBufferLock_ReadOnly);
-                }
-                
-                return texture;
+                    CVMetalTextureCacheFlush(textureCache, 0);
+                    return texture;
+                }(pixel_buffer));
             };
-        }();
-        
-        render_texture = ^ (id<MTLTexture> texture) {
-            _colorMap = texture;
-            [mtkView draw];
-        };
+        }(mtkView);
         
         // Set up a simple MTLBuffer with vertices which include texture coordinates
         const float dim_a  = CGRectGetMaxX(UIScreen.mainScreen.bounds);
@@ -491,8 +490,7 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
 }
 
 - (void)captureOutput:(AVCaptureOutput *)output didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer fromConnection:(AVCaptureConnection *)connection {
-    render_texture(create_texture(CMSampleBufferGetImageBuffer(sampleBuffer))); // before overwriting _colorMap, copy it to another texture (for differencing)
-    // Try create_texture on _colorMapP, using it one frame after _colorMap
+    draw_texture(CMSampleBufferGetImageBuffer(sampleBuffer));
 }
 
 @end

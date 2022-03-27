@@ -211,7 +211,6 @@ static unsigned long (^(^integrate)(unsigned long))(unsigned long (^ __strong )(
             ((frames & 1) && (^ long {
                 frame = floor(log2(frames));
                 (((frames & 1) & (STOP == FALSE)) && integrand(frame, &STOP)) || ^ long {
-                    printf("End\n");
                     [display_link removeFromRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
                     [display_link invalidate];
                     [display_link setPaused:TRUE];
@@ -261,7 +260,7 @@ static const long (^(^(^state_setter)(long(^ _Nullable)(void)))(long(^ _Nullable
                         
                     });
                 });
-                printf("5 %d\n", i++);
+//                printf("5 %d\n", i++);
                 
                 //                        ^ {
                 //                            return ^ (void(^post_transition)(void(^)(void))) {
