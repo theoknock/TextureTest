@@ -199,50 +199,33 @@ static void(^(^(^a)(CADisplayLink *))(unsigned int))(unsigned int) = ^ (CADispla
     }(c);
 };
 
-/*
-static void (^(^handle_touch_control_event_init)(TouchEventHandlerType))(UITouch *);
-static void (^handle_touch_control_event[TouchEventHandlerTypeDefault])(UITouch *);
- */
 
-
-static long (^(^integrate)(long))(long(^ _Nullable (^__strong)(CADisplayLink *, long))(CADisplayLink *, long)) = ^ (long duration) {
+typedef unsigned long (^ const integrand)(CADisplayLink *, unsigned long);
+typedef const unsigned long (^ const * integrand_t)(CADisplayLink *, unsigned long);
+static unsigned long(^(^(^integrate)(unsigned long))(integrand))(integrand) = ^ (unsigned long frame_count){
     __block typeof(CADisplayLink *) display_link;
-    
-    return ^ long (long(^ _Nullable (^__strong integrand)(CADisplayLink *, long))(CADisplayLink *, long)) {
-        __block long frames;
-        __block long frame;
-        __block long(^ _Nullable (^__strong parent_integrand)(CADisplayLink *, long))(CADisplayLink *, long) = integrand;
-        __block long(^ _Nullable (^__strong child_integrand)(CADisplayLink *, long))(CADisplayLink *, long) = integrand;
-        //        __block long(^__strong child_integrand)(CADisplayLink *, long) = integrand(display_link, (frames = ~(1 << (duration + 1))));
-        frames = ~(1 << (duration + 1));
-        printf("--------- start ------------\n");
-        display_link = [CADisplayLink displayLinkWithTarget:^{
-            frames >>= 1;
-            ((frames & 1) && (^ long {
-                frame = floor(log2(frames));
-                parent_integrand(display_link, frame);
-                printf("A frame %ld\n", frame);
-                return active_component_bit_vector;
-            }()))
-            ||
-            ((frames | 1) && (^ long {
-                (!(FALSE_BIT || child_integrand) && (^ long {
-                    parent_integrand = child_integrand;
-                    child_integrand = nil;
-                    return (frames = ~(1 << (duration + 1)));
+    __block unsigned long frames = ~(1 << (frame_count + 1));
+    __block unsigned long frame;
+    return ^ (integrand const a) {
+        return ^ (integrand const b) {
+            display_link = [CADisplayLink displayLinkWithTarget:^{
+                frames >>= 1;
+                ((frames & 1) && (^ long {
+                    frame = floor(log2(frames));
+                    ((frame > 15) && a(display_link, frame)) || b(display_link, frame);
+                    return active_component_bit_vector;
                 }()))
                 ||
-                ((FALSE_BIT || child_integrand) && (^ long {
+                ((frames | 1) && (^ long {
                     [display_link removeFromRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
                     [display_link invalidate];
                     [display_link setPaused:TRUE];
                     return active_component_bit_vector;
                 }()));
-                return active_component_bit_vector;
-            }()));
-        } selector:@selector(invoke)];
-        [display_link addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
-        return active_component_bit_vector;
+            } selector:@selector(invoke)];
+            [display_link addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
+            return active_component_bit_vector;
+        };
     };
 };
 
@@ -627,6 +610,15 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
             step = (360.0 / 60.0);
             angle_offset = 0;
             ((long)0 || state_setter_t) && ((*state_setter_t)(^ long {
+                integrate((unsigned long)30)
+                (^ (CADisplayLink * display_link, unsigned long frame) {
+                    printf("1\t\t%lu\n", frame);
+                    return frame;
+                })
+                (^ (CADisplayLink * display_link, unsigned long frame) {
+                    printf("2\t\t%lu\n", frame);
+                    return frame;
+                });
                 //                static float step;
                 //                step = (360.0 / 60.0);
                 //                angle_offset = 0;
