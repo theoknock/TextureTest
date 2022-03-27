@@ -1019,3 +1019,79 @@ typedef unsigned long v30si __attribute__((__vector_size__(sizeof(unsigned long)
 
 
 //
+
+
+/*
+ 
+ 
+ */
+
+    unsigned long (^(^test)(UITouchPhase))(const UIButton __strong * _Nonnull)  = ^ (UITouchPhase touch_phase) {
+        //        __block UIDynamicAnimator * dynamic_animator = [[UIDynamicAnimator alloc] initWithReferenceView:view];
+        //        __block UISnapBehavior * snap_behavior;
+        //        [snap_behavior setDamping:1.0];
+        return ^  (unsigned long(^invoke)(const UIButton __strong * _Nonnull)) {
+            return (^{
+                //                [dynamic_animator removeAllBehaviors];
+                !!(((~selected_property_bit_vector & active_component_bit_vector) ^ selected_property_bit_vector) >> 0) && invoke(buttons[0]);
+                !!(((~selected_property_bit_vector & active_component_bit_vector) ^ selected_property_bit_vector) >> 1) && invoke(buttons[1]);
+                !!(((~selected_property_bit_vector & active_component_bit_vector) ^ selected_property_bit_vector) >> 2) && invoke(buttons[2]);
+                !!(((~selected_property_bit_vector & active_component_bit_vector) ^ selected_property_bit_vector) >> 3) && invoke(buttons[3]);
+                !!(((~selected_property_bit_vector & active_component_bit_vector) ^ selected_property_bit_vector) >> 4) && invoke(buttons[4]);
+                return ^{
+                    return invoke;
+                };
+            }()());
+        }(^ unsigned long (const UIButton __strong * _Nonnull button) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [button setHighlighted:(highlighted_property_bit_vector >> button.tag) & 1UL];
+                [button setSelected:(selected_property_bit_vector >> button.tag) & 1UL];
+                [button setHidden:(hidden_property_bit_vector >> button.tag) & 1UL];
+                ((active_component_bit_vector & BUTTON_ARC_COMPONENT_BIT_MASK) && angle_from_point(point_from_angle(rescale(button.tag, 0.0, 4.0, 180.0, 270.0))));
+                (((selected_property_bit_vector >> button.tag) & 1UL) && (set_configuration_phase(touch_phase))(configure_torch_level(rescale(angle, 180.0, 270.0, 0.0, 1.0))));
+                //                (touch_phase & UITouchPhaseBegan && ^{
+                //                    snap_behavior = [[UISnapBehavior alloc] initWithItem:button snapToPoint:button_center];
+                //                    [dynamic_animator addBehavior:snap_behavior];
+                //                    return TRUE_BIT;
+                //                });
+                [button setCenter:point_from_angle(angle + angle_offset)];
+            });
+            return button.tag;
+        });
+    };
+
+/*
+ 
+ 
+ */
+
+
+    unsigned long (^(^testes)(UITouchPhase))(const UIButton __strong * _Nonnull)  = ^ (UITouchPhase touch_phase) {
+        static float step;
+        step = (360.0 / 60.0);
+        angle_offset = 0;
+        return ^  (unsigned long(^post_animation)(const UIButton __strong * _Nonnull)) {
+            return (^{
+                post_animation(buttons[0]);
+                return ^{
+                    return post_animation;
+                };
+            }()());
+        }(^ unsigned long (const UIButton __strong * _Nonnull button) {
+            return ^ (unsigned long(^asdf)(const UIButton __strong * _Nonnull button)) {
+                printf("----1---\n");
+                return asdf(button);
+            }(^ unsigned long (const UIButton __strong * _Nonnull button) {
+                integrate((long)30)(^ (CADisplayLink * display_link, long frame) {
+                    angle_offset += step;
+                    printf("A-%d\t\tangle_offset == %f\n", frame, angle_offset);
+                   return ^ long (CADisplayLink * display_link, long frame) {
+                       angle_offset += step;
+                       printf("B-%d\t\tangle_offset == %f\n", frame, angle_offset);
+                       return frame;
+                   };
+                });
+                return button.tag;
+            });
+        });
+    };
