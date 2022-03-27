@@ -501,6 +501,13 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
         };
     };
     
+    unsigned long (^(^configure_lens_position)(float))(void) = ^ (float value) {
+        return ^{
+            [VideoCamera.captureDevice setFocusModeLockedWithLensPosition:value completionHandler:nil];
+            return (unsigned long)1;
+        };
+    };
+    
     unsigned long (^(^(^configure_capture_device_property)(unsigned long(^)(unsigned long(^)(void))))(unsigned long(^)(void)))(void) = ^ (unsigned long(^capture_device_lock_configuration)(unsigned long(^)(void))) {
         return ^ (unsigned long(^property_configuration)(void)) {
             return ^  (unsigned long(^configure_property)(void)) {
@@ -624,7 +631,8 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
             });
             
             ((active_component_bit_vector & ~BUTTON_ARC_COMPONENT_BIT_MASK) && (^ unsigned long {
-                (set_configuration_phase([touch phase]))(configure_torch_level(rescale(angle, 180.0, 270.0, 0.0, 1.0)));
+                configure_capture_device_property(set_configuration_phase([touch phase]))(configure_torch_level(rescale(angle, 180.0, 270.0, 0.0, 1.0)));
+//                (set_configuration_phase([touch phase]))(configure_torch_level(rescale(angle, 180.0, 270.0, 0.0, 1.0)));
                 [(ControlView *)view setNeedsDisplay];
                 return TRUE_BIT;
             })());
