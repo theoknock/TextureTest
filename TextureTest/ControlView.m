@@ -408,7 +408,7 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
                 [button setSelected:(selected_property_bit_vector >> button.tag) & 1UL];
                 [button setHidden:(hidden_property_bit_vector >> button.tag) & 1UL];
                 ((active_component_bit_vector & BUTTON_ARC_COMPONENT_BIT_MASK) && angle_from_point(point_from_angle(rescale(button.tag, 0.0, 4.0, 180.0, 270.0))));
-                [button setCenter:point_from_angle(angle + angle_offset)];
+                [button setCenter:point_from_angle(angle)];
             });
             return button.tag;
         });
@@ -515,7 +515,7 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
                         double minDurationSeconds = MAX( CMTimeGetSeconds(VideoCamera.captureDevice.activeFormat.minExposureDuration ), kExposureMinimumDuration );
                         double maxDurationSeconds = 1.0/3.0;//CMTimeGetSeconds( self.videoDevice.activeFormat.maxExposureDuration );
                         double newDurationSeconds = p * ( maxDurationSeconds - minDurationSeconds ) + minDurationSeconds;
-                        [VideoCamera.captureDevice setExposureModeCustomWithDuration:CMTimeMakeWithSeconds( newDurationSeconds, 1000*1000*1000 )  ISO:AVCaptureISOCurrent completionHandler:nil];
+                        [VideoCamera.captureDevice setExposureModeCustomWithDuration:CMTimeMakeWithSeconds( newDurationSeconds, 1000*1000*1000 )  ISO:[VideoCamera.captureDevice ISO] completionHandler:nil];
                         return (unsigned long)1;
                     };
                 };
@@ -525,9 +525,9 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
                 return ^ (float value) {
                     return ^{
                         @try {
-                            [VideoCamera.captureDevice setExposureModeCustomWithDuration:AVCaptureExposureDurationCurrent ISO:rescale(value, 0.0, 1.0, [VideoCamera.captureDevice.activeFormat minISO], [VideoCamera.captureDevice.activeFormat maxISO]) completionHandler:nil];
+                            [VideoCamera.captureDevice setExposureModeCustomWithDuration:[VideoCamera.captureDevice exposureDuration] ISO:rescale(value, 0.0, 1.0, [VideoCamera.captureDevice.activeFormat minISO], [VideoCamera.captureDevice.activeFormat maxISO]) completionHandler:nil];
                         } @catch (NSException *exception) {
-                            [VideoCamera.captureDevice setExposureModeCustomWithDuration:AVCaptureExposureDurationCurrent ISO:AVCaptureISOCurrent completionHandler:nil];
+                            [VideoCamera.captureDevice setExposureModeCustomWithDuration:[VideoCamera.captureDevice exposureDuration] ISO:[VideoCamera.captureDevice ISO] completionHandler:nil];
                         } @finally {
                             
                         }

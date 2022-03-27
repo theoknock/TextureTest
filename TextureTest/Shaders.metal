@@ -88,31 +88,28 @@ sobelEdgeDetectionKernel(
     uint2 bottomTextureCoordinate = gid + uint2(0, 1);
     uint2 bottomLeftTextureCoordinate = gid + uint2(-1, 1);
     uint2 bottomRightTextureCoordinate = gid + uint2(1, 1);
-    half3 bottomLeftIntensity = (inTexture.read(bottomLeftTextureCoordinate)).rgb;
-    half3 topRightIntensity = (inTexture.read(topRightTextureCoordinate)).rgb;
-    half3 topLeftIntensity = (inTexture.read(topLeftTextureCoordinate)).rgb;
-    half3 bottomRightIntensity = (inTexture.read(bottomRightTextureCoordinate)).rgb;
-    half3 leftIntensity = (inTexture.read(leftTextureCoordinate)).rgb;
-    half3 rightIntensity = (inTexture.read(rightTextureCoordinate)).rgb;
-    half3 bottomIntensity = (inTexture.read(bottomTextureCoordinate)).rgb;
-    half3 topIntensity = (inTexture.read(topTextureCoordinate)).rgb;
+    half bottomLeftIntensity = dot((inTexture.read(bottomLeftTextureCoordinate)).rgb, kRec709Luma);
+    half topRightIntensity = dot((inTexture.read(topRightTextureCoordinate)).rgb, kRec709Luma);
+    half topLeftIntensity = dot((inTexture.read(topLeftTextureCoordinate)).rgb, kRec709Luma);
+    half bottomRightIntensity = dot((inTexture.read(bottomRightTextureCoordinate)).rgb, kRec709Luma);
+    half leftIntensity = dot((inTexture.read(leftTextureCoordinate)).rgb, kRec709Luma);
+    half rightIntensity = dot((inTexture.read(rightTextureCoordinate)).rgb, kRec709Luma);
+    half bottomIntensity = dot((inTexture.read(bottomTextureCoordinate)).rgb, kRec709Luma);
+    half topIntensity = dot((inTexture.read(topTextureCoordinate)).rgb, kRec709Luma);
     
-    half3 coefficient_h = half3(1.f / 0.75, 1.f / 0.75, 1.f / 0.75);
-    half3 coefficient_v = half3(1.f / 1.3333333333, 1.f / 1.3333333333, 1.f / 1.3333333333);
-    half3 h = -topLeftIntensity - coefficient_h * topIntensity - topRightIntensity + bottomLeftIntensity + coefficient_h * bottomIntensity + bottomRightIntensity;
-    half3 v = -bottomLeftIntensity - coefficient_v * leftIntensity - topLeftIntensity + bottomRightIntensity + coefficient_v * rightIntensity + topRightIntensity;
+    half coefficient_h = half(2.0);
+    half coefficient_v = half(2.0);
+    half h = -topLeftIntensity - coefficient_h * topIntensity - topRightIntensity + bottomLeftIntensity + coefficient_h * bottomIntensity + bottomRightIntensity;
+    half v = -bottomLeftIntensity - coefficient_v * leftIntensity - topLeftIntensity + bottomRightIntensity + coefficient_v * rightIntensity + topRightIntensity;
     
-    half3 mag;
-    float2 multiplier = float2(1.f / 0.75, 1.f / 1.3333333333);
-    mag.r = length(float2(h.r, v.r)) * length(multiplier);
-    mag.g = length(float2(h.g, v.g)) * length(multiplier);
-    mag.b = length(float2(h.b, v.b)) * length(multiplier);
-    half dot_product = dot(mag, kRec709Luma);// * dot(mag, kRec709Luma);
+    half mag;
+    float2 multiplier = float2(2.0, 2.0);
+    mag = length(float2(h, v)) * length(multiplier);
+    mag *= mag;
+    half4 outputImageTexture = half4(mag, mag, mag, 1.0 + (mag / (1 - mag))); // (inputImageTextureP - inputImageTexture) * averageImageTextures;
+//    clamp(outputImageTexture, 0.0, 1.0);
     
-    half4 outputImageTexture = half4(dot_product, dot_product, dot_product, dot_product); // (inputImageTextureP - inputImageTexture) * averageImageTextures;
-    clamp(outputImageTexture, 0.0, 1.0);
-    
-    outTexture.write(half4(outputImageTexture.r, outputImageTexture.g, outputImageTexture.b, 1.0), gid);
+    outTexture.write(outputImageTexture, gid);
 }
 
 
