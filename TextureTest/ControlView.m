@@ -199,33 +199,29 @@ static void(^(^(^a)(CADisplayLink *))(unsigned int))(unsigned int) = ^ (CADispla
     }(c);
 };
 
-
-typedef unsigned long (^ const integrand)(CADisplayLink *, unsigned long);
-typedef const unsigned long (^ const * integrand_t)(CADisplayLink *, unsigned long);
-static unsigned long(^(^(^integrate)(unsigned long))(integrand))(integrand) = ^ (unsigned long frame_count){
+static unsigned long (^ __strong integrand)(unsigned long, unsigned long *);
+static unsigned long (^(^integrate)(unsigned long))(unsigned long (^ __strong )(unsigned long, unsigned long *)) = ^ (unsigned long frame_count){
     __block typeof(CADisplayLink *) display_link;
     __block unsigned long frames = ~(1 << (frame_count + 1));
     __block unsigned long frame;
-    return ^ (integrand const a) {
-        return ^ (integrand const b) {
-            display_link = [CADisplayLink displayLinkWithTarget:^{
-                frames >>= 1;
-                ((frames & 1) && (^ long {
-                    frame = floor(log2(frames));
-                    ((frame > 15) && a(display_link, frame)) || b(display_link, frame);
-                    return active_component_bit_vector;
-                }()))
-                ||
-                ((frames | 1) && (^ long {
+    __block unsigned long STOP = FALSE_BIT;
+    return ^ (unsigned long (^ __strong integrand)(unsigned long, unsigned long *)) {
+        display_link = [CADisplayLink displayLinkWithTarget:^{
+            frames >>= 1;
+            ((frames & 1) && (^ long {
+                frame = floor(log2(frames));
+                (STOP && integrand(frame, &STOP)) || (frames & 1) || ^ long {
                     [display_link removeFromRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
                     [display_link invalidate];
                     [display_link setPaused:TRUE];
+                    display_link = nil;
                     return active_component_bit_vector;
-                }()));
-            } selector:@selector(invoke)];
-            [display_link addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
-            return active_component_bit_vector;
-        };
+                }();
+                return active_component_bit_vector;
+            }()));
+        } selector:@selector(invoke)];
+        [display_link addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
+        return active_component_bit_vector;
     };
 };
 
@@ -611,14 +607,14 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
             angle_offset = 0;
             ((long)0 || state_setter_t) && ((*state_setter_t)(^ long {
                 integrate((unsigned long)30)
-                (^ (CADisplayLink * display_link, unsigned long frame) {
-                    printf("1\t\t%lu\n", frame);
-                    return frame;
-                })
-                (^ (CADisplayLink * display_link, unsigned long frame) {
-                    printf("2\t\t%lu\n", frame);
-                    return frame;
-                });
+                (^{
+                    return ^ (unsigned long frame, dispatch_queue_t stop_display_link) {
+                        return ^{
+                            printf("1\t\t%lu\n", frame);
+                            return (unsigned long)frame;
+                        };
+                    };
+                }());
                 //                static float step;
                 //                step = (360.0 / 60.0);
                 //                angle_offset = 0;
