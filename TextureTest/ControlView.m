@@ -480,7 +480,7 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
         }
     };
     
-    static const float kExposureDurationPower = 5.0;
+    static const float kExposureDurationPower = 4.0;
     static const float kExposureMinimumDuration = 1.0/1000;
     unsigned long (^(^(^capture_device_configuration)(CaptureDeviceConfigurationControlProperty))(float))(void)= ^ (CaptureDeviceConfigurationControlProperty property) {
         switch (property) {
@@ -525,7 +525,7 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
                 return ^ (float value) {
                     return ^{
                         @try {
-                            [VideoCamera.captureDevice setExposureModeCustomWithDuration:AVCaptureExposureDurationCurrent ISO:rescale(value, 0.0, 1.0, VideoCamera.captureDevice.activeFormat.minISO, VideoCamera.captureDevice.activeFormat.maxISO) completionHandler:nil];
+                            [VideoCamera.captureDevice setExposureModeCustomWithDuration:AVCaptureExposureDurationCurrent ISO:rescale(value, 0.0, 1.0, [VideoCamera.captureDevice.activeFormat minISO], [VideoCamera.captureDevice.activeFormat maxISO]) completionHandler:nil];
                         } @catch (NSException *exception) {
                             [VideoCamera.captureDevice setExposureModeCustomWithDuration:AVCaptureExposureDurationCurrent ISO:AVCaptureISOCurrent completionHandler:nil];
                         } @finally {
@@ -539,7 +539,7 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
             case CaptureDeviceConfigurationControlPropertyVideoZoomFactor: {
                 return ^ (float value) {
                     return ^{
-                        [VideoCamera.captureDevice setVideoZoomFactor:rescale(value, 0.0, 1.0, 1.0, 9.0)];
+                        [VideoCamera.captureDevice setVideoZoomFactor:rescale(pow(value, kExposureDurationPower), 0.0, 1.0, [VideoCamera.captureDevice minAvailableVideoZoomFactor], [VideoCamera.captureDevice maxAvailableVideoZoomFactor])];
                         return (unsigned long)1;
                     };
                 };
@@ -672,18 +672,18 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
                             angle = (rescale(VideoCamera.captureDevice.lensPosition, 0.0, 1.0, 180.0, 270.0));
                             break;
                         case CaptureDeviceConfigurationControlPropertyExposureDuration: {
-                            double newDurationSeconds = CMTimeGetSeconds( VideoCamera.captureDevice.exposureDuration );
-                            double minDurationSeconds = MAX(CMTimeGetSeconds( VideoCamera.captureDevice.activeFormat.minExposureDuration ), kExposureMinimumDuration);
+                            double newDurationSeconds = CMTimeGetSeconds([VideoCamera.captureDevice exposureDuration]);
+                            double minDurationSeconds = MAX(CMTimeGetSeconds([VideoCamera.captureDevice.activeFormat minExposureDuration]), kExposureMinimumDuration);
                             double maxDurationSeconds = 1.0/3.0;
                             double normalized_duration = fmaxf(0.0, fminf(pow(rescale(newDurationSeconds, minDurationSeconds, maxDurationSeconds, 0.0, 1.0), 1.0 / kExposureDurationPower), 1.0));
                             angle = rescale(normalized_duration, 0.0, 1.0, 180.0, 270.0);
                             break;
                         }
                         case CaptureDeviceConfigurationControlPropertyISO:
-                            angle = (rescale(VideoCamera.captureDevice.ISO, VideoCamera.captureDevice.activeFormat.minISO, VideoCamera.captureDevice.activeFormat.maxISO, 180.0, 270.0));
+                            angle = (rescale([VideoCamera.captureDevice ISO], [VideoCamera.captureDevice.activeFormat minISO], [VideoCamera.captureDevice.activeFormat maxISO], 180.0, 270.0));
                             break;
                         case CaptureDeviceConfigurationControlPropertyVideoZoomFactor:
-                            angle = (rescale(VideoCamera.captureDevice.videoZoomFactor, 1.0, 9.0, 180.0, 270.0));
+                            angle = (rescale([VideoCamera.captureDevice videoZoomFactor], [VideoCamera.captureDevice minAvailableVideoZoomFactor], [VideoCamera.captureDevice maxAvailableVideoZoomFactor], 180.0, 270.0));
                             break;
                         default:
                             return ~BUTTON_ARC_COMPONENT_BIT_MASK;

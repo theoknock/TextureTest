@@ -48,6 +48,7 @@ samplingShader(RasterizerData in [[stage_in]],
     return float4(colorSample);
 }
 
+constant half3 kRec709Luma = half3(0.2126, 0.7152, 0.0722);
 
 // Brightens dark images by dividing the texture by its inverse without burning out the highlights (clamp)
 // To-Do: an overlay blend mode kernel
@@ -75,15 +76,10 @@ kernel void
 sobelEdgeDetectionKernel(
                 texture2d<half, access::read>  inTexture  [[ texture(0) ]],
                 texture2d<half, access::write> outTexture [[ texture(1) ]],
-                texture2d<half, access::read>  inTextureP  [[ texture(2) ]],
+                texture2d<half, access::read>  inTextureP [[ texture(2) ]],
                 uint2                          gid        [[ thread_position_in_grid ]]
                 )
 {
-    if((gid.x >= outTexture.get_width()) || (gid.y >= outTexture.get_height()))
-    {
-        return;
-    }
-
     uint2 leftTextureCoordinate = gid + uint2(-1, 0);
     uint2 rightTextureCoordinate = gid + uint2(0, 1);
     uint2 topTextureCoordinate = gid + uint2(0, -1);
@@ -92,19 +88,28 @@ sobelEdgeDetectionKernel(
     uint2 bottomTextureCoordinate = gid + uint2(0, 1);
     uint2 bottomLeftTextureCoordinate = gid + uint2(-1, 1);
     uint2 bottomRightTextureCoordinate = gid + uint2(1, 1);
-    half bottomLeftIntensity = (inTexture.read(bottomLeftTextureCoordinate)).r;
-    float topRightIntensity = (inTexture.read(topRightTextureCoordinate)).r;
-    float topLeftIntensity = (inTexture.read(topLeftTextureCoordinate)).r;
-    float bottomRightIntensity = (inTexture.read(bottomRightTextureCoordinate)).r;
-    float leftIntensity = (inTexture.read(leftTextureCoordinate)).r;
-    float rightIntensity = (inTexture.read(rightTextureCoordinate)).r;
-    float bottomIntensity = (inTexture.read(bottomTextureCoordinate)).r;
-    float topIntensity = (inTexture.read(topTextureCoordinate)).r;
-    float h = -topLeftIntensity - 2.0 * topIntensity - topRightIntensity + bottomLeftIntensity + 2.0 * bottomIntensity + bottomRightIntensity;
-    float v = -bottomLeftIntensity - 2.0 * leftIntensity - topLeftIntensity + bottomRightIntensity + 2.0 * rightIntensity + topRightIntensity;
-    float mag = 1.0 - (length(float2(h, v)) * length(float2(1 / 0.75, 1 / 1.333333)));
+    half3 bottomLeftIntensity = (inTexture.read(bottomLeftTextureCoordinate)).rgb;
+    half3 topRightIntensity = (inTexture.read(topRightTextureCoordinate)).rgb;
+    half3 topLeftIntensity = (inTexture.read(topLeftTextureCoordinate)).rgb;
+    half3 bottomRightIntensity = (inTexture.read(bottomRightTextureCoordinate)).rgb;
+    half3 leftIntensity = (inTexture.read(leftTextureCoordinate)).rgb;
+    half3 rightIntensity = (inTexture.read(rightTextureCoordinate)).rgb;
+    half3 bottomIntensity = (inTexture.read(bottomTextureCoordinate)).rgb;
+    half3 topIntensity = (inTexture.read(topTextureCoordinate)).rgb;
     
-    half4 outputImageTexture = mag * mag; // (inputImageTextureP - inputImageTexture) * averageImageTextures;
+    half3 coefficient_h = half3(1.f / 0.75, 1.f / 0.75, 1.f / 0.75);
+    half3 coefficient_v = half3(1.f / 1.3333333333, 1.f / 1.3333333333, 1.f / 1.3333333333);
+    half3 h = -topLeftIntensity - coefficient_h * topIntensity - topRightIntensity + bottomLeftIntensity + coefficient_h * bottomIntensity + bottomRightIntensity;
+    half3 v = -bottomLeftIntensity - coefficient_v * leftIntensity - topLeftIntensity + bottomRightIntensity + coefficient_v * rightIntensity + topRightIntensity;
+    
+    half3 mag;
+    float2 multiplier = float2(1.f / 0.75, 1.f / 1.3333333333);
+    mag.r = length(float2(h.r, v.r)) * length(multiplier);
+    mag.g = length(float2(h.g, v.g)) * length(multiplier);
+    mag.b = length(float2(h.b, v.b)) * length(multiplier);
+    half dot_product = dot(mag, kRec709Luma);// * dot(mag, kRec709Luma);
+    
+    half4 outputImageTexture = half4(dot_product, dot_product, dot_product, dot_product); // (inputImageTextureP - inputImageTexture) * averageImageTextures;
     clamp(outputImageTexture, 0.0, 1.0);
     
     outTexture.write(half4(outputImageTexture.r, outputImageTexture.g, outputImageTexture.b, 1.0), gid);
@@ -143,7 +148,6 @@ frameDifferencingKernel(
     outTexture.write(half4(averageDifference.r, averageDifference.g, averageDifference.b, 1.0), gid);
 }
 
-constant half3 kRec709Luma = half3(0.2126, 0.7152, 0.0722);
 kernel void
 frameDifferencingBasicKernel(
                              texture2d<half, access::read>  inTexture  [[ texture(0) ]],
