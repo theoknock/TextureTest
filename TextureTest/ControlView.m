@@ -173,35 +173,70 @@ int extractBit(int bit_vector, int length, int position)
 //    return (NSString *)bit_vector_str;
 //};
 
-static long (^(^integrate)(long))(long(^__strong)(long)) = ^ (long duration) {
+unsigned long (^(^invoke)(unsigned long(^)(const UIButton __strong * _Nonnull)))(const UIButton __strong * _Nonnull)  = ^ (unsigned long(^invoke_a)(const UIButton __strong * _Nonnull)) {
+    return ^  (unsigned long(^invoke_b)(const UIButton __strong * _Nonnull)) {
+        return (^{
+            invoke_b(buttons[0]);
+            return ^{
+                return invoke_b;
+            };
+        }()());
+    }(invoke_a);
+};
+
+static void(^c)(unsigned int);
+static void(^(^b)(unsigned int))(unsigned int);
+static void(^(^(^a)(CADisplayLink *))(unsigned int))(unsigned int) = ^ (CADisplayLink * display_link) {
+    return ^ (void(^x)(unsigned int)) {
+        return ^ (unsigned int frame) {
+            x(frame);
+            return ^ (void(^y)(unsigned int)) {
+                return ^ (unsigned int frame) {
+                    y(frame);
+                };
+            }(c);
+        };
+    }(c);
+};
+
+static long (^(^integrate)(long))(long(^ _Nullable (^__strong)(CADisplayLink *, long))(CADisplayLink *, long)) = ^ (long duration) {
     __block typeof(CADisplayLink *) display_link;
-    __block /* _Atomic */ long frames = ~(1 << (duration + 1));
-    __block long frame;
-    //    __block long(^cancel)(CADisplayLink *);
-    //    return ^ long (long(^__strong integrand)(long)) {
-    return ^ long (long(^__strong integrand)(long)) {
+    
+
+    return ^ long (long(^ _Nullable (^__strong integrand)(CADisplayLink *, long))(CADisplayLink *, long)) {
+        __block long frames;
+        __block long frame;
+        __block long(^ _Nullable (^__strong parent_integrand)(CADisplayLink *, long))(CADisplayLink *, long) = integrand;
+        __block long(^__strong child_integrand)(CADisplayLink *, long) = integrand(display_link, (frames = ~(1 << (duration + 1))));
+        printf("--------- start ------------\n");
         display_link = [CADisplayLink displayLinkWithTarget:^{
-            //            dispatch_barrier_async(dispatch_get_main_queue(), ^{
             frames >>= 1;
-            ((frames & 1) && ^ long {
+            ((frames & 1) && (^ long {
                 frame = floor(log2(frames));
-                //                    static long (^(^integrate)(long))(long(^ _Nullable (^__strong)(long))(CADisplayLink *)) = ^ (long duration) {
-                //                        return ^ long (long(^ _Nullable (^__strong integrand)(long))(CADisplayLink *)) {
-                //                    ((long)0 || (cancel = (integrand(frame)))) && cancel(display_link); // runs a cancel handler if one was provided
-                
-                //                    dispatch_barrier_async_and_wait(enumerator_queue(), ^{ integrand(frame); });
-                integrand(frame);
+                parent_integrand(display_link, frame);
+                printf("A frame %d\n", frame);
                 return active_component_bit_vector;
-            }())
+            }()));
             
-            ||
-            
-            ((frames | 1) && ^ long {
-                [display_link removeFromRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
-                [display_link invalidate];
+            ((frames | 1) && (^ long {
+                (((long)0 || (child_integrand = parent_integrand(display_link, (frames = ~(1 << (duration + 1)))))));
+                  
+                  
+                  
+                  
+//                  && ^ long {
+//                    printf("B frame %d\n", frame);
+//                    return (frames = ~(1 << (duration + 1)));
+//                }()) || (^ long {
+//                    printf("--------- end ------------\n");
+//                    [display_link removeFromRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
+//                    [display_link invalidate];
+//                    [display_link setPaused:TRUE];
+//                    return active_component_bit_vector;
+//                }());
                 return active_component_bit_vector;
-            }());
-            //            });
+            }()));
+            
         } selector:@selector(invoke)];
         [display_link addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
         return active_component_bit_vector;
@@ -212,17 +247,17 @@ static const long (^(^(^state_setter)(long(^ _Nullable)(void)))(long(^ _Nullable
     
     return ^ (long (^ _Nonnull __strong transition)(void)) {
         
-        //        transition();
-        static int i;
-        return ^ (long (^ _Nonnull __strong post_set_state_animation)(void)) {
-            return ^ long {
-                dispatch_sync(animator_queue(), ^{
-                    printf("1 %d\n", i++);
-                    pre_set_state_animation();
-                    dispatch_sync(animator_queue(), ^{
-                        printf("2 %d\n", i++);
-                        // selected (converse nonimplication)
-                        selected_property_bit_vector = highlighted_property_bit_vector & active_component_bit_vector;
+                //        transition();
+                static int i;
+                return ^ (long (^ _Nonnull __strong post_set_state_animation)(void)) {
+                    return ^ long {
+                        dispatch_sync(animator_queue(), ^{
+//                            printf("1 %d\n", i++);
+                            pre_set_state_animation();
+                            dispatch_sync(animator_queue(), ^{
+//                                printf("2 %d\n", i++);
+                                // selected (converse nonimplication)
+                                selected_property_bit_vector = highlighted_property_bit_vector & active_component_bit_vector;
                         
                         // hidden (exclusive disjunction)
                         hidden_property_bit_vector = (~selected_property_bit_vector & active_component_bit_vector);
@@ -233,20 +268,31 @@ static const long (^(^(^state_setter)(long(^ _Nullable)(void)))(long(^ _Nullable
                         // active_component
                         active_component_bit_vector = ~active_component_bit_vector;
                         dispatch_sync(animator_queue(), ^{
-                            printf("3 %d\n", i++);
-                            transition();
+//                            printf("3 %d\n", i++);
+                            post_set_state_animation();
                             dispatch_sync(animator_queue(), ^{
-                                printf("4 %d\n", i++);
-                                post_set_state_animation();
+//                                printf("4 %d\n", i++);
+                                transition();
                             });
                         });
                         
                     });
-                });
-                printf("5 %d\n", i++);
-                return TRUE_BIT;
-            }();
-        };
+                        });
+                        printf("5 %d\n", i++);
+                        
+//                        ^ {
+//                            return ^ (void(^post_transition)(void(^)(void))) {
+//                                return ^ (void(^(^state)(void))(void)) {
+//                                    return ^ (void(^(^pre_transition)(void(^)(void)))(void)) {
+//                                        return post_transition(pre_transition(state()));
+//                                    };
+//                                };
+//                            };
+//                        };
+                        
+                        return TRUE_BIT;
+                    }();
+                };
     };
 };
 
@@ -256,9 +302,9 @@ static const void (^ const (* restrict draw_tick_wheel_ptr))(CGContextRef, CGRec
 static const long (^(^(^state_setter)(long(^ _Nullable)(void)))(long(^ _Nullable)(void)))(long(^ _Nullable)(void));
 static const long (^(^(^__strong * restrict state_setter_ptr)(long (^ _Nullable __strong)(void)))(long (^ _Nullable __strong)(void)))(long (^ _Nullable __strong)(void)) = &state_setter;
 
-static const long (^(^_Nonnull touch_handler)(__strong UITouch * _Nullable))(const long (^(^(^__strong * restrict state_setter_ptr)(long (^ _Nullable __strong)(void)))(long (^ _Nullable __strong)(void)))(long (^ _Nullable __strong)(void)));
-static const long (^ _Nonnull  handle_touch)(const long (^(^(^__strong * restrict state_setter_ptr)(long (^ _Nullable __strong)(void)))(long (^ _Nullable __strong)(void)))(long (^ _Nullable __strong)(void)));
-static long (^(^(^touch_handler_init)(const ControlView * __strong))(__strong UITouch * _Nullable))(const long (^(^(^__strong * restrict state_setter_ptr)(long (^ _Nullable __strong)(void)))(long (^ _Nullable __strong)(void)))(long (^ _Nullable __strong)(void))) = ^ (const ControlView * __strong view) {
+static const unsigned long (^(^_Nonnull touch_handler)(__strong UITouch * _Nullable))(const long (^(^(^__strong * restrict state_setter_ptr)(long (^ _Nullable __strong)(void)))(long (^ _Nullable __strong)(void)))(long (^ _Nullable __strong)(void)));
+static const unsigned long (^ _Nonnull  handle_touch)(const long (^(^(^__strong * restrict state_setter_ptr)(long (^ _Nullable __strong)(void)))(long (^ _Nullable __strong)(void)))(long (^ _Nullable __strong)(void)));
+static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__strong UITouch * _Nullable))(const long (^(^(^__strong * restrict state_setter_ptr)(long (^ _Nullable __strong)(void)))(long (^ _Nullable __strong)(void)))(long (^ _Nullable __strong)(void))) = ^ (const ControlView * __strong view) {
     center_point = CGPointMake(CGRectGetMaxX(((ControlView *)view).bounds), CGRectGetMaxY(((ControlView *)view).bounds));
     
     static float radius;
@@ -373,50 +419,187 @@ static long (^(^(^touch_handler_init)(const ControlView * __strong))(__strong UI
     haptic_feedback = [[UISelectionFeedbackGenerator alloc] init];
     [haptic_feedback prepare];
     
-    unsigned long (^(^test)(UITouchPhase))(const UIButton __strong * _Nonnull)  = ^ (UITouchPhase touch_phase) {
-        //        __block UIDynamicAnimator * dynamic_animator = [[UIDynamicAnimator alloc] initWithReferenceView:view];
-        //        __block UISnapBehavior * snap_behavior;
-        //        [snap_behavior setDamping:1.0];
-        return ^  (unsigned long(^invoke)(const UIButton __strong * _Nonnull)) {
+    unsigned long (^(^invoke)(unsigned long(^)(const UIButton __strong * _Nonnull)))(const UIButton __strong * _Nonnull)  = ^ (unsigned long(^invoke_a)(const UIButton __strong * _Nonnull)) {
+        return ^  (unsigned long(^invoke_aa)(const UIButton __strong * _Nonnull)) {
             return (^{
-                //                [dynamic_animator removeAllBehaviors];
-                !!(((~selected_property_bit_vector & active_component_bit_vector) ^ selected_property_bit_vector) >> 0) && invoke(buttons[0]);
-                !!(((~selected_property_bit_vector & active_component_bit_vector) ^ selected_property_bit_vector) >> 1) && invoke(buttons[1]);
-                !!(((~selected_property_bit_vector & active_component_bit_vector) ^ selected_property_bit_vector) >> 2) && invoke(buttons[2]);
-                !!(((~selected_property_bit_vector & active_component_bit_vector) ^ selected_property_bit_vector) >> 3) && invoke(buttons[3]);
-                !!(((~selected_property_bit_vector & active_component_bit_vector) ^ selected_property_bit_vector) >> 4) && invoke(buttons[4]);
+                !!(((~selected_property_bit_vector & active_component_bit_vector) ^ selected_property_bit_vector) >> 0) && invoke_aa(buttons[0]);
+                !!(((~selected_property_bit_vector & active_component_bit_vector) ^ selected_property_bit_vector) >> 1) && invoke_aa(buttons[1]);
+                !!(((~selected_property_bit_vector & active_component_bit_vector) ^ selected_property_bit_vector) >> 2) && invoke_aa(buttons[2]);
+                !!(((~selected_property_bit_vector & active_component_bit_vector) ^ selected_property_bit_vector) >> 3) && invoke_aa(buttons[3]);
+                !!(((~selected_property_bit_vector & active_component_bit_vector) ^ selected_property_bit_vector) >> 4) && invoke_aa(buttons[4]);
                 return ^{
-                    return invoke;
+                    return invoke_aa;
                 };
             }()());
-        }(^ unsigned long (const UIButton __strong * _Nonnull button) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [button setHighlighted:(highlighted_property_bit_vector >> button.tag) & 1UL];
-                [button setSelected:(selected_property_bit_vector >> button.tag) & 1UL];
-                [button setHidden:(hidden_property_bit_vector >> button.tag) & 1UL];
-                ((active_component_bit_vector & BUTTON_ARC_COMPONENT_BIT_MASK) && angle_from_point(point_from_angle(rescale(button.tag, 0.0, 4.0, 180.0, 270.0))));
-                //                (touch_phase & UITouchPhaseBegan && ^{
-                //                    snap_behavior = [[UISnapBehavior alloc] initWithItem:button snapToPoint:button_center];
-                //                    [dynamic_animator addBehavior:snap_behavior];
-                //                    return TRUE_BIT;
-                //                });
-                [button setCenter:point_from_angle(angle + angle_offset)];
-            });
-            return button.tag;
-        });
+        }(invoke_a);
     };
+    
+    /*
+     
+     
+     */
+    
+    static unsigned long (^(^set_configuration_phase)(UITouchPhase))(unsigned long(^)(void)) = ^ (UITouchPhase phase) {
+        switch (phase) {
+            case UITouchPhaseMoved: {
+                return ^ (unsigned long(^configuration)(void)) {
+                    return configuration();
+                };
+                break;
+            }
+            case UITouchPhaseBegan: {
+                return ^ (unsigned long(^configuration)(void)) {
+                    @try {
+                        __autoreleasing NSError *error = NULL;
+                        [VideoCamera.captureDevice lockForConfiguration:&error];
+                        if (error) {
+                            printf("Error == %s\n", [[error debugDescription] UTF8String]);
+                            NSException* exception = [NSException
+                                                      exceptionWithName:error.domain
+                                                      reason:error.localizedDescription
+                                                      userInfo:@{@"Error Code" : @(error.code)}];
+                            @throw exception;
+                        }
+                    } @catch (NSException *exception) {
+                        NSLog(@"Error configuring camera:\n\t%@\n\t%@\n\t%lu",
+                              exception.name,
+                              exception.reason,
+                              ((NSNumber *)[exception.userInfo valueForKey:@"Error Code"]).unsignedIntegerValue);
+                    } @finally {
+                        return configuration();
+                    }
+                };
+                break;
+            }
+            case UITouchPhaseEnded: {
+                return ^ (unsigned long(^configuration)(void)) {
+                    unsigned long invocation_result = configuration();
+                    [VideoCamera.captureDevice unlockForConfiguration];
+                    return (unsigned long)invocation_result;
+                };
+                break;
+            }
+            default: {
+                return ^ (unsigned long(^configuration)(void)) {
+                    return (unsigned long)0;
+                };
+                break;
+            }
+        }
+    };
+    
+    unsigned long (^(^configure_torch_level)(float))(void) = ^ (float value) {
+        return ^{
+            __autoreleasing NSError * error = nil;
+            if (([[NSProcessInfo processInfo] thermalState] != NSProcessInfoThermalStateCritical && [[NSProcessInfo processInfo] thermalState] != NSProcessInfoThermalStateSerious)) {
+                if (value != 0)
+                    [VideoCamera.captureDevice setTorchModeOnWithLevel:value error:&error];
+                else
+                    [VideoCamera.captureDevice setTorchMode:AVCaptureTorchModeOff];
+            }
+            return (unsigned long)1;
+        };
+    };
+    
+    unsigned long (^(^(^configure_capture_device_property)(unsigned long(^)(unsigned long(^)(void))))(unsigned long(^)(void)))(void) = ^ (unsigned long(^capture_device_lock_configuration)(unsigned long(^)(void))) {
+        return ^ (unsigned long(^property_configuration)(void)) {
+            return ^  (unsigned long(^configure_property)(void)) {
+                return (^{
+                    capture_device_lock_configuration(configure_property);
+                    return ^{
+                        return configure_property;
+                    };
+                }()());
+            }(property_configuration);
+        };
+    };
+    
+        /*
+         
+         
+         */
+        
+//    unsigned long (^(^test)(UITouchPhase))(const UIButton __strong * _Nonnull)  = ^ (UITouchPhase touch_phase) {
+//        //        __block UIDynamicAnimator * dynamic_animator = [[UIDynamicAnimator alloc] initWithReferenceView:view];
+//        //        __block UISnapBehavior * snap_behavior;
+//        //        [snap_behavior setDamping:1.0];
+//        return ^  (unsigned long(^invoke)(const UIButton __strong * _Nonnull)) {
+//            return (^{
+//                //                [dynamic_animator removeAllBehaviors];
+//                !!(((~selected_property_bit_vector & active_component_bit_vector) ^ selected_property_bit_vector) >> 0) && invoke(buttons[0]);
+//                !!(((~selected_property_bit_vector & active_component_bit_vector) ^ selected_property_bit_vector) >> 1) && invoke(buttons[1]);
+//                !!(((~selected_property_bit_vector & active_component_bit_vector) ^ selected_property_bit_vector) >> 2) && invoke(buttons[2]);
+//                !!(((~selected_property_bit_vector & active_component_bit_vector) ^ selected_property_bit_vector) >> 3) && invoke(buttons[3]);
+//                !!(((~selected_property_bit_vector & active_component_bit_vector) ^ selected_property_bit_vector) >> 4) && invoke(buttons[4]);
+//                return ^{
+//                    return invoke;
+//                };
+//            }()());
+//        }(^ unsigned long (const UIButton __strong * _Nonnull button) {
+//            dispatch_async(dispatch_get_main_queue(), ^{
+//                [button setHighlighted:(highlighted_property_bit_vector >> button.tag) & 1UL];
+//                [button setSelected:(selected_property_bit_vector >> button.tag) & 1UL];
+//                [button setHidden:(hidden_property_bit_vector >> button.tag) & 1UL];
+//                ((active_component_bit_vector & BUTTON_ARC_COMPONENT_BIT_MASK) && angle_from_point(point_from_angle(rescale(button.tag, 0.0, 4.0, 180.0, 270.0))));
+//                (((selected_property_bit_vector >> button.tag) & 1UL) && (set_configuration_phase(touch_phase))(configure_torch_level(rescale(angle, 180.0, 270.0, 0.0, 1.0))));
+//                //                (touch_phase & UITouchPhaseBegan && ^{
+//                //                    snap_behavior = [[UISnapBehavior alloc] initWithItem:button snapToPoint:button_center];
+//                //                    [dynamic_animator addBehavior:snap_behavior];
+//                //                    return TRUE_BIT;
+//                //                });
+//                [button setCenter:point_from_angle(angle + angle_offset)];
+//            });
+//            return button.tag;
+//        });
+//    };
+        
+     /*
+      
+      
+      */
+        
+    
+//    unsigned long (^(^testes)(UITouchPhase))(const UIButton __strong * _Nonnull)  = ^ (UITouchPhase touch_phase) {
+//        static float step;
+//        step = (360.0 / 60.0);
+//        angle_offset = 0;
+//        return ^  (unsigned long(^post_animation)(const UIButton __strong * _Nonnull)) {
+//            return (^{
+//                post_animation(buttons[0]);
+//                return ^{
+//                    return post_animation;
+//                };
+//            }()());
+//        }(^ unsigned long (const UIButton __strong * _Nonnull button) {
+//            return ^ (unsigned long(^asdf)(const UIButton __strong * _Nonnull button)) {
+//                printf("----1---\n");
+//                return asdf(button);
+//            }(^ unsigned long (const UIButton __strong * _Nonnull button) {
+//                integrate((long)30)(^ (CADisplayLink * display_link, long frame) {
+//                    angle_offset += step;
+//                    printf("A-%d\t\tangle_offset == %f\n", frame, angle_offset);
+//                   return ^ long (CADisplayLink * display_link, long frame) {
+//                       angle_offset += step;
+//                       printf("B-%d\t\tangle_offset == %f\n", frame, angle_offset);
+//                       return frame;
+//                   };
+//                });
+//                return button.tag;
+//            });
+//        });
+//    };
     
     __block unsigned long touch_property;
     
     return ^ (__strong UITouch * _Nullable touch) { // handle_touch:
         return ^ (const long (^(^(^__strong * restrict state_setter_t)(long (^ _Nullable __strong)(void)))(long (^ _Nullable __strong)(void)))(long (^ _Nullable __strong)(void))) {
             ^ (CGPoint touch_point) {
-                touch_point.x = fmaxf(center_point.x - CGRectGetWidth(view.bounds),             fminf(touch_point.x, center_point.x));
+                touch_point.x = fmaxf(CGRectGetMinX(view.bounds), fminf(touch_point.x, center_point.x));
                 touch_point.y = fmaxf(CGRectGetMaxY(view.bounds) - CGRectGetWidth(view.bounds), fminf(touch_point.y, center_point.y));
                 radius_from_point(touch_point);
                 angle_from_point(touch_point);
                 touch_property = (unsigned int)round(rescale(angle, 180.0, 270.0, 0.0, 4.0));
-                highlighted_property_bit_vector = (1UL << touch_property);
+                (active_component_bit_vector & BUTTON_ARC_COMPONENT_BIT_MASK) && (highlighted_property_bit_vector = (1UL << touch_property));
 //                typeof(touch_property) new_touch_property;
 //                (active_component_bit_vector & BUTTON_ARC_COMPONENT_BIT_MASK) && ((new_touch_property = (unsigned int)round(rescale(angle, 180.0, 270.0, 0.0, 4.0))) ^ touch_property) && (highlighted_property_bit_vector = (1UL << (^ unsigned long {
 //                    [haptic_feedback selectionChanged];
@@ -428,22 +611,48 @@ static long (^(^(^touch_handler_init)(const ControlView * __strong))(__strong UI
             
             
             
-            dispatch_async(dispatch_get_main_queue(), ^{ test(touch.phase); });
+//            test(touch.phase);
+            invoke(^ unsigned long (const UIButton __strong * _Nonnull button) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [button setHighlighted:(highlighted_property_bit_vector >> button.tag) & 1UL];
+                    [button setSelected:(selected_property_bit_vector >> button.tag) & 1UL];
+                    [button setHidden:(hidden_property_bit_vector >> button.tag) & 1UL];
+                    ((active_component_bit_vector & BUTTON_ARC_COMPONENT_BIT_MASK) && angle_from_point(point_from_angle(rescale(button.tag, 0.0, 4.0, 180.0, 270.0))));
+                    [button setCenter:point_from_angle(angle + angle_offset)];
+                });
+                return button.tag;
+            });
+            
             ((active_component_bit_vector & ~BUTTON_ARC_COMPONENT_BIT_MASK) && (^ unsigned long {
+                (set_configuration_phase([touch phase]))(configure_torch_level(rescale(angle, 180.0, 270.0, 0.0, 1.0)));
                 [(ControlView *)view setNeedsDisplay];
                 return TRUE_BIT;
             })());
             
-            static float step;
-            step = (360.0 / 60.0);
-            angle_offset = 0;
+//            static float step;
+//            step = (360.0 / 60.0);
+//            angle_offset = 0;
             ((long)0 || state_setter_t) && ((*state_setter_t)(^ long {
-                integrate(30)(^ long (long frame) {
-                        angle_offset += step;
-                        printf("A\t\tangle_offset == %f\n", angle_offset);
-                        test(touch.phase);
-                        return frame;
-                    });
+//                static float step;
+//                step = (360.0 / 60.0);
+//                angle_offset = 0;
+//                integrate((long)30)(^ (CADisplayLink * display_link, long frame) {
+//                    angle_offset += step;
+//                    printf("A-%d\t\tangle_offset == %f\n", frame, angle_offset);
+//                    return ^ long (long(^blk)(CADisplayLink * display_link, long frame)) {
+//                       angle_offset += step;
+//                       printf("B-%d\t\tangle_offset == %f\n", frame, angle_offset);
+//                       return frame;
+//                    }(^ (CADisplayLink * display_link, long frame) {
+//                        return frame;
+//                    });
+//                });
+//                integrate(30)(^ long (long frame) {
+//                    angle_offset += step;
+//                    printf("A\t\tangle_offset == %f\n", angle_offset);
+//                    test(touch.phase);
+//                    return frame;
+//                });
                 //                ^ (ControlView * control_view) {
                 //                    animator = [[UIDynamicAnimator alloc] initWithReferenceView:control_view];
                 //                    angle_from_point(center_point);
@@ -496,13 +705,13 @@ static long (^(^(^touch_handler_init)(const ControlView * __strong))(__strong UI
                 })());
                 return (long)TRUE_BIT;
             })(^ long {
-                integrate(30)(^ long (long frame) {
-                        angle_offset += step;
-                        printf("B\t\tangle_offset == %f\n", angle_offset);
-                        test(touch.phase);
-                        return frame;
-                    });
-                angle_offset = 0;
+//                integrate(30)(^ long (long frame) {
+//                    angle_offset += step;
+//                    printf("B\t\tangle_offset == %f\n", angle_offset);
+//                    test(touch.phase);
+//                    return frame;
+//                });
+//                angle_offset = 0;
                 //                ^ (ControlView * control_view) {
                 //                    animator = [[UIDynamicAnimator alloc] initWithReferenceView:control_view];
                 //                    return ^ long (long(^animation)(UIDynamicAnimator *, UISnapBehavior *, size_t)) {
@@ -525,7 +734,7 @@ static long (^(^(^touch_handler_init)(const ControlView * __strong))(__strong UI
                 return (long)TRUE_BIT;
             }));
             [(ControlView *)view setNeedsDisplay];
-            return (long)test(touch.phase);
+            return TRUE_BIT;
         };
     };
 };
