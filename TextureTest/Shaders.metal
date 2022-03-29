@@ -52,7 +52,7 @@ constant half3 kRec709Luma = half3(0.2126, 0.7152, 0.0722);
 
 // Brightens dark images by dividing the texture by its inverse without burning out the highlights (clamp)
 // To-Do: an overlay blend mode kernel
-[[stitchable]] void
+kernel void
 divideInverseKernel(
                 texture2d<half, access::read>  inTexture  [[ texture(0) ]],
                 texture2d<half, access::write> outTexture [[ texture(1) ]],

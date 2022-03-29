@@ -222,7 +222,7 @@ static unsigned long (^(^integrate)(unsigned long))(unsigned long (^ __strong )(
             }()));
         } selector:@selector(invoke)];
         [display_link addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
-        return active_component_bit_vector;
+        return frame;
     };
 };
 
@@ -281,8 +281,7 @@ typedef float (^Step)(int);
 static Step (^stepper)(int, float) = ^ (int count, float start) {
     __block float stride = (float)(start / count);
     return ^ float (int step) {
-        float result = (float)(start - (stride * step));
-        printf("result == %f\n", result);
+        float result = (float)(start + (stride * step));
         return result;
     };
 };
@@ -612,23 +611,20 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
             
             ((active_component_bit_vector & ~BUTTON_ARC_COMPONENT_BIT_MASK) && (^ unsigned long {
                 unsigned int selected_property_bit_position = floor(log2(selected_property_bit_vector));
-//                configure_capture_device_property(set_configuration_phase([touch phase]))((capture_device_configuration(selected_property_bit_position))(rescale(angle, 180.0, 270.0, 0.0, 1.0)));
-                                set_configuration_phase([touch phase])((capture_device_configuration(selected_property_bit_position))(rescale(angle, 180.0, 270.0, 0.0, 1.0)));
+                //                configure_capture_device_property(set_configuration_phase([touch phase]))((capture_device_configuration(selected_property_bit_position))(rescale(angle, 180.0, 270.0, 0.0, 1.0)));
+                set_configuration_phase([touch phase])((capture_device_configuration(selected_property_bit_position))(rescale(angle, 180.0, 270.0, 0.0, 1.0)));
                 [(ControlView *)view setNeedsDisplay];
                 return TRUE_BIT;
             })());
             
             
             ((unsigned long)0 | (unsigned long)state_setter_t) && ^ long {
-                ((*(state_setter_t))());
                 float (^destination_angle)(unsigned long) = ^ float (unsigned long button_tag) {
                     __block float destination_angle;
                     ((active_component_bit_vector & BUTTON_ARC_COMPONENT_BIT_MASK) && (^ long {
-                        printf("primary\n");
                         destination_angle = rescale(button_tag, 0.0, 4.0, 180.0, 270.0);
                         return TRUE_BIT;
                     }())) || (^ long {
-                        printf("\t\tsecondary\n");
                         unsigned int selected_property_bit_position = floor(log2(selected_property_bit_vector));
                         switch (selected_property_bit_position) {
                             case CaptureDeviceConfigurationControlPropertyTorchLevel:
@@ -659,26 +655,33 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
                     }());
                     return destination_angle;
                 };
-                int frame_count = 30;
-                Step angle_stepper = stepper(frame_count, 360.0);
-                integrate((unsigned long)frame_count)
-                (^ (unsigned long frame, BOOL * STOP) {
-                    render_button_arc_using_block(^ unsigned long (const UIButton __strong * _Nonnull button) {
-                        dispatch_async(dispatch_get_main_queue(), ^{
-                            [button setHighlighted:(highlighted_property_bit_vector >> button.tag) & 1UL];
-                            [button setSelected:(selected_property_bit_vector >> button.tag) & 1UL];
-                            [button setHidden:(hidden_property_bit_vector >> button.tag) & 1UL];
-                            angle_from_point([button center]);
-                            float target_angle = destination_angle(button.tag) + angle_stepper((int)frame);
-                            [button setCenter:point_from_angle(target_angle)];
+                
+                dispatch_block_t set_state = dispatch_block_create(0, ^{ (*(state_setter_t))(); });
+                
+                dispatch_block_t pre_animation = dispatch_block_create(0, ^{
+                    int frame_count = 30;
+                    Step angle_stepper = stepper(frame_count, 360.f);
+                    (integrate((unsigned long)frame_count)(^ (unsigned long frame, BOOL * STOP) {
+                        render_button_arc_using_block(^ unsigned long (const UIButton __strong * _Nonnull button) {
+                            dispatch_async(dispatch_get_main_queue(), ^{
+                                [button setHighlighted:(highlighted_property_bit_vector >> button.tag) & 1UL];
+                                [button setSelected:(selected_property_bit_vector >> button.tag) & 1UL];
+                                [button setHidden:(hidden_property_bit_vector >> button.tag) & 1UL];
+                                angle_from_point([button center]);
+                                float target_angle = destination_angle(button.tag) + angle_stepper((int)frame);
+                                [button setCenter:point_from_angle(target_angle)];
+                            });
+                            return frame;
                         });
-                        return button.tag;
-                    });
-                    return (unsigned long)frame;
+                        return frame;
+                    }));
                 });
-                [(ControlView *)view setNeedsDisplay];
+                dispatch_barrier_sync(animator_queue(), set_state);
+                dispatch_block_notify(set_state, animator_queue(), pre_animation);
+                                      
                 return TRUE_BIT;
             }();
+            [(ControlView *)view setNeedsDisplay];
             return TRUE_BIT;
         };
     };
