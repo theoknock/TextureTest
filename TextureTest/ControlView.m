@@ -687,6 +687,7 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
     };
 };
 
+
 // To-Do: Get bit field length using sizeof() and then subtract value returned by ctz (e.g., count trailing zeros)
 unsigned long (^(^bits)(unsigned long))(unsigned long)  = ^ (unsigned long x) {
     return ^ (unsigned long(^bit_operation)(unsigned long)) {
@@ -710,6 +711,46 @@ unsigned long (^(^bits)(unsigned long))(unsigned long)  = ^ (unsigned long x) {
 
 - (void)awakeFromNib {
     [super awakeFromNib];
+    
+    typedef void(^(^(^blk_)(void))(void))(void);
+    void (^test_)(void) = ^{
+        return ^ (blk_ b) {
+            return b()()();
+        }(^{
+            return ^{
+                return ^{
+                    
+                };
+            };
+        });
+    };
+    
+    
+    typedef void(^(^blk)(void))(void);
+    ^ blk (blk b) {
+        printf("pre-animation");
+        return ^{
+            return b();
+        };
+    }(^{
+        printf("set_state");
+        return ^{
+            printf("post-animation");
+        };
+    })()();
+    
+    
+//    blk(^test)(blk) = ^ blk (blk b) {
+//        printf("pre-animation");
+//        return b;
+//    };
+//    (test(^{
+//        printf("set_state");
+//        return ^{
+//            printf("post-animation");
+//        };
+//    })())();
+    
     
     //    bits(BUTTON_ARC_COMPONENT_BIT_MASK);
     //    bits(TICK_WHEEL_COMPONENT_BIT_MASK);

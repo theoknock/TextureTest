@@ -60,15 +60,22 @@ divideInverseKernel(
                 uint2                          gid        [[ thread_position_in_grid ]]
                 )
 {
-    if((gid.x >= outTexture.get_width()) || (gid.y >= outTexture.get_height()))
-    {
-        return;
-    }
+//    if((gid.x >= outTexture.get_width()) || (gid.y >= outTexture.get_height()))
+//    {
+//        return;
+//    }
 
     half4 inputImageTexture  = inTexture.read(gid);
-    half4 outputImageTexture = inputImageTexture / ( 1.0 - inputImageTexture);
+    half4 negativeInputImageTexture = ( 1.0 - inTexture.read(gid));
+    negativeInputImageTexture.rgb = (half3)pow(negativeInputImageTexture.rgb, half3(3.0, 3.0, 3.0));
+    negativeInputImageTexture.rgb = (half3)pow(negativeInputImageTexture.rgb, half3(1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0));
+    negativeInputImageTexture.rgb = 1.0 - negativeInputImageTexture.rgb;
+    clamp(negativeInputImageTexture, 0.0, 1.0);
+    half4 outputImageTexture = inputImageTexture / negativeInputImageTexture;
     clamp(outputImageTexture, 0.0, 1.0);
-    outTexture.write(half4(outputImageTexture.r, outputImageTexture.g, outputImageTexture.b, 1.0), gid);
+    half negativeInputImageTextureAlpha = dot(negativeInputImageTexture.rgb, kRec709Luma);
+    
+    outTexture.write(half4(half3(negativeInputImageTexture.rgb), 1.0 - negativeInputImageTextureAlpha), gid);
 }
 
 // Renders an outline of the texture using the Sobel method for detecting edges
@@ -107,9 +114,9 @@ sobelEdgeDetectionKernel(
     mag = length(float2(h, v)) * length(multiplier);
     mag *= mag;
     half4 outputImageTexture = half4(mag, mag, mag, 1.0 + (mag / (1 - mag))); // (inputImageTextureP - inputImageTexture) * averageImageTextures;
-//    clamp(outputImageTexture, 0.0, 1.0);
+    clamp(outputImageTexture, 0.0, 1.0);
     
-    outTexture.write(outputImageTexture, gid);
+    outTexture.write(half4(half3(outputImageTexture.rgb), (half)step((half)0.0, (half)dot(inTexture.read(gid).rgb, kRec709Luma))), gid);
 }
 
 
