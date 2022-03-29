@@ -287,10 +287,10 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
             
             return ^ (CVPixelBufferRef _Nonnull pixel_buffer) {
                 ^ (id<MTLTexture> t) {
-                    dispatch_async(dispatch_get_main_queue(), ^{
-                        [render_view performSelectorOnMainThread:@selector(draw) withObject:nil waitUntilDone:TRUE];
-                    });
-                }(self->_colorMap = ^ id<MTLTexture> (CVPixelBufferRef _Nonnull pixel_buffer) {
+//                    dispatch_async(dispatch_get_main_queue(), ^{
+                        [render_view performSelectorOnMainThread:@selector(draw) withObject:nil waitUntilDone:FALSE];
+//                    });
+                }(self->_colorMap = ^ (CVPixelBufferRef _Nonnull pixel_buffer) {
                     __autoreleasing id<MTLTexture> texture = nil;
                     @autoreleasepool {
                         CVPixelBufferLockBaseAddress(pixel_buffer, kCVPixelBufferLock_ReadOnly);

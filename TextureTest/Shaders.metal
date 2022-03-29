@@ -163,7 +163,7 @@ frameDifferencingBasicKernel(
     half4 diff_texture = abs(texture_p - texture);
     clamp(diff_texture, 0.0, 1.0);
     half gray_texture = dot(diff_texture.rgb, kRec709Luma);
-    half gamma_texture = 1.0 - pow((1.0 - gray_texture), 1.5); // invert, gamma to stretch whites (really black), invert again
+    half gamma_texture = 0.0;// 1.0 - pow((1.0 - gray_texture), 1.5); // invert, gamma to stretch whites (really black), invert again
     half4 out_texture = half4( diff_texture.r + gamma_texture, diff_texture.g + gamma_texture, diff_texture.b + gamma_texture, 1.0);
     clamp(out_texture, 0.0, 1.0);
 //    half4 out_texture = half4(texture.r, texture.g, texture.b, out_alpha);

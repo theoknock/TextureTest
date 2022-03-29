@@ -20,7 +20,7 @@
                                 <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                             </mtkView>
                             <view opaque="NO" contentMode="scaleAspectFit" translatesAutoresizingMaskIntoConstraints="NO" id="7uW-EJ-Fip" customClass="ControlView">
-                                <rect key="frame" x="20" y="468" width="394" height="394"/>
+                                <rect key="frame" x="20" y="488" width="374" height="374"/>
                                 <subviews>
                                     <stackView hidden="YES" opaque="NO" alpha="0.0" contentMode="scaleToFill" fixedFrame="YES" distribution="fillEqually" translatesAutoresizingMaskIntoConstraints="NO" id="GJP-Sq-w0U">
                                         <rect key="frame" x="99" y="145" width="176" height="124"/>
@@ -170,7 +170,7 @@
                             <constraint firstItem="JsS-qo-bbp" firstAttribute="top" secondItem="PlH-bq-DWk" secondAttribute="top" id="nVs-68-sVv"/>
                             <constraint firstItem="JsS-qo-bbp" firstAttribute="trailing" secondItem="PlH-bq-DWk" secondAttribute="trailing" id="rEe-U1-ipK"/>
                             <constraint firstItem="7uW-EJ-Fip" firstAttribute="width" relation="lessThanOrEqual" secondItem="PlH-bq-DWk" secondAttribute="width" id="vjo-4d-Chl"/>
-                            <constraint firstItem="7uW-EJ-Fip" firstAttribute="trailing" secondItem="Zni-1Q-DHl" secondAttribute="trailing" id="x4R-a1-piF"/>
+                            <constraint firstItem="7uW-EJ-Fip" firstAttribute="trailing" secondItem="PlH-bq-DWk" secondAttribute="trailingMargin" id="x4R-a1-piF"/>
                         </constraints>
                     </view>
                     <connections>

@@ -55,7 +55,7 @@ static dispatch_queue_t _Nonnull animator_queue() {
     static dispatch_queue_t queue;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        queue = dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0);
+        queue = dispatch_get_global_queue(QOS_CLASS_USER_INTERACTIVE, 0);
     });
     
     return queue;
