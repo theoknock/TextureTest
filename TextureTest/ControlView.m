@@ -456,8 +456,23 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
                     [(UIButton *)button_arc_component setHighlighted:(highlighted_property_bit_vector >> ((UIButton *)button_arc_component).tag) & 1UL];
                     [(UIButton *)button_arc_component setSelected:(selected_property_bit_vector >> ((UIButton *)button_arc_component).tag) & 1UL];
                     [(UIButton *)button_arc_component setHidden:(hidden_property_bit_vector >> ((UIButton *)button_arc_component).tag) & 1UL];
-                    ((active_component_bit_vector & BUTTON_ARC_COMPONENT_BIT_MASK) && angle_from_point(point_from_angle(rescale(((UIButton *)button_arc_component).tag, 0.0, 4.0, 180.0, 270.0))));
+                    (((active_component_bit_vector & BUTTON_ARC_COMPONENT_BIT_MASK) && (^ unsigned long {
+                        angle_from_point(point_from_angle(rescale(((UIButton *)button_arc_component).tag, 0.0, 4.0, 180.0, 270.0)));
+                        return TRUE_BIT; }())));
+                    (((active_component_bit_vector & ~BUTTON_ARC_COMPONENT_BIT_MASK) && (^ unsigned long {
+                        NSMutableParagraphStyle *centerAlignedParagraphStyle = [[NSMutableParagraphStyle alloc] init];
+                        centerAlignedParagraphStyle.alignment = NSTextAlignmentCenter;
+                        NSDictionary *centerAlignedTextAttributes = @{NSForegroundColorAttributeName:[UIColor systemYellowColor],
+                                                                      NSFontAttributeName:[UIFont systemFontOfSize:14.0],
+                                                                      NSParagraphStyleAttributeName:centerAlignedParagraphStyle};
+                        
+                        NSString *valueString = [NSString stringWithFormat:@"%.2f", value];
+                        NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:valueString attributes:centerAlignedTextAttributes];
+                        [(UIButton *)button_arc_component setAttributedTitle:attributedString forState:UIControlStateNormal];
+                        [(UIButton *)button_arc_component sizeToFit];
+                        return TRUE_BIT; }())));
                     [(UIButton *)button_arc_component setCenter:point_from_angle(angle)];
+                    
                 });
                 return TRUE_BIT;
             });
@@ -569,10 +584,10 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
             case CaptureDeviceConfigurationControlPropertyExposureDuration: {
                 return ^ (float v) {
                     return ^{
-                        value = rescale(angle, 180.0, 270.0, 0.0, 1.0); //MAX( CMTimeGetSeconds(VideoCamera.captureDevice.activeFormat.minExposureDuration ), kExposureMinimumDuration ), 1.0/3.0);
-                        double p = pow( value, kExposureDurationPower );
+//                        value = rescale(angle, 180.0, 270.0, 0.0, 1.0); //MAX( CMTimeGetSeconds(VideoCamera.captureDevice.activeFormat.minExposureDuration ), kExposureMinimumDuration ), 1.0/3.0);
+                        double p = pow( rescale(angle, 180.0, 270.0, 0.0, 1.0), kExposureDurationPower);
                         double minDurationSeconds = MAX( CMTimeGetSeconds(VideoCamera.captureDevice.activeFormat.minExposureDuration ), kExposureMinimumDuration );
-                        double maxDurationSeconds = 1.0/3.0;//CMTimeGetSeconds( self.videoDevice.activeFormat.maxExposureDuration );
+                        double maxDurationSeconds = 1.0/3.0;
                         value = p * ( maxDurationSeconds - minDurationSeconds ) + minDurationSeconds;
                         [VideoCamera.captureDevice setExposureModeCustomWithDuration:CMTimeMakeWithSeconds( value, 1000*1000*1000 )  ISO:[VideoCamera.captureDevice ISO] completionHandler:nil];
                         return (unsigned long)1;
@@ -720,6 +735,7 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
                         }
                         return TRUE_BIT;
                     }());
+                    value = rescale(destination_angle, 180.0, 270.0, 0.0, 1.0);
                     return destination_angle;
                 };
                 
@@ -736,6 +752,18 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
                                 [button setHidden:(hidden_property_bit_vector >> button.tag) & 1UL];
                                 angle_from_point([button center]);
                                 float target_angle = destination_angle(button.tag) + angle_stepper((int)frame);
+                                (((active_component_bit_vector & ~BUTTON_ARC_COMPONENT_BIT_MASK) && (^ unsigned long {
+                                    NSMutableParagraphStyle *centerAlignedParagraphStyle = [[NSMutableParagraphStyle alloc] init];
+                                    centerAlignedParagraphStyle.alignment = NSTextAlignmentCenter;
+                                    NSDictionary *centerAlignedTextAttributes = @{NSForegroundColorAttributeName:[UIColor systemYellowColor],
+                                                                                  NSFontAttributeName:[UIFont systemFontOfSize:14.0],
+                                                                                  NSParagraphStyleAttributeName:centerAlignedParagraphStyle};
+                                    
+                                    NSString *valueString = [NSString stringWithFormat:@"%.2f", value];
+                                    NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:valueString attributes:centerAlignedTextAttributes];
+                                    [(UIButton *)button setAttributedTitle:attributedString forState:UIControlStateNormal];
+                                    [(UIButton *)button sizeToFit];
+                                    return TRUE_BIT; }())));
                                 [button setCenter:point_from_angle(target_angle)];
                             });
                             return frame;
