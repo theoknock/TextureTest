@@ -36,7 +36,7 @@ vertexShader(uint vertexID [[ vertex_id ]],
 }
 
 /*
-    Stitchable functions
+ Stitchable functions
  */
 
 [[stitchable]] matrix_half3x3 edges(half coefficient) {
@@ -93,8 +93,10 @@ vertexShader(uint vertexID [[ vertex_id ]],
 //                                            //matrix_half3x3(0,-1,0,-1,4,-1,0,-1,0); // Ridge detection (1)
 
 [[stitchable]]
-half3 convolution3x3(texture2d<half, access::read> inTexture, uint2 gid, matrix_half3x3 convolutionKernel)
+void convolution3x3(texture2d<half, access::read> inTexture, texture2d<half, access::write> outTexture, uint2 gid, matrix_half3x3 convolutionKernel)
 {
+    // To-Do: Process an array of convolution kernels, each feeding their result into the next
+    //        ...or 
     uint2 leftTextureCoordinate = gid + uint2(-1, 0);
     uint2 rightTextureCoordinate = gid + uint2(0, 1);
     uint2 topTextureCoordinate = gid + uint2(0, -1);
@@ -116,7 +118,7 @@ half3 convolution3x3(texture2d<half, access::read> inTexture, uint2 gid, matrix_
     resultColor += leftIntensity * convolutionKernel[1][0] + inTexture.read(gid).rgb * convolutionKernel[1][1] + rightIntensity * convolutionKernel[1][2];
     resultColor += bottomLeftIntensity * convolutionKernel[2][0] + bottomIntensity * convolutionKernel[2][1] + bottomRightIntensity * convolutionKernel[2][2];
     
-    return resultColor;
+    outTexture.write(half4(resultColor.rgb, 1.0), gid);
 }
 
 // Fragment function
@@ -134,19 +136,21 @@ samplingShader(RasterizerData in [[stage_in]],
 
 kernel void
 computeKernel(
-               texture2d<half, access::read>  inTexture  [[ texture(0) ]],
-               texture2d<half, access::write> outTexture [[ texture(1) ]],
-               texture2d<half, access::read>  inTextureP [[ texture(2) ]],
-               uint2                          gid        [[ thread_position_in_grid ]]
-               )
+              texture2d<half, access::read>  inTexture  [[ texture(0) ]],
+              texture2d<half, access::write> outTexture [[ texture(1) ]],
+              texture2d<half, access::read>  inTextureP [[ texture(2) ]],
+              uint2                          gid        [[ thread_position_in_grid ]]
+              )
 {
-    const half3 ridges_convolution = convolution3x3(inTexture, gid, ridges(1));
-    const half3 sobel_h = convolution3x3(inTexture, gid, matrix_half3x3(3, 0, -3, 10, 0, -10, 3, 0, -3));
-    const half3 sobel_v = convolution3x3(inTexture, gid, matrix_half3x3(3, 10, 3, 0, 0, 0, -3, -10, -3)); //matrix_half3x3(1, 2, 1, 0, 0, 0, -1, -2, -1));
-//    half3 sobel_convolution = sqrt((sobel_h * sobel_h) + (sobel_v * sobel_v));
-    half3 sobel_convolution = atan2(sobel_h, sobel_v);
-//    half4 inputTexture =  inTexture.read(gid);
-    outTexture.write(inTexture.read(gid), gid);
+    convolution3x3(inTexture, outTexture, gid, ridges(1) * sharpen(2) * emboss(1));
+    
+    //    const half3 sharpen_convolution = convolution3x3(outTexture, gid, sharpen(1.0));
+    //    const half3 sobel_h = convolution3x3(inTexture, gid, matrix_half3x3(3, 0, -3, 10, 0, -10, 3, 0, -3));
+    //    const half3 sobel_v = convolution3x3(inTexture, gid, matrix_half3x3(3, 10, 3, 0, 0, 0, -3, -10, -3)); //matrix_half3x3(1, 2, 1, 0, 0, 0, -1, -2, -1));
+    ////    half3 sobel_convolution = sqrt((sobel_h * sobel_h) + (sobel_v * sobel_v));
+    //    half3 sobel_convolution = atan2(sobel_h, sobel_v);
+    ////    half4 inputTexture =  inTexture.read(gid);
+    //    outTexture.write(half4(sharpen_convolution.rgb, 1.0), gid);
 }
 
 /*
@@ -158,11 +162,11 @@ computeKernel(
 // Renders an outline of the texture using the Sobel method for detecting edges
 kernel void
 wackySobelEdgeDetectionKernelWithConvolution3x3(
-                         texture2d<half, access::read>  inTexture  [[ texture(0) ]],
-                         texture2d<half, access::write> outTexture [[ texture(1) ]],
-                         texture2d<half, access::read>  inTextureP [[ texture(2) ]],
-                         uint2                          gid        [[ thread_position_in_grid ]]
-                         )
+                                                texture2d<half, access::read>  inTexture  [[ texture(0) ]],
+                                                texture2d<half, access::write> outTexture [[ texture(1) ]],
+                                                texture2d<half, access::read>  inTextureP [[ texture(2) ]],
+                                                uint2                          gid        [[ thread_position_in_grid ]]
+                                                )
 {
     uint2 leftTextureCoordinate = gid + uint2(-1, 0);
     uint2 rightTextureCoordinate = gid + uint2(0, 1);
@@ -193,13 +197,13 @@ wackySobelEdgeDetectionKernelWithConvolution3x3(
     half4 outputImageTexture = half4(mag, mag, mag, 1.0 + (mag / (1 - mag))); // (inputImageTextureP - inputImageTexture) * averageImageTextures;
     clamp(outputImageTexture, 0.0, 1.0);
     
-//    outTexture.write(half4(half3(outputImageTexture.rgb), (half)step((half)0.0, (half)dot(inTexture.read(gid).rgb, kRec709Luma))), gid);
+    //    outTexture.write(half4(half3(outputImageTexture.rgb), (half)step((half)0.0, (half)dot(inTexture.read(gid).rgb, kRec709Luma))), gid);
     
     const matrix_half3x3 convolutionKernel = matrix_half3x3(-1,-1,-1,-1,8,-1,-1,-1,-1); // Ridge detection (2)
-                                            //matrix_half3x3(1,1,1,1,1,1,1,1,1); // Box blur
-                                            //matrix_half3x3(1,2,1,2,4,2,1,2,1); // Gaussian Blur
-                                            //matrix_half3x3(0,-1,0,-1,5,-1,0,-1,0); // Sharpen
-                                            //matrix_half3x3(0,-1,0,-1,4,-1,0,-1,0); // Ridge detection (1)
+    //matrix_half3x3(1,1,1,1,1,1,1,1,1); // Box blur
+    //matrix_half3x3(1,2,1,2,4,2,1,2,1); // Gaussian Blur
+    //matrix_half3x3(0,-1,0,-1,5,-1,0,-1,0); // Sharpen
+    //matrix_half3x3(0,-1,0,-1,4,-1,0,-1,0); // Ridge detection (1)
     
     half3 resultColor = topLeftIntensity * convolutionKernel[0][0] + topIntensity * convolutionKernel[0][1] + topRightIntensity * convolutionKernel[0][2];
     resultColor += leftIntensity * convolutionKernel[1][0] + outputImageTexture.rgb * convolutionKernel[1][1] + rightIntensity * convolutionKernel[1][2];
@@ -342,16 +346,11 @@ frameDifferencingBasicKernel(
                              uint2                          gid        [[ thread_position_in_grid ]]
                              )
 {
-    //    if((gid.x >= outTexture.get_width()) || (gid.y >= outTexture.get_height()))
-    //    {
-    //        return;
-    //    }
-    
     half4 texture = inTexture.read(gid);
     half4 texture_p = inTextureP.read(gid);
     half4 diff_texture = abs(texture_p - texture);
     clamp(diff_texture, 0.0, 1.0);
-    half gray_texture = dot(diff_texture.rgb, kRec709Luma);
+//    half gray_texture = dot(diff_texture.rgb, kRec709Luma);
     half gamma_texture = 0.0;// 1.0 - pow((1.0 - gray_texture), 1.5); // invert, gamma to stretch whites (really black), invert again
     half4 out_texture = half4( diff_texture.r + gamma_texture, diff_texture.g + gamma_texture, diff_texture.b + gamma_texture, 1.0);
     clamp(out_texture, 0.0, 1.0);

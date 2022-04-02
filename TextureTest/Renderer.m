@@ -37,7 +37,7 @@
     id <MTLDepthStencilState> _depthState;
     id <MTLTexture> _colorMap;
     id <MTLTexture> _colorMapPrev;
-    id<MTLTexture> compute_texture_p;
+    id <MTLTexture> compute_texture_p;
     
     void(^draw_texture)(CVPixelBufferRef);
     
@@ -413,7 +413,7 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
                                              width:2160
                                              height:1284
                                              mipmapped:FALSE];
-        [descriptor setUsage:MTLTextureUsageShaderWrite | MTLTextureUsageShaderRead | MTLTextureUsageRenderTarget];
+        [descriptor setUsage:MTLTextureUsageShaderWrite | MTLTextureUsageShaderRead | MTLTextureUsageRenderTarget | MTLTextureUsageUnknown];
         compute_texture_p = [_device newTextureWithDescriptor:descriptor];
         
         MTLTextureDescriptor * descriptorP = [MTLTextureDescriptor

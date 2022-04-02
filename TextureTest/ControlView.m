@@ -345,6 +345,8 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong, con
         };
     };
     
+    static float value;
+    
     static unsigned long (^angle_from_point)(CGPoint);
     angle_from_point = angle_from_point_init(&angle)(&center_point)(180.0, 270.0)
     (^ (float * result, CGPoint * origin, float min, float max, CGPoint intersection) {
@@ -394,7 +396,7 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong, con
         return TRUE_BIT;
     });
     
-    draw_tick_wheel = ^ (ControlView * view, float * restrict angle_t, float * restrict radius_t, CATextLayer * value_text_layer) {
+    draw_tick_wheel = ^ (ControlView * view, float * restrict angle_t, float * restrict radius_t, CATextLayer * value_text_layer, float * restrict value_t) {
         return ^ (CGContextRef ctx, CGRect rect) {
             dispatch_barrier_sync(enumerator_queue(), ^{
                 ((active_component_bit_vector ^ BUTTON_ARC_COMPONENT_BIT_MASK) && ^ unsigned long (void) {
@@ -421,10 +423,10 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong, con
                                                                   NSFontAttributeName:[UIFont systemFontOfSize:14.0],
                                                                   NSParagraphStyleAttributeName:centerAlignedParagraphStyle};
                     
-                    NSString *valueString = [NSString stringWithFormat:@"%.2f", rescale(angle, 180.0, 270.0, 0.0, 1.0)];
+                    NSString *valueString = [NSString stringWithFormat:@"%.2f", *value_t];
                     NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:valueString attributes:centerAlignedTextAttributes];
                     ((CATextLayer *)value_text_layer).string = attributedString;
-
+                    
                     CGSize textLayerframeSize = suggestFrameSizeWithConstraints(rect.size, attributedString);
                     CGRect textLayerFrame = CGRectMake(CGRectGetMidX(rect) - (textLayerframeSize.width * 0.5), CGRectGetMinY(rect), textLayerframeSize.width, textLayerframeSize.height);
                     [(CATextLayer *)value_text_layer setFrame:textLayerFrame];
@@ -437,7 +439,7 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong, con
                 }());
             });
         };
-    }((ControlView *)view, &angle, &radius, valueTextLayer);
+    }((ControlView *)view, &angle, &radius, valueTextLayer, &value);
     
     __block UISelectionFeedbackGenerator * haptic_feedback;
     haptic_feedback = [[UISelectionFeedbackGenerator alloc] init];
@@ -458,10 +460,10 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong, con
         return ^  (unsigned long(^invoke_aa)(const UIButton __strong * _Nonnull)) {
             return (^{
                 dispatch_sync(animator_queue(), ^{
-                ((( !!(((~selected_property_bit_vector & active_component_bit_vector) ^ selected_property_bit_vector) >> 0) && invoke_aa(buttons[0])   +
-                    !!(((~selected_property_bit_vector & active_component_bit_vector) ^ selected_property_bit_vector) >> 1) && invoke_aa(buttons[1]) ) +
-                    !!(((~selected_property_bit_vector & active_component_bit_vector) ^ selected_property_bit_vector) >> 2) && invoke_aa(buttons[2]) ) +
-                    !!(((~selected_property_bit_vector & active_component_bit_vector) ^ selected_property_bit_vector) >> 3) && invoke_aa(buttons[3]) ) +
+                    ((( !!(((~selected_property_bit_vector & active_component_bit_vector) ^ selected_property_bit_vector) >> 0) && invoke_aa(buttons[0])   +
+                       !!(((~selected_property_bit_vector & active_component_bit_vector) ^ selected_property_bit_vector) >> 1) && invoke_aa(buttons[1]) ) +
+                      !!(((~selected_property_bit_vector & active_component_bit_vector) ^ selected_property_bit_vector) >> 2) && invoke_aa(buttons[2]) ) +
+                     !!(((~selected_property_bit_vector & active_component_bit_vector) ^ selected_property_bit_vector) >> 3) && invoke_aa(buttons[3]) ) +
                     !!(((~selected_property_bit_vector & active_component_bit_vector) ^ selected_property_bit_vector) >> 4) && invoke_aa(buttons[4]);
                 });
                 return ^{
@@ -523,18 +525,21 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong, con
     static const float kExposureDurationPower = 4.f;
     static const float kExposureMinimumDuration = 1.f/1000.f;
     
-//    printf("value_min = %f\t\tvalue_max = %f\n", min_v, max_v);
-    static float value_min, value_max;
-    value_max = fmax(0.0, fmin(rescale(radius, center_point.x, CGRectGetMidX(((ControlView *)view).bounds), 0.5, 1.0), 1.0));
-    value_min = fmax(0.0, fmin(1.0 - value_max, 1.0));
+    //    static float value_min, value_max;
+    
+    
     unsigned long (^(^(^capture_device_configuration)(CaptureDeviceConfigurationControlProperty))(float))(void)= ^ (CaptureDeviceConfigurationControlProperty property) {
+        //        value_max = fmax(0.5, fmin(rescale(radius, center_point.x, CGRectGetMidX(((ControlView *)view).bounds), 0.5, 1.0), 1.0));
+        //        value_min = (1.0 - value_max) - 0.001;
+        //        printf("value_min = %f\t\tvalue_max = %f\n", value_min, value_max);
         switch (property) {
             case CaptureDeviceConfigurationControlPropertyTorchLevel: {
-                return ^ (float value) {
+                return ^ (float v) {
+                    value = rescale(angle, 180.0, 270.0, 0.0, 1.0);
                     return ^{
                         __autoreleasing NSError * error = nil;
                         if (([[NSProcessInfo processInfo] thermalState] != NSProcessInfoThermalStateCritical && [[NSProcessInfo processInfo] thermalState] != NSProcessInfoThermalStateSerious)) {
-                            if (value != 0)
+                            if (value != 0.0)
                                 [VideoCamera.captureDevice setTorchModeOnWithLevel:value error:&error];
                             else
                                 [VideoCamera.captureDevice setTorchMode:AVCaptureTorchModeOff];
@@ -545,8 +550,9 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong, con
                 break;
             }
             case CaptureDeviceConfigurationControlPropertyLensPosition: {
-                return ^ (float value) {
+                return ^ (float v) {
                     return ^{
+                        value = rescale(angle, 180.0, 270.0, 0.0, 1.0);
                         [VideoCamera.captureDevice setFocusModeLockedWithLensPosition:value completionHandler:nil];
                         
                         
@@ -556,23 +562,25 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong, con
                 break;
             }
             case CaptureDeviceConfigurationControlPropertyExposureDuration: {
-                return ^ (float value) {
+                return ^ (float v) {
                     return ^{
+                        value = rescale(angle, 180.0, 270.0, 0.0, 1.0); //MAX( CMTimeGetSeconds(VideoCamera.captureDevice.activeFormat.minExposureDuration ), kExposureMinimumDuration ), 1.0/3.0);
                         double p = pow( value, kExposureDurationPower );
                         double minDurationSeconds = MAX( CMTimeGetSeconds(VideoCamera.captureDevice.activeFormat.minExposureDuration ), kExposureMinimumDuration );
                         double maxDurationSeconds = 1.0/3.0;//CMTimeGetSeconds( self.videoDevice.activeFormat.maxExposureDuration );
-                        double newDurationSeconds = p * ( maxDurationSeconds - minDurationSeconds ) + minDurationSeconds;
-                        [VideoCamera.captureDevice setExposureModeCustomWithDuration:CMTimeMakeWithSeconds( newDurationSeconds, 1000*1000*1000 )  ISO:[VideoCamera.captureDevice ISO] completionHandler:nil];
+                        value = p * ( maxDurationSeconds - minDurationSeconds ) + minDurationSeconds;
+                        [VideoCamera.captureDevice setExposureModeCustomWithDuration:CMTimeMakeWithSeconds( value, 1000*1000*1000 )  ISO:[VideoCamera.captureDevice ISO] completionHandler:nil];
                         return (unsigned long)1;
                     };
                 };
                 break;
             }
             case CaptureDeviceConfigurationControlPropertyISO: {
-                return ^ (float value) {
+                return ^ (float v) {
                     return ^{
                         @try {
-                            [VideoCamera.captureDevice setExposureModeCustomWithDuration:[VideoCamera.captureDevice exposureDuration] ISO:rescale(value, value_min, value_max, [VideoCamera.captureDevice.activeFormat minISO], [VideoCamera.captureDevice.activeFormat maxISO]) completionHandler:nil];
+                            value = rescale(angle, 180.0, 270.0, [VideoCamera.captureDevice.activeFormat minISO], [VideoCamera.captureDevice.activeFormat maxISO]);
+                            [VideoCamera.captureDevice setExposureModeCustomWithDuration:[VideoCamera.captureDevice exposureDuration] ISO:value completionHandler:nil];
                         } @catch (NSException *exception) {
                             [VideoCamera.captureDevice setExposureModeCustomWithDuration:[VideoCamera.captureDevice exposureDuration] ISO:[VideoCamera.captureDevice ISO] completionHandler:nil];
                         } @finally {
@@ -584,9 +592,10 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong, con
                 break;
             }
             case CaptureDeviceConfigurationControlPropertyVideoZoomFactor: {
-                return ^ (float value) {
+                return ^ (float v) {
                     return ^{
-                        [VideoCamera.captureDevice setVideoZoomFactor:rescale(pow(value, kExposureDurationPower), 1.0, 9.0, [VideoCamera.captureDevice minAvailableVideoZoomFactor], [VideoCamera.captureDevice maxAvailableVideoZoomFactor])];
+                        value = rescale(pow(rescale(angle, 180.0, 270.0, 0.0, 1.0), kExposureDurationPower), 0.0, 1.0, [VideoCamera.captureDevice minAvailableVideoZoomFactor], [VideoCamera.captureDevice maxAvailableVideoZoomFactor]);
+                        [VideoCamera.captureDevice setVideoZoomFactor:value];
                         return (unsigned long)1;
                     };
                 };
@@ -677,6 +686,7 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong, con
                                 angle = (rescale([VideoCamera.captureDevice ISO], [VideoCamera.captureDevice.activeFormat minISO], [VideoCamera.captureDevice.activeFormat maxISO], 180.0, 270.0));
                                 break;
                             case CaptureDeviceConfigurationControlPropertyVideoZoomFactor:
+                                
                                 destination_angle = (rescale([VideoCamera.captureDevice videoZoomFactor], [VideoCamera.captureDevice minAvailableVideoZoomFactor], [VideoCamera.captureDevice maxAvailableVideoZoomFactor], 180.0, 270.0));
                                 break;
                             default:
@@ -710,7 +720,7 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong, con
                 });
                 dispatch_barrier_sync(animator_queue(), set_state);
                 dispatch_block_notify(set_state, animator_queue(), pre_animation);
-                                      
+                
                 return TRUE_BIT;
             }();
             [(ControlView *)view setNeedsDisplay];
@@ -794,10 +804,10 @@ unsigned long (^(^bits)(unsigned long))(unsigned long)  = ^ (unsigned long x) {
 //        CGContextStrokePath(ctx);
 //    }
 //}
-    
+
 - (void)awakeFromNib {
     [super awakeFromNib];
-
+    
     valueTextLayer = [CATextLayer new];
     [self attributesForTextLayer:valueTextLayer];
     [self.layer addSublayer:valueTextLayer];
