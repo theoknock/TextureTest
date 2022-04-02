@@ -39,22 +39,23 @@ vertexShader(uint vertexID [[ vertex_id ]],
     Stitchable functions
  */
 
+//const matrix_half3x3 convolutionKernel = matrix_half3x3(1,1,1,1,-8,1,1,1,1);// * coefficient_matrix;
+//    const matrix_half3x3 convolutionKernel = matrix_half3x3(1, 0, -1, 0, 0, 0, -1, 0, 1);
+//                                            //matrix_half3x3(-2, -1, 0, -1, 1, 1, 0, 1, 2); // Emboss
+//                                            //matrix_half3x3(-1,-1,-1,-1,8,-1,-1,-1,-1); // Ridge detection (2)
+//                                            //matrix_half3x3(-1,-1,-1,-1,8,-1,-1,-1,-1); // Ridge detection (2)
+//                                            //matrix_half3x3(1,1,1,1,1,1,1,1,1); // Box blur (multiply by a coefficient)
+//                                            //matrix_half3x3(1,2,1,2,4,2,1,2,1); // Gaussian Blur (multiply by a coefficient)
+//                                            //matrix_half3x3(0,-1,0,-1,5,-1,0,-1,0); // Sharpen
+//                                            //matrix_half3x3(-1,-1,-1,-1,8,-1,-1,-1,-1); // Ridge detection (2)
+//                                            //matrix_half3x3(0,-1,0,-1,4,-1,0,-1,0); // Ridge detection (1)
+
 [[stitchable]]
-half3 convolution3x3(texture2d<half, access::read> inTexture, uint2 gid)
+half3 convolution3x3(texture2d<half, access::read> inTexture, uint2 gid, matrix_half3x3 convolutionKernel, half coefficient)
 {
-    half coefficient = 0.0625;
     const matrix_half3x3 coefficient_matrix = matrix_half3x3(coefficient, coefficient, coefficient, coefficient, coefficient, coefficient, coefficient, coefficient, coefficient);
 
-    const matrix_half3x3 convolutionKernel = matrix_half3x3(1,1,1,1,-8,1,1,1,1);// * coefficient_matrix;
-    //    const matrix_half3x3 convolutionKernel = matrix_half3x3(1, 0, -1, 0, 0, 0, -1, 0, 1);
-    //                                            //matrix_half3x3(-2, -1, 0, -1, 1, 1, 0, 1, 2); // Emboss
-    //                                            //matrix_half3x3(-1,-1,-1,-1,8,-1,-1,-1,-1); // Ridge detection (2)
-    //                                            //matrix_half3x3(-1,-1,-1,-1,8,-1,-1,-1,-1); // Ridge detection (2)
-    //                                            //matrix_half3x3(1,1,1,1,1,1,1,1,1); // Box blur (multiply by a coefficient)
-    //                                            //matrix_half3x3(1,2,1,2,4,2,1,2,1); // Gaussian Blur (multiply by a coefficient)
-    //                                            //matrix_half3x3(0,-1,0,-1,5,-1,0,-1,0); // Sharpen
-    //                                            //matrix_half3x3(-1,-1,-1,-1,8,-1,-1,-1,-1); // Ridge detection (2)
-    //                                            //matrix_half3x3(0,-1,0,-1,4,-1,0,-1,0); // Ridge detection (1)
+    
     
     uint2 leftTextureCoordinate = gid + uint2(-1, 0);
     uint2 rightTextureCoordinate = gid + uint2(0, 1);
@@ -101,7 +102,7 @@ computeKernel(
                uint2                          gid        [[ thread_position_in_grid ]]
                )
 {
-    const half3 coefficient = convolution3x3(inTexture, gid);
+    const half3 coefficient = convolution3x3(inTexture, gid, matrix_half3x3(1,1,1,1,-8,1,1,1,1), 1);
 
     outTexture.write(half4(coefficient, 1.0), gid);
 }
