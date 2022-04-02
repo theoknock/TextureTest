@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		B90B097D2793070E0052879E /* Kernels.metal in Sources */ = {isa = PBXBuildFile; fileRef = B90B097C2793070E0052879E /* Kernels.metal */; };
 		B90E67D627A5C6B8004B935F /* ControlView.m in Sources */ = {isa = PBXBuildFile; fileRef = B90E67D527A5C6B8004B935F /* ControlView.m */; };
+		B98DC77E27F8967500681FBF /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B98DC77D27F8967500681FBF /* Metal.framework */; };
 		B9B73FCA27EA652500B51138 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B9B73FC927EA652400B51138 /* MetalKit.framework */; };
 		B9FB8D4A2792DD970088F353 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = B9FB8D492792DD970088F353 /* AppDelegate.m */; };
 		B9FB8D4D2792DD970088F353 /* Renderer.m in Sources */ = {isa = PBXBuildFile; fileRef = B9FB8D4C2792DD970088F353 /* Renderer.m */; };
@@ -27,6 +28,7 @@
 		B90E67D427A5C6B8004B935F /* ControlView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ControlView.h; sourceTree = "<group>"; };
 		B90E67D527A5C6B8004B935F /* ControlView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ControlView.m; sourceTree = "<group>"; wrapsLines = 0; };
 		B94F5B4F27A58AAF00DA42A4 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
+		B98DC77D27F8967500681FBF /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		B9B73FC927EA652400B51138 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
 		B9D264C827987C38004776B5 /* CodeSnippetReview */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = CodeSnippetReview; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		B9FB8D452792DD970088F353 /* TextureTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TextureTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -51,6 +53,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B98DC77E27F8967500681FBF /* Metal.framework in Frameworks */,
 				B9B73FCA27EA652500B51138 /* MetalKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -61,6 +64,7 @@
 		B94F5B4E27A58AAF00DA42A4 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				B98DC77D27F8967500681FBF /* Metal.framework */,
 				B9B73FC927EA652400B51138 /* MetalKit.framework */,
 				B94F5B4F27A58AAF00DA42A4 /* Accelerate.framework */,
 			);

@@ -20,6 +20,7 @@
 
 @property (strong, nonatomic, readwrite) __block id<MTLLibrary> library;
 @property (strong, nonatomic, readwrite) __block NSMutableDictionary<NSString *, id<MTLFunction>> * functions;
+@property (strong, nonatomic, readwrite) __block MTLComputePipelineDescriptor * computePipelineDescriptor;
 @property (strong, nonatomic, readwrite) __block id<MTLComputePipelineState> computePipelineState;
 @property (nonatomic, readwrite) __block MTLSize gridSize;
 @property (nonatomic, readwrite) __block MTLSize threadgroupsPerGrid;
@@ -337,9 +338,18 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
         //        id<MTLLibrary> defaultLibrary = [_device newDefaultLibrary];
         id<MTLFunction> vertexFunction = [defaultLibrary newFunctionWithName:@"vertexShader"];
         id<MTLFunction> fragmentFunction = [defaultLibrary newFunctionWithName:@"samplingShader"];
-        id<MTLFunction> computeKernel = [defaultLibrary newFunctionWithName:@"sobelEdgeDetectionKernel"];
-
+        id<MTLFunction> computeKernel = [defaultLibrary newFunctionWithName:@"convolution3x3"];
         
+        /*
+            Stitchable functions
+         */
+        
+        
+        // Load the functions from the library.
+        NSArray<id<MTLFunction>> * functions = @[
+            [defaultLibrary newFunctionWithName:@"add"]
+        ];
+
         // Set up a descriptor for creating a pipeline state object
         MTLRenderPipelineDescriptor *pipelineStateDescriptor = [[MTLRenderPipelineDescriptor alloc] init];
         pipelineStateDescriptor.label = @"MyPipeline";
@@ -356,7 +366,7 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
         pipelineStateDescriptor.colorAttachments[0].sourceAlphaBlendFactor = MTLBlendFactorSourceAlpha;
         pipelineStateDescriptor.colorAttachments[0].destinationRGBBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
         pipelineStateDescriptor.colorAttachments[0].destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
-        
+
         __autoreleasing NSError * error = nil;
         _pipelineState = [_device newRenderPipelineStateWithDescriptor:pipelineStateDescriptor error:&error];
         if (!_pipelineState)
@@ -369,9 +379,16 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
         depthStateDesc.depthWriteEnabled = YES;
         _depthState = [_device newDepthStencilStateWithDescriptor:depthStateDesc];
         
-        _computePipelineState = [_device newComputePipelineStateWithFunction:computeKernel error:&error];
-        NSAssert(_computePipelineState, @"Failed to create compute pipeline state: %@", error);
+        _computePipelineDescriptor = [[MTLComputePipelineDescriptor alloc] init];
+        [_computePipelineDescriptor setComputeFunction:computeKernel];
         
+        MTLLinkedFunctions * linkedFunctions = [[MTLLinkedFunctions alloc] init];
+        [linkedFunctions setFunctions:functions];
+        
+        [_computePipelineDescriptor setLinkedFunctions:linkedFunctions];
+        _computePipelineState = [_device newComputePipelineStateWithDescriptor:_computePipelineDescriptor options:nil reflection:nil error:&error];// newComputePipelineStateWithFunction:computeKernel error:&error];
+        NSAssert(_computePipelineState, @"Failed to create compute pipeline state: %@", error);
+
         NSUInteger w = _computePipelineState.threadExecutionWidth;
         NSUInteger h = _computePipelineState.maxTotalThreadsPerThreadgroup / w;
         _threadsPerThreadgroup = MTLSizeMake(w, h, 1);
@@ -424,7 +441,9 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
         commandBuffer.label = @"MyCommand";
         
         //    [commandBuffer enqueue];
+
         id<MTLComputeCommandEncoder> computeEncoder = [commandBuffer computeCommandEncoder];
+        if (computeEncoder) {
         [computeEncoder setComputePipelineState:_computePipelineState];
         [computeEncoder setTexture:_colorMap
                            atIndex:0];
@@ -436,10 +455,10 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
         [computeEncoder endEncoding];
         
         commandBuffer.label = @"DrawTextureCommandBuffer";
-        
+        }
         // Obtain a renderPassDescriptor generated from the view's drawable textures
         __autoreleasing MTLRenderPassDescriptor *renderPassDescriptor = [view currentRenderPassDescriptor];
-        
+    
         if(renderPassDescriptor != nil)
         {
             id<MTLRenderCommandEncoder> renderEncoder =

@@ -419,6 +419,7 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
     haptic_feedback = [[UISelectionFeedbackGenerator alloc] init];
     [haptic_feedback prepare];
     
+    // recusrive polymorphism (a block that invokes both itself and its returning block in one call)
     unsigned long (^(^render_button_arc_using_block)(unsigned long(^ _Nullable)(const UIButton __strong * _Nonnull)))(const UIButton __strong * _Nonnull)  = ^ (unsigned long(^ _Nullable invoke_a)(const UIButton __strong * _Nonnull)) {
         !((unsigned long)0 || invoke_a) && (invoke_a = ^ unsigned long (const UIButton __strong * _Nonnull button) {
             dispatch_async(dispatch_get_main_queue(), ^{
@@ -711,47 +712,7 @@ unsigned long (^(^bits)(unsigned long))(unsigned long)  = ^ (unsigned long x) {
 
 - (void)awakeFromNib {
     [super awakeFromNib];
-    
-    typedef void(^(^(^blk_)(void))(void))(void);
-    void (^test_)(void) = ^{
-        return ^ (blk_ b) {
-            return b()()();
-        }(^{
-            return ^{
-                return ^{
-                    
-                };
-            };
-        });
-    };
-    
-    
-    typedef void(^(^blk)(void))(void);
-    ^ blk (blk b) {
-        printf("pre-animation");
-        return ^{
-            return b();
-        };
-    }(^{
-        printf("set_state");
-        return ^{
-            printf("post-animation");
-        };
-    })()();
-    
-    
-//    blk(^test)(blk) = ^ blk (blk b) {
-//        printf("pre-animation");
-//        return b;
-//    };
-//    (test(^{
-//        printf("set_state");
-//        return ^{
-//            printf("post-animation");
-//        };
-//    })())();
-    
-    
+
     //    bits(BUTTON_ARC_COMPONENT_BIT_MASK);
     //    bits(TICK_WHEEL_COMPONENT_BIT_MASK);
     bits(active_component_bit_vector ^ TICK_WHEEL_COMPONENT_BIT_MASK);
@@ -806,7 +767,7 @@ unsigned long (^(^bits)(unsigned long))(unsigned long)  = ^ (unsigned long x) {
 
 - (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
     handle_touch(state_setter_ptr);
-};
+}
 
 - (void)touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
     handle_touch(nil);

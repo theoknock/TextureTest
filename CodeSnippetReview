@@ -1015,8 +1015,41 @@ typedef unsigned long v30si __attribute__((__vector_size__(sizeof(unsigned long)
 //
 //@end
 
+/*
+    Block pointer to void(^)(void) block
+ */
+
+void (^blk)(void) = ^{
+    printf("blk\n");
+};
+void (^const __strong * blk_t)(void) = &blk;    // Initializes a block pointer to blk using the address of blk
+(*blk_t)();                                     // prints 'blk' to the console
 
 
+/*
+    Block returning pointer to void(^)(void) block
+ */
+
+const void * (^const __strong blk_ptr)(const void (^const __strong)(void)) = ^ (const void(^const __strong blk_ptr_t)(void)) { // Initializes block pointer blk_ptr using block parameter blk_ptr_t
+    printf("blk_ptr_t\n");
+    return Block_copy((const void *)CFBridgingRetain(blk_ptr_t));
+};
+((__bridge const void(^const __strong)(void))(blk_ptr(CFBridgingRelease((__bridge CFTypeRef _Nullable)(blk)))))(); // Returns a pointer to blk_ptr_t (prints 'blk_ptr_t' to the console) using blk_ptr and invokes blk (prints 'blk' to the console)
+
+
+/*
+    Block returning pointer to a int(^)(int) block. Similar to an adaptable functor (nested functions with varying return types and arguments) used in generic programming.
+ */
+
+int (^int_blk)(int) = ^ (int i) {
+    printf("2 == %d\n", i);
+    return (int)2;
+};
+const void * (^const __strong int_blk_ptr)(const int (^const __strong)(int)) = ^ (const int(^const __strong int_blk_ptr_t)(int)) { // Initializes block pointer blk_ptr using block parameter blk_ptr_t
+    printf("int_blk_ptr\n");
+    return Block_copy((const void *)CFBridgingRetain(int_blk_ptr_t));
+};
+((__bridge const int(^const __strong)(int))(int_blk_ptr(CFBridgingRelease((__bridge CFTypeRef _Nullable)(int_blk)))))((int)2); // Returns a pointer to int_blk_ptr_t (prints 'int_blk_ptr' to the console) using int_blk_ptr and invokes blk (prints 'i == 1' to the console)
 
 //
 
