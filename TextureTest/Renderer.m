@@ -347,7 +347,8 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
         
         // Load the functions from the library.
         NSArray<id<MTLFunction>> * functions = @[
-            [defaultLibrary newFunctionWithName:@"convolution3x3"]
+            [defaultLibrary newFunctionWithName:@"convolution3x3"],
+            [defaultLibrary newFunctionWithName:@"edges"]
         ];
 
         // Set up a descriptor for creating a pipeline state object

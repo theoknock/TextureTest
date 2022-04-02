@@ -39,6 +39,9 @@ vertexShader(uint vertexID [[ vertex_id ]],
     Stitchable functions
  */
 
+[[stitchable]] matrix_half3x3 edges() {
+    return matrix_half3x3(1,1,1,1,-8,1,1,1,1);
+}
 //const matrix_half3x3 convolutionKernel = matrix_half3x3(1,1,1,1,-8,1,1,1,1);// * coefficient_matrix;
 //    const matrix_half3x3 convolutionKernel = matrix_half3x3(1, 0, -1, 0, 0, 0, -1, 0, 1);
 //                                            //matrix_half3x3(-2, -1, 0, -1, 1, 1, 0, 1, 2); // Emboss
@@ -102,7 +105,7 @@ computeKernel(
                uint2                          gid        [[ thread_position_in_grid ]]
                )
 {
-    const half3 coefficient = convolution3x3(inTexture, gid, matrix_half3x3(1,1,1,1,-8,1,1,1,1), 1);
+    const half3 coefficient = convolution3x3(inTexture, gid, edges(), 1);
 
     outTexture.write(half4(coefficient, 1.0), gid);
 }
