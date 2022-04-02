@@ -348,9 +348,14 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
         // Load the functions from the library.
         NSArray<id<MTLFunction>> * functions = @[
             [defaultLibrary newFunctionWithName:@"convolution3x3"],
-            [defaultLibrary newFunctionWithName:@"edges"]
+            [defaultLibrary newFunctionWithName:@"edges"],
+            [defaultLibrary newFunctionWithName:@"emboss"],
+            [defaultLibrary newFunctionWithName:@"ridges"],
+            [defaultLibrary newFunctionWithName:@"gaussian_blur"],
+            [defaultLibrary newFunctionWithName:@"sharpen"],
+            [defaultLibrary newFunctionWithName:@"ridges_alt"]
         ];
-
+    
         // Set up a descriptor for creating a pipeline state object
         MTLRenderPipelineDescriptor *pipelineStateDescriptor = [[MTLRenderPipelineDescriptor alloc] init];
         pipelineStateDescriptor.label = @"MyPipeline";

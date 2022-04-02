@@ -45,6 +45,42 @@ vertexShader(uint vertexID [[ vertex_id ]],
     matrix_half3x3 convolution = convolution_kernel * coefficient_matrix;
     return convolution;
 }
+
+[[stitchable]] matrix_half3x3 emboss(half coefficient) {
+    matrix_half3x3 convolution_kernel = matrix_half3x3(-2, -1, 0, -1, 1, 1, 0, 1, 2);
+    const matrix_half3x3 coefficient_matrix = matrix_half3x3(coefficient, coefficient, coefficient, coefficient, coefficient, coefficient, coefficient, coefficient, coefficient);
+    matrix_half3x3 convolution = convolution_kernel * coefficient_matrix;
+    return convolution;
+}
+
+[[stitchable]] matrix_half3x3 ridges(half coefficient) {
+    matrix_half3x3 convolution_kernel = matrix_half3x3(-1,-1,-1,-1,8,-1,-1,-1,-1);
+    const matrix_half3x3 coefficient_matrix = matrix_half3x3(coefficient, coefficient, coefficient, coefficient, coefficient, coefficient, coefficient, coefficient, coefficient);
+    matrix_half3x3 convolution = convolution_kernel * coefficient_matrix;
+    return convolution;
+}
+
+[[stitchable]] matrix_half3x3 gaussian_blur(half coefficient) {
+    matrix_half3x3 convolution_kernel = matrix_half3x3(1,2,1,2,4,2,1,2,1);
+    const matrix_half3x3 coefficient_matrix = matrix_half3x3(coefficient, coefficient, coefficient, coefficient, coefficient, coefficient, coefficient, coefficient, coefficient);
+    matrix_half3x3 convolution = convolution_kernel * coefficient_matrix;
+    return convolution;
+}
+
+[[stitchable]] matrix_half3x3 sharpen(half coefficient) {
+    matrix_half3x3 convolution_kernel = matrix_half3x3(0,-1,0,-1,5,-1,0,-1,0);
+    const matrix_half3x3 coefficient_matrix = matrix_half3x3(coefficient, coefficient, coefficient, coefficient, coefficient, coefficient, coefficient, coefficient, coefficient);
+    matrix_half3x3 convolution = convolution_kernel * coefficient_matrix;
+    return convolution;
+}
+
+[[stitchable]] matrix_half3x3 ridges_alt(half coefficient) {
+    matrix_half3x3 convolution_kernel = matrix_half3x3(0,-1,0,-1,4,-1,0,-1,0);
+    const matrix_half3x3 coefficient_matrix = matrix_half3x3(coefficient, coefficient, coefficient, coefficient, coefficient, coefficient, coefficient, coefficient, coefficient);
+    matrix_half3x3 convolution = convolution_kernel * coefficient_matrix;
+    return convolution;
+}
+
 //const matrix_half3x3 convolutionKernel = matrix_half3x3(1,1,1,1,-8,1,1,1,1);// * coefficient_matrix;
 //    const matrix_half3x3 convolutionKernel = matrix_half3x3(1, 0, -1, 0, 0, 0, -1, 0, 1);
 //                                            //matrix_half3x3(-2, -1, 0, -1, 1, 1, 0, 1, 2); // Emboss
@@ -59,10 +95,6 @@ vertexShader(uint vertexID [[ vertex_id ]],
 [[stitchable]]
 half3 convolution3x3(texture2d<half, access::read> inTexture, uint2 gid, matrix_half3x3 convolutionKernel)
 {
-
-
-    
-    
     uint2 leftTextureCoordinate = gid + uint2(-1, 0);
     uint2 rightTextureCoordinate = gid + uint2(0, 1);
     uint2 topTextureCoordinate = gid + uint2(0, -1);
@@ -108,7 +140,7 @@ computeKernel(
                uint2                          gid        [[ thread_position_in_grid ]]
                )
 {
-    const half3 coefficient = convolution3x3(inTexture, gid, edges(1));
+    const half3 coefficient = convolution3x3(inTexture, gid, ridges(1));
 
     outTexture.write(half4(coefficient, 1.0), gid);
 }
