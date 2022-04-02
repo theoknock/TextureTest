@@ -26,7 +26,7 @@
 		B90B097C2793070E0052879E /* Kernels.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Kernels.metal; sourceTree = "<group>"; };
 		B90B097E2793074D0052879E /* KernelTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = KernelTypes.h; sourceTree = "<group>"; };
 		B90E67D427A5C6B8004B935F /* ControlView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ControlView.h; sourceTree = "<group>"; };
-		B90E67D527A5C6B8004B935F /* ControlView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ControlView.m; sourceTree = "<group>"; wrapsLines = 1; };
+		B90E67D527A5C6B8004B935F /* ControlView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ControlView.m; sourceTree = "<group>"; wrapsLines = 0; };
 		B94F5B4F27A58AAF00DA42A4 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 		B98DC77D27F8967500681FBF /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		B9B73FC927EA652400B51138 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };

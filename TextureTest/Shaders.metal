@@ -67,8 +67,16 @@ vertexShader(uint vertexID [[ vertex_id ]],
     return convolution;
 }
 
+
+[[stitchable]] matrix_half3x3 box_blur(half coefficient) {
+    matrix_half3x3 convolution_kernel = matrix_half3x3(1,1,1,1,1,1,1,1,1);
+    const matrix_half3x3 coefficient_matrix = matrix_half3x3(coefficient, coefficient, coefficient, coefficient, coefficient, coefficient, coefficient, coefficient, coefficient);
+    matrix_half3x3 convolution = convolution_kernel * coefficient_matrix;
+    return convolution;
+}
+
 [[stitchable]] matrix_half3x3 sharpen(half coefficient) {
-    matrix_half3x3 convolution_kernel = matrix_half3x3(0,-1,0,-1,5,-1,0,-1,0);
+    matrix_half3x3 convolution_kernel = matrix_half3x3(0,-1,0,-1,4,-1,0,-1,0);
     const matrix_half3x3 coefficient_matrix = matrix_half3x3(coefficient, coefficient, coefficient, coefficient, coefficient, coefficient, coefficient, coefficient, coefficient);
     matrix_half3x3 convolution = convolution_kernel * coefficient_matrix;
     return convolution;
@@ -142,7 +150,7 @@ computeKernel(
               uint2                          gid        [[ thread_position_in_grid ]]
               )
 {
-    convolution3x3(inTexture, outTexture, gid, ridges(1) * sharpen(2) * emboss(1));
+    convolution3x3(inTexture, outTexture, gid, (ridges(1) + sharpen(1)));
     
     //    const half3 sharpen_convolution = convolution3x3(outTexture, gid, sharpen(1.0));
     //    const half3 sobel_h = convolution3x3(inTexture, gid, matrix_half3x3(3, 0, -3, 10, 0, -10, 3, 0, -3));

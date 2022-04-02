@@ -352,6 +352,7 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
             [defaultLibrary newFunctionWithName:@"emboss"],
             [defaultLibrary newFunctionWithName:@"ridges"],
             [defaultLibrary newFunctionWithName:@"gaussian_blur"],
+            [defaultLibrary newFunctionWithName:@"box_blur"],
             [defaultLibrary newFunctionWithName:@"sharpen"],
             [defaultLibrary newFunctionWithName:@"ridges_alt"]
         ];
