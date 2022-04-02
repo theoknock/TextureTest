@@ -140,9 +140,13 @@ computeKernel(
                uint2                          gid        [[ thread_position_in_grid ]]
                )
 {
-    const half3 coefficient = convolution3x3(inTexture, gid, ridges(1));
-
-    outTexture.write(half4(coefficient, 1.0), gid);
+    const half3 ridges_convolution = convolution3x3(inTexture, gid, ridges(1));
+    const half3 sobel_h = convolution3x3(inTexture, gid, matrix_half3x3(3, 0, -3, 10, 0, -10, 3, 0, -3));
+    const half3 sobel_v = convolution3x3(inTexture, gid, matrix_half3x3(3, 10, 3, 0, 0, 0, -3, -10, -3)); //matrix_half3x3(1, 2, 1, 0, 0, 0, -1, -2, -1));
+//    half3 sobel_convolution = sqrt((sobel_h * sobel_h) + (sobel_v * sobel_v));
+    half3 sobel_convolution = atan2(sobel_h, sobel_v);
+//    half4 inputTexture =  inTexture.read(gid);
+    outTexture.write(inTexture.read(gid), gid);
 }
 
 /*

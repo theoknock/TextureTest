@@ -10,6 +10,7 @@
 
 #import <UIKit/UIKit.h>
 #import <AVFoundation/AVFoundation.h>
+#import <CoreText/CoreText.h>
 @import CoreHaptics;
 @import QuartzCore;
 @import CoreGraphics;

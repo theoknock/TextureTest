@@ -18,6 +18,7 @@
 //#include <stdatomic.h>
 #import "VideoCamera.h"
 
+
 @import simd;
 
 
@@ -286,6 +287,15 @@ static Step (^stepper)(int, float) = ^ (int count, float start) {
     };
 };
 
+static CGSize (^suggestFrameSizeWithConstraints)(CGSize, NSAttributedString *) = ^ (CGSize size, NSAttributedString * attributedString) {
+    CTFramesetterRef framesetter = CTFramesetterCreateWithAttributedString((CFMutableAttributedStringRef)attributedString);
+    CFRange attributedStringRange = CFRangeMake(0, attributedString.length);
+    CGSize suggestedSize = CTFramesetterSuggestFrameSizeWithConstraints(framesetter, attributedStringRange, NULL, size, NULL);
+    CFRelease(framesetter);
+    
+    return suggestedSize;
+};
+
 static const unsigned long (^state_setter_)(void) = ^{
     selected_property_bit_vector = highlighted_property_bit_vector & active_component_bit_vector;
     hidden_property_bit_vector = (~selected_property_bit_vector & active_component_bit_vector);
@@ -304,7 +314,7 @@ static const void (^ const (* restrict draw_tick_wheel_ptr))(CGContextRef, CGRec
 
 static unsigned long (^(^_Nonnull touch_handler)(__strong UITouch * _Nullable))(const unsigned long (^ const (* _Nullable restrict))(void));
 static unsigned long (^ _Nonnull  handle_touch)(const unsigned long (^ const (* _Nullable restrict))(void));
-static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__strong UITouch * _Nullable))(const unsigned long (^ const (* _Nullable restrict))(void)) = ^ (const ControlView * __strong view) {
+static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong, const CATextLayer *))(__strong UITouch * _Nullable))(const unsigned long (^ const (* _Nullable restrict))(void)) = ^ (const ControlView * __strong view, const CATextLayer * __strong valueTextLayer) {
     center_point = CGPointMake(CGRectGetMaxX(((ControlView *)view).bounds) - (buttons[0].intrinsicContentSize.width + buttons[0].intrinsicContentSize.height), CGRectGetMaxY(((ControlView *)view).bounds) - (buttons[4].intrinsicContentSize.width + buttons[4].intrinsicContentSize.height));
     
     static float radius;
@@ -384,7 +394,7 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
         return TRUE_BIT;
     });
     
-    draw_tick_wheel = ^ (ControlView * view, float * restrict angle_t, float * restrict radius_t) {
+    draw_tick_wheel = ^ (ControlView * view, float * restrict angle_t, float * restrict radius_t, CATextLayer * value_text_layer) {
         return ^ (CGContextRef ctx, CGRect rect) {
             dispatch_barrier_sync(enumerator_queue(), ^{
                 ((active_component_bit_vector ^ BUTTON_ARC_COMPONENT_BIT_MASK) && ^ unsigned long (void) {
@@ -405,6 +415,20 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
                         };
                         CGContextStrokePath(ctx);
                     }
+                    NSMutableParagraphStyle *centerAlignedParagraphStyle = [[NSMutableParagraphStyle alloc] init];
+                    centerAlignedParagraphStyle.alignment = NSTextAlignmentCenter;
+                    NSDictionary *centerAlignedTextAttributes = @{NSForegroundColorAttributeName:[UIColor systemYellowColor],
+                                                                  NSFontAttributeName:[UIFont systemFontOfSize:14.0],
+                                                                  NSParagraphStyleAttributeName:centerAlignedParagraphStyle};
+                    
+                    NSString *valueString = [NSString stringWithFormat:@"%.2f", rescale(angle, 180.0, 270.0, 0.0, 1.0)];
+                    NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:valueString attributes:centerAlignedTextAttributes];
+                    ((CATextLayer *)value_text_layer).string = attributedString;
+
+                    CGSize textLayerframeSize = suggestFrameSizeWithConstraints(rect.size, attributedString);
+                    CGRect textLayerFrame = CGRectMake(CGRectGetMidX(rect) - (textLayerframeSize.width * 0.5), CGRectGetMinY(rect), textLayerframeSize.width, textLayerframeSize.height);
+                    [(CATextLayer *)value_text_layer setFrame:textLayerFrame];
+                    
                     UIGraphicsEndImageContext();
                     return TRUE_BIT;
                 }()) || ((active_component_bit_vector & BUTTON_ARC_COMPONENT_BIT_MASK) && ^ unsigned long (void) {
@@ -413,7 +437,7 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
                 }());
             });
         };
-    }((ControlView *)view, &angle, &radius);
+    }((ControlView *)view, &angle, &radius, valueTextLayer);
     
     __block UISelectionFeedbackGenerator * haptic_feedback;
     haptic_feedback = [[UISelectionFeedbackGenerator alloc] init];
@@ -498,6 +522,11 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
     
     static const float kExposureDurationPower = 4.f;
     static const float kExposureMinimumDuration = 1.f/1000.f;
+    
+//    printf("value_min = %f\t\tvalue_max = %f\n", min_v, max_v);
+    static float value_min, value_max;
+    value_max = fmax(0.0, fmin(rescale(radius, center_point.x, CGRectGetMidX(((ControlView *)view).bounds), 0.5, 1.0), 1.0));
+    value_min = fmax(0.0, fmin(1.0 - value_max, 1.0));
     unsigned long (^(^(^capture_device_configuration)(CaptureDeviceConfigurationControlProperty))(float))(void)= ^ (CaptureDeviceConfigurationControlProperty property) {
         switch (property) {
             case CaptureDeviceConfigurationControlPropertyTorchLevel: {
@@ -519,6 +548,8 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
                 return ^ (float value) {
                     return ^{
                         [VideoCamera.captureDevice setFocusModeLockedWithLensPosition:value completionHandler:nil];
+                        
+                        
                         return (unsigned long)1;
                     };
                 };
@@ -541,7 +572,7 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
                 return ^ (float value) {
                     return ^{
                         @try {
-                            [VideoCamera.captureDevice setExposureModeCustomWithDuration:[VideoCamera.captureDevice exposureDuration] ISO:rescale(value, 0.0, 1.0, [VideoCamera.captureDevice.activeFormat minISO], [VideoCamera.captureDevice.activeFormat maxISO]) completionHandler:nil];
+                            [VideoCamera.captureDevice setExposureModeCustomWithDuration:[VideoCamera.captureDevice exposureDuration] ISO:rescale(value, value_min, value_max, [VideoCamera.captureDevice.activeFormat minISO], [VideoCamera.captureDevice.activeFormat maxISO]) completionHandler:nil];
                         } @catch (NSException *exception) {
                             [VideoCamera.captureDevice setExposureModeCustomWithDuration:[VideoCamera.captureDevice exposureDuration] ISO:[VideoCamera.captureDevice ISO] completionHandler:nil];
                         } @finally {
@@ -555,7 +586,7 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
             case CaptureDeviceConfigurationControlPropertyVideoZoomFactor: {
                 return ^ (float value) {
                     return ^{
-                        [VideoCamera.captureDevice setVideoZoomFactor:rescale(pow(value, kExposureDurationPower), 0.0, 1.0, [VideoCamera.captureDevice minAvailableVideoZoomFactor], [VideoCamera.captureDevice maxAvailableVideoZoomFactor])];
+                        [VideoCamera.captureDevice setVideoZoomFactor:rescale(pow(value, kExposureDurationPower), 1.0, 9.0, [VideoCamera.captureDevice minAvailableVideoZoomFactor], [VideoCamera.captureDevice maxAvailableVideoZoomFactor])];
                         return (unsigned long)1;
                     };
                 };
@@ -612,7 +643,7 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
             
             ((active_component_bit_vector & ~BUTTON_ARC_COMPONENT_BIT_MASK) && (^ unsigned long {
                 unsigned int selected_property_bit_position = floor(log2(selected_property_bit_vector));
-                //                configure_capture_device_property(set_configuration_phase([touch phase]))((capture_device_configuration(selected_property_bit_position))(rescale(angle, 180.0, 270.0, 0.0, 1.0)));
+                //                configure_capture_device_property(set_configuration_phase([touch phase]))((capture_device_configuration(selected_property_bit_position))(rescale(angle, 180.0, 270.0, value_min, value_max)));
                 set_configuration_phase([touch phase])((capture_device_configuration(selected_property_bit_position))(rescale(angle, 180.0, 270.0, 0.0, 1.0)));
                 [(ControlView *)view setNeedsDisplay];
                 return TRUE_BIT;
@@ -709,10 +740,79 @@ unsigned long (^(^bits)(unsigned long))(unsigned long)  = ^ (unsigned long x) {
 };
 
 @implementation ControlView
+{
+    CATextLayer * valueTextLayer, * valueMinTextLayer, * valueMaxTextLayer;
+}
 
+- (void)attributesForTextLayer:(CATextLayer *)textLayer
+{
+    [(CATextLayer *)textLayer setAllowsFontSubpixelQuantization:TRUE];
+    [(CATextLayer *)textLayer setOpaque:FALSE];
+    [(CATextLayer *)textLayer setAlignmentMode:kCAAlignmentCenter];
+    [(CATextLayer *)textLayer setWrapped:FALSE];
+}
+
+//- (void)drawLayer:(CALayer *)layer inContext:(CGContextRef)ctx {
+//    NSMutableParagraphStyle *centerAlignedParagraphStyle = [[NSMutableParagraphStyle alloc] init];
+//    centerAlignedParagraphStyle.alignment = NSTextAlignmentCenter;
+//    NSDictionary *centerAlignedTextAttributes = @{NSForegroundColorAttributeName:[UIColor systemYellowColor],
+//                                                  NSFontAttributeName:[UIFont systemFontOfSize:14.0],
+//                                                  NSParagraphStyleAttributeName:centerAlignedParagraphStyle};
+//
+//    NSString *valueString = [NSString stringWithFormat:@"%.2f", self.value.floatValue];
+//    NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:valueString attributes:centerAlignedTextAttributes];
+//    ((CATextLayer *)valueTextLayer).string = attributedString;
+//
+//    CGSize textLayerframeSize = [self suggestFrameSizeWithConstraints:self.frame.size forAttributedString:attributedString];
+//    CGRect textLayerFrame = CGRectMake(CGRectGetMidX(self.frame) - (textLayerframeSize.width * 0.5), CGRectGetMinY(self.frame), textLayerframeSize.width, textLayerframeSize.height);
+//    [(CATextLayer *)valueTextLayer setFrame:textLayerFrame];
+//
+//    CGRect bounds = CGRectMake(CGRectGetMidX(self.frame) - (CGRectGetWidth(self.frame) * 0.5), 0.0, CGRectGetWidth(self.frame) * 2.0, CGRectGetHeight(self.frame));
+//    CGContextTranslateCTM(ctx, CGRectGetMinX(bounds), CGRectGetMinY(bounds));
+//
+//    CGFloat stepSize = (CGRectGetMaxX(bounds) / 100.0);
+//    CGFloat height_eighth = (CGRectGetHeight(bounds) / 8.0);
+//    CGFloat height_sixteenth = (CGRectGetHeight(bounds) / 16.0);
+//    CGFloat height_thirtyseconth = (CGRectGetHeight(bounds) / 16.0);
+//    for (int t = 0; t <= 100; t++) {
+//        CGFloat x = (CGRectGetMinX(bounds) + (stepSize * t));
+//        if (t % 10 == 0)
+//        {
+//            CGContextSetStrokeColorWithColor(ctx, [[UIColor whiteColor] CGColor]);
+//            CGContextSetLineWidth(ctx, 0.625);
+//            CGContextMoveToPoint(ctx, x, (CGRectGetMinY(bounds) + height_eighth) - height_thirtyseconth);
+//            CGContextAddLineToPoint(ctx, x, (CGRectGetMidY(bounds) - height_eighth) - height_thirtyseconth);
+//        }
+//        else
+//        {
+//            CGContextSetStrokeColorWithColor(ctx, [[UIColor lightGrayColor] CGColor]);
+//            CGContextSetLineWidth(ctx, 0.375);
+//            CGContextMoveToPoint(ctx, x, (CGRectGetMinY(bounds) + (height_eighth + height_sixteenth)) - height_thirtyseconth);
+//            CGContextAddLineToPoint(ctx, x, (CGRectGetMidY(bounds) - (height_eighth + height_sixteenth)) - height_thirtyseconth);
+//        }
+//
+//        CGContextStrokePath(ctx);
+//    }
+//}
+    
 - (void)awakeFromNib {
     [super awakeFromNib];
 
+    valueTextLayer = [CATextLayer new];
+    [self attributesForTextLayer:valueTextLayer];
+    [self.layer addSublayer:valueTextLayer];
+    
+    valueMinTextLayer = [CATextLayer new];
+    [self attributesForTextLayer:valueMinTextLayer];
+    [self.layer addSublayer:valueMinTextLayer];
+    
+    valueMaxTextLayer = [CATextLayer new];
+    [self attributesForTextLayer:valueMaxTextLayer];
+    [self.layer addSublayer:valueMaxTextLayer];
+    
+    [self.layer setNeedsDisplay];
+    [self.layer setNeedsDisplayOnBoundsChange:YES];
+    
     //    bits(BUTTON_ARC_COMPONENT_BIT_MASK);
     //    bits(TICK_WHEEL_COMPONENT_BIT_MASK);
     bits(active_component_bit_vector ^ TICK_WHEEL_COMPONENT_BIT_MASK);
@@ -754,7 +854,7 @@ unsigned long (^(^bits)(unsigned long))(unsigned long)  = ^ (unsigned long x) {
         return button;
     });
     
-    touch_handler = touch_handler_init((ControlView *)self);
+    touch_handler = touch_handler_init((ControlView *)self, valueTextLayer);
 }
 
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
