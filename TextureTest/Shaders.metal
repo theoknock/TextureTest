@@ -40,7 +40,7 @@ vertexShader(uint vertexID [[ vertex_id ]],
  */
 
 [[stitchable]]
-half3 add(texture2d<half, access::read> inTexture, uint2 gid)
+half3 convolution3x3(texture2d<half, access::read> inTexture, uint2 gid)
 {
     half coefficient = 0.0625;
     const matrix_half3x3 coefficient_matrix = matrix_half3x3(coefficient, coefficient, coefficient, coefficient, coefficient, coefficient, coefficient, coefficient, coefficient);
@@ -94,14 +94,14 @@ samplingShader(RasterizerData in [[stage_in]],
 }
 
 kernel void
-convolution3x3(
+computeKernel(
                texture2d<half, access::read>  inTexture  [[ texture(0) ]],
                texture2d<half, access::write> outTexture [[ texture(1) ]],
                texture2d<half, access::read>  inTextureP [[ texture(2) ]],
                uint2                          gid        [[ thread_position_in_grid ]]
                )
 {
-    const half3 coefficient = add(inTexture, gid);
+    const half3 coefficient = convolution3x3(inTexture, gid);
 
     outTexture.write(half4(coefficient, 1.0), gid);
 }

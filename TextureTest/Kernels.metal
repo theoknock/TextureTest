@@ -13,7 +13,7 @@ using namespace metal;
 // Including header shared between this Metal shader code and Swift/C code executing Metal API commands
 #import "KernelTypes.h"
 
-kernel void computeKernel(device CaptureDevicePropertyControlLayout & layout [[ buffer(0) ]],
+kernel void computeFunction(device CaptureDevicePropertyControlLayout & layout [[ buffer(0) ]],
                           uint idx [[ thread_position_in_grid ]])
 {
     // TO-DO: Simply plot control points of bezier curve for button center (all this other math is grossly unnecessary)

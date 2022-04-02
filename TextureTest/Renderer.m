@@ -338,7 +338,7 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
         //        id<MTLLibrary> defaultLibrary = [_device newDefaultLibrary];
         id<MTLFunction> vertexFunction = [defaultLibrary newFunctionWithName:@"vertexShader"];
         id<MTLFunction> fragmentFunction = [defaultLibrary newFunctionWithName:@"samplingShader"];
-        id<MTLFunction> computeKernel = [defaultLibrary newFunctionWithName:@"convolution3x3"];
+        id<MTLFunction> computeKernel = [defaultLibrary newFunctionWithName:@"computeKernel"];
         
         /*
             Stitchable functions
@@ -347,7 +347,7 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
         
         // Load the functions from the library.
         NSArray<id<MTLFunction>> * functions = @[
-            [defaultLibrary newFunctionWithName:@"add"]
+            [defaultLibrary newFunctionWithName:@"convolution3x3"]
         ];
 
         // Set up a descriptor for creating a pipeline state object
