@@ -45,7 +45,7 @@ half3 add(texture2d<half, access::read> inTexture, uint2 gid)
     half coefficient = 0.0625;
     const matrix_half3x3 coefficient_matrix = matrix_half3x3(coefficient, coefficient, coefficient, coefficient, coefficient, coefficient, coefficient, coefficient, coefficient);
 
-    const matrix_half3x3 convolutionKernel = matrix_half3x3(1,1,1,1,-8,1,1,1,1) * coefficient_matrix;
+    const matrix_half3x3 convolutionKernel = matrix_half3x3(1,1,1,1,-8,1,1,1,1);// * coefficient_matrix;
     //    const matrix_half3x3 convolutionKernel = matrix_half3x3(1, 0, -1, 0, 0, 0, -1, 0, 1);
     //                                            //matrix_half3x3(-2, -1, 0, -1, 1, 1, 0, 1, 2); // Emboss
     //                                            //matrix_half3x3(-1,-1,-1,-1,8,-1,-1,-1,-1); // Ridge detection (2)
