@@ -349,6 +349,8 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
         NSArray<id<MTLFunction>> * functions = @[
             [defaultLibrary newFunctionWithName:@"convolution3x3"],
             [defaultLibrary newFunctionWithName:@"edges"],
+            [defaultLibrary newFunctionWithName:@"horizontal_axis_edge"],
+            [defaultLibrary newFunctionWithName:@"vertical_axis_edge"],
             [defaultLibrary newFunctionWithName:@"emboss"],
             [defaultLibrary newFunctionWithName:@"ridges"],
             [defaultLibrary newFunctionWithName:@"gaussian_blur"],
