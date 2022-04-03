@@ -39,6 +39,8 @@ vertexShader(uint vertexID [[ vertex_id ]],
  Stitchable functions
  */
 
+constant matrix_half3x3 identity = matrix_half3x3(0,0,0,0,1,0,0,0,0);
+
 [[stitchable]] matrix_half3x3 edges(half coefficient) {
     matrix_half3x3 convolution_kernel = matrix_half3x3(1,1,1,1,-8,1,1,1,1);
     const matrix_half3x3 coefficient_matrix = matrix_half3x3(coefficient, coefficient, coefficient, coefficient, coefficient, coefficient, coefficient, coefficient, coefficient);
@@ -150,7 +152,7 @@ computeKernel(
               uint2                          gid        [[ thread_position_in_grid ]]
               )
 {
-    convolution3x3(inTexture, outTexture, gid, (ridges(1) + sharpen(1)));
+    convolution3x3(inTexture, outTexture, gid, (sharpen(3) + identity));
     
     //    const half3 sharpen_convolution = convolution3x3(outTexture, gid, sharpen(1.0));
     //    const half3 sobel_h = convolution3x3(inTexture, gid, matrix_half3x3(3, 0, -3, 10, 0, -10, 3, 0, -3));
