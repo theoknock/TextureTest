@@ -89,7 +89,7 @@ constant matrix_half3x3 identity = matrix_half3x3(0,0,0,0,1,0,0,0,0);
 
 
 [[stitchable]] matrix_half3x3 box_blur(half coefficient) {
-    matrix_half3x3 convolution_kernel = matrix_half3x3(1,1,1,1,1,1,1,1,1);
+    matrix_half3x3 convolution_kernel = matrix_half3x3(1,1,1,1,0,1,1,1,1);
     const matrix_half3x3 coefficient_matrix = matrix_half3x3(coefficient, coefficient, coefficient, coefficient, coefficient, coefficient, coefficient, coefficient, coefficient);
     matrix_half3x3 convolution = convolution_kernel * coefficient_matrix;
     return convolution;
@@ -118,33 +118,88 @@ constant matrix_half3x3 identity = matrix_half3x3(0,0,0,0,1,0,0,0,0);
 //                                            //matrix_half3x3(-1,-1,-1,-1,8,-1,-1,-1,-1); // Ridge detection (2)
 //                                            //matrix_half3x3(0,-1,0,-1,4,-1,0,-1,0); // Ridge detection (1)
 
+constant half3 kRec709Luma = half3(0.2126, 0.7152, 0.0722);
+
 [[stitchable]]
-void convolution3x3(texture2d<half, access::read> inTexture, texture2d<half, access::write> outTexture, uint2 gid, matrix_half3x3 convolutionKernel)
+uint2 convolution3x3GIDOffset(uint2 offset, int index) {
+    switch (index) {
+        case 0:
+            return offset;
+        case 1:
+            return uint2(0, 0);
+        default:
+            return uint2(0, 0);
+    }
+}
+
+[[stitchable]]
+uint2 convolution3x3GID(uint2 gid, uint2 offset, int position, int index) {
+    switch (position) {
+        case 0:
+            return gid + uint2(-1, 0) + convolution3x3GIDOffset(offset, index);
+        case 1:
+            return gid + uint2(0, 1) + convolution3x3GIDOffset(offset, index);
+        case 2:
+            return gid + uint2(0, -1) + convolution3x3GIDOffset(offset, index);
+        case 3:
+            return gid + uint2(-1, -1) + convolution3x3GIDOffset(offset, index);
+        case 4:
+            return gid + uint2(1, -1) + convolution3x3GIDOffset(offset, index);
+        case 5:
+            return gid + uint2(0, 1) + convolution3x3GIDOffset(offset, index);
+        case 6:
+            return gid + uint2(-1, 1) + convolution3x3GIDOffset(offset, index);
+        case 7:
+            return gid + uint2(1, 1) + convolution3x3GIDOffset(offset, index);
+        default:
+            return gid;
+    }
+}
+
+
+
+
+[[stitchable]]
+void convolution3x3(texture2d<half, access::read> inTexture, texture2d<half, access::write> outTexture, uint2 gid, matrix_half3x3 convolutionKernel, uint2 offset)
 {
     // To-Do: Process an array of convolution kernels, each feeding their result into the next
-    //        ...or 
-    uint2 leftTextureCoordinate = gid + uint2(-1, 0);
-    uint2 rightTextureCoordinate = gid + uint2(0, 1);
-    uint2 topTextureCoordinate = gid + uint2(0, -1);
-    uint2 topLeftTextureCoordinate = gid + uint2(-1, -1);
-    uint2 topRightTextureCoordinate = gid + uint2(1, -1);
-    uint2 bottomTextureCoordinate = gid + uint2(0, 1);
-    uint2 bottomLeftTextureCoordinate = gid + uint2(-1, 1);
-    uint2 bottomRightTextureCoordinate = gid + uint2(1, 1);
-    half3 bottomLeftIntensity = inTexture.read(bottomLeftTextureCoordinate).rgb;
-    half3 topRightIntensity = inTexture.read(topRightTextureCoordinate).rgb;
-    half3 topLeftIntensity = inTexture.read(topLeftTextureCoordinate).rgb;
-    half3 bottomRightIntensity = inTexture.read(bottomRightTextureCoordinate).rgb;
-    half3 leftIntensity = inTexture.read(leftTextureCoordinate).rgb;
-    half3 rightIntensity = inTexture.read(rightTextureCoordinate).rgb;
-    half3 bottomIntensity = inTexture.read(bottomTextureCoordinate).rgb;
-    half3 topIntensity = inTexture.read(topTextureCoordinate).rgb;
+    //        ...or
+    uint2 leftTextureCoordinate[2] = {convolution3x3GID(gid, offset, 0, 0), convolution3x3GID(gid, offset, 0, 1)};
+    uint2 rightTextureCoordinate[2] = {convolution3x3GID(gid, offset, 1, 0), convolution3x3GID(gid, offset, 1, 1)};
+    uint2 topTextureCoordinate[2] = {convolution3x3GID(gid, offset, 2, 0), convolution3x3GID(gid, offset, 2, 1)};
+    uint2 topLeftTextureCoordinate[2] = {convolution3x3GID(gid, offset, 3, 0), convolution3x3GID(gid, offset, 3, 1)};
+    uint2 topRightTextureCoordinate[2] = {convolution3x3GID(gid, offset, 4, 0), convolution3x3GID(gid, offset, 4, 1)};
+    uint2 bottomTextureCoordinate[2]= {convolution3x3GID(gid, offset, 5, 0), convolution3x3GID(gid, offset, 5, 1)};
+    uint2 bottomLeftTextureCoordinate[2] = {convolution3x3GID(gid, offset, 6, 0), convolution3x3GID(gid, offset, 6, 1)};
+    uint2 bottomRightTextureCoordinate[2] = {convolution3x3GID(gid, offset, 7, 0), convolution3x3GID(gid, offset, 7, 1)};
+    half4 bottomLeftIntensity[2] = {inTexture.read(bottomLeftTextureCoordinate[0]).rgba, inTexture.read(bottomLeftTextureCoordinate[1]).rgba};
+    half4 topRightIntensity[2] = {inTexture.read(topRightTextureCoordinate[0]).rgba, inTexture.read(topRightTextureCoordinate[1]).rgba};
+    half4 topLeftIntensity[2] = {inTexture.read(topLeftTextureCoordinate[0]).rgba, inTexture.read(topLeftTextureCoordinate[1]).rgba};
+    half4 bottomRightIntensity[2] = {inTexture.read(bottomRightTextureCoordinate[0]).rgba, inTexture.read(bottomRightTextureCoordinate[1]).rgba};
+    half4 leftIntensity[2] = {inTexture.read(leftTextureCoordinate[0]).rgba, inTexture.read(leftTextureCoordinate[1]).rgba};
+    half4 rightIntensity[2] = {inTexture.read(rightTextureCoordinate[0]).rgba, inTexture.read(rightTextureCoordinate[1]).rgba};
+    half4 bottomIntensity[2] = {inTexture.read(bottomTextureCoordinate[0]).rgba, inTexture.read(bottomTextureCoordinate[1]).rgba};
+    half4 topIntensity[2] = {inTexture.read(topTextureCoordinate[0]).rgba, inTexture.read(topTextureCoordinate[1]).rgba};
     
-    half3 resultColor = topLeftIntensity * convolutionKernel[0][0] + topIntensity * convolutionKernel[0][1] + topRightIntensity * convolutionKernel[0][2];
-    resultColor += leftIntensity * convolutionKernel[1][0] + inTexture.read(gid).rgb * convolutionKernel[1][1] + rightIntensity * convolutionKernel[1][2];
-    resultColor += bottomLeftIntensity * convolutionKernel[2][0] + bottomIntensity * convolutionKernel[2][1] + bottomRightIntensity * convolutionKernel[2][2];
+    half4 resultColor = topLeftIntensity[0] * convolutionKernel[0][0] + topIntensity[0] * convolutionKernel[0][1] + topRightIntensity[0] * convolutionKernel[0][2];
+    resultColor += leftIntensity[0] * convolutionKernel[1][0] + inTexture.read(gid).rgba * convolutionKernel[1][1] + rightIntensity[0] * convolutionKernel[1][2];
+    resultColor += bottomLeftIntensity[0] * convolutionKernel[2][0] + bottomIntensity[0] * convolutionKernel[2][1] + bottomRightIntensity[0] * convolutionKernel[2][2];
     
-    outTexture.write(half4(resultColor.rgb, 1.0), gid);
+    convolutionKernel = identity;
+    half4 resultColor_2 = topLeftIntensity[1] * convolutionKernel[0][0] + topIntensity[1] * convolutionKernel[0][1] + topRightIntensity[1] * convolutionKernel[0][2];
+    resultColor_2 += leftIntensity[1] * convolutionKernel[1][0] + inTexture.read(gid).rgba * convolutionKernel[1][1] + rightIntensity[1] * convolutionKernel[1][2];
+    resultColor_2 += bottomLeftIntensity[1] * convolutionKernel[2][0] + bottomIntensity[1] * convolutionKernel[2][1] + bottomRightIntensity[1] * convolutionKernel[2][2];
+    
+    half alpha = resultColor.a + (resultColor_2.a * (1.0 - resultColor.a));
+    half3 color_operator_over = ((resultColor.rgb * resultColor.a) + ((resultColor_2.rgb * resultColor_2.a) * (1.0 - resultColor.a)))/alpha;
+    half3 blend = resultColor_2.rgb * ((mix(mix(resultColor_2.rgb, resultColor.rgb, half3(0.4, 0.4, 0.4)),
+                                            mix(resultColor_2.rgb, resultColor.rgb, half3(0.4, 0.4, 0.4)),
+                                            half3(0.4, 0.4, 0.4)) * abs(resultColor_2.rgb - resultColor.rgb)));
+    half3 color =  (1.0 / alpha) * half3((1.0 - resultColor_2.rgb) * (resultColor.rgb * resultColor.a) + (1.0 - resultColor.rgb) * (resultColor_2.rgb * resultColor_2.a)
+                                               + (resultColor.a * resultColor_2.a) * blend);
+    // ((resultColor.rgb * resultColor.a) + ((resultColor_2.rgb * resultColor_2.a) * (1.0 - resultColor.a)))/alpha;
+    
+    outTexture.write(half4(color.rgb, alpha), gid);
 }
 
 // Fragment function
@@ -168,15 +223,7 @@ computeKernel(
               uint2                          gid        [[ thread_position_in_grid ]]
               )
 {
-    convolution3x3(inTexture, outTexture, gid, edges(-3));// (identity + horizontal_axis_edge(-1)) - (vertical_axis_edge(-1) + identity));
-    
-    //    const half3 sharpen_convolution = convolution3x3(outTexture, gid, sharpen(1.0));
-    //    const half3 sobel_h = convolution3x3(inTexture, gid, matrix_half3x3(3, 0, -3, 10, 0, -10, 3, 0, -3));
-    //    const half3 sobel_v = convolution3x3(inTexture, gid, matrix_half3x3(3, 10, 3, 0, 0, 0, -3, -10, -3)); //matrix_half3x3(1, 2, 1, 0, 0, 0, -1, -2, -1));
-    ////    half3 sobel_convolution = sqrt((sobel_h * sobel_h) + (sobel_v * sobel_v));
-    //    half3 sobel_convolution = atan2(sobel_h, sobel_v);
-    ////    half4 inputTexture =  inTexture.read(gid);
-    //    outTexture.write(half4(sharpen_convolution.rgb, 1.0), gid);
+    convolution3x3(inTexture, outTexture, gid, edges(.5), uint2(15, -15));
 }
 
 /*
@@ -260,7 +307,6 @@ wackySobelEdgeDetectionKernelWithConvolution3x3(
 
 
 
-constant half3 kRec709Luma = half3(0.2126, 0.7152, 0.0722);
 
 // Brightens dark images by dividing the texture by its inverse without burning out the highlights (clamp)
 // To-Do: an overlay blend mode kernel
@@ -376,7 +422,7 @@ frameDifferencingBasicKernel(
     half4 texture_p = inTextureP.read(gid);
     half4 diff_texture = abs(texture_p - texture);
     clamp(diff_texture, 0.0, 1.0);
-//    half gray_texture = dot(diff_texture.rgb, kRec709Luma);
+    //    half gray_texture = dot(diff_texture.rgb, kRec709Luma);
     half gamma_texture = 0.0;// 1.0 - pow((1.0 - gray_texture), 1.5); // invert, gamma to stretch whites (really black), invert again
     half4 out_texture = half4( diff_texture.r + gamma_texture, diff_texture.g + gamma_texture, diff_texture.b + gamma_texture, 1.0);
     clamp(out_texture, 0.0, 1.0);

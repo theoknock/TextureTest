@@ -347,6 +347,8 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
         
         // Load the functions from the library.
         NSArray<id<MTLFunction>> * functions = @[
+            [defaultLibrary newFunctionWithName:@"convolution3x3GID"],
+            [defaultLibrary newFunctionWithName:@"convolution3x3GIDOffset"],
             [defaultLibrary newFunctionWithName:@"convolution3x3"],
             [defaultLibrary newFunctionWithName:@"edges"],
             [defaultLibrary newFunctionWithName:@"horizontal_axis_edge"],
