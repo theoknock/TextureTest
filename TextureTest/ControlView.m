@@ -688,119 +688,47 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
 //                return TRUE_BIT;
 //            });
             
-            const float (^ const __strong float_blk)(float) = ^ float (float i) {
-                return i;
-            };
-            
-            const void * (^ const __strong float_blk_ptr)(typeof(float (^)(float))) = ^ (typeof(float (^)(float)) block) {
-                printf("const_void_blk_ptr\n");
-                return Block_copy((const void *)CFBridgingRetain(block));
-            };
-            float float_result = ((__bridge const float(^ const __strong)(float))(float_blk_ptr(CFBridgingRelease((__bridge CFTypeRef _Nullable)(float_blk)))))((float)radius);
-            printf("%.2f", float_result);
-            
-            const void * float_blk_t = float_blk_ptr((typeof(float (^)(float)))float_blk);
-            typeof(float (^)(float)) (^ const __strong float_block_ptr_float_block_value)(const void *) = ^ (const void * blk_ptr) {
-                printf("const_void_blk_ptr\n");
-                return (typeof(float (^)(float)))CFBridgingRelease((__bridge CFTypeRef _Nullable)((__bridge typeof(^{}) _Nullable)(blk_ptr)));
-            };
-            typeof(float (^)(float)) float_blk_from_ptr = float_block_ptr_float_block_value(float_blk_t);
-            float float_value = float_blk_from_ptr(radius);
-            printf("\t\t%.2f", float_value);
-        //
-        //
-        //    unsigned long (^(^evaluate_predicate)(unsigned long))(unsigned long)  = ^ (const void * predicate_block_ptr) {
-        //        return ^ (const void * (^ const __strong const_void_blk_ptr)(typeof(^{}))) {
-        //            return (^{
-        //                printf("\predicate_evaluation = %lu\n", predicate_evaluation(2));
-        //                return ^{
-        //                    return predicate_evaluation;
-        //                };
-        //            }()());
-        //        }(CFBridgingRelease(predicate_block_ptr));
-        //    };
-
-            
-//            const void * (^ const __strong const_void_blk_ptr)(const int (^ const __strong)(int)) = ^ (const int(^ const __strong blk_in)(int)) {
-//                printf("const_void_blk_ptr\n");
-//                return Block_copy((const void *)CFBridgingRetain(blk_in));
-//            };
-//            ((__bridge const int(^ const __strong)(int))(const_void_blk_ptr(CFBridgingRelease((__bridge CFTypeRef _Nullable)(int_blk)))))((int)2);
-//
-//            const void * const_void_int_blk_ptr = const_void_blk_ptr(int_blk);
-//            ^ (const void * polymorph_blk) {
-//                return ^ (const int(^ const __strong polymorph_blk_t)(int)) {
-//                    return ^ (int i) {
-//                        return polymorph_blk_t(i);
-//                    };
-//                }((__bridge const int (^)(int))((__bridge const void *)(CFBridgingRelease(polymorph_blk)))); // cast to original type
-//            }(const_void_int_blk_ptr);
-            
-            
-            // A predicate expression
-//            typedef unsigned long predicate_expr;
-//            predicate_expr expr = 1;
-////            predicate_expr (^predicate_expr_t)(predicate_expr) =
-//            ^ predicate_expr (predicate_expr expr) {
-//                return ^ predicate_expr (predicate_expr(^predicate_expression_block)(void)) {
-//                    return (^{
-//                        return ^{
-//                            return predicate_expression_block;
-//                        };
-//                    }()());
-//                }(^ predicate_expr {
-//                    return expr;
-//                });
-//            };
-//            predicate_expr expr_t = predicate_expr_t(expr);
-//
-//            printf("expr = %lu\n", expr_t);
-//            // A predicate expression, evaluated
-//            typedef unsigned long predicate_eval;
-//            // Evaluates a predicate expression
-//            typedef predicate_expr * (^predicate_expr_t)(predicate_expr);               // returns a pointer to a predicate expression
-//            typedef predicate_eval * (^predicate_eval_t)(predicate_eval);               // returns a pointer to an evaluated predicate expression
-//            typedef predicate_eval_t (^evaluate_predicate_expression_t)(predicate_expr_t);
-//
-//            // write a block that points to an init block that points to an inner return block
-//            // (for coupling the argument values and the inner return block without invoking it)
-//            static unsigned long (^(^_Nonnull touch_handler)(__strong UITouch * _Nullable))(const unsigned long (^ const (* _Nullable restrict))(void));
-//            static unsigned long (^ _Nonnull  handle_touch)(const unsigned long (^ const (* _Nullable restrict))(void));
-//            static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__strong UITouch * _Nullable))(const unsigned long (^ const (* _Nullable restrict))(void)) =
-//
-//
-//            predicate_eval (^predicate_evaluation)(predicate_eval_block);
-//            // Returns a block that evaluates a predicate expression
-//            evaluate_predicate_expression (^predicate_expression_evaluation_block)(predicate_expr) = ^ (predicate_expr expr) {
-//                return ^ predicate_eval {
-//                    return (predicate_eval)expr;
-//                };
-//            };
-//            predicate_block(1); // should do nothing
-//            predicate_block(2)(); // should return 2;
-            
             /*
-             = ^ predicate_eval (unsigned long predicate) {
-             return (predicate_eval)predicate_expr;
-             };
+             Use the following three blocks to supply the predicate parameter after predicate_blk is passed
              */
             
-            //            typedef const void * predicate_block_t;
-            //            // Returns a pointer to a block that evaluates the expression 'predicate'
-//            const void * (^predicate_block_t)(predicate_block) = ^ const void * (predicate_block predicate) {
-//                return Block_copy((const void *)CFBridgingRetain(predicate));
-//            };
-//
-//            // Invokes 'predicate_block' pointed to by 'predicate_block_t' and return the result
-//            unsigned long (^predicate)(predicate_block) = ^ const void * (predicate_block predicate) {
-//                return ((__bridge const int(^ const __strong)(int))(const_void_blk_ptr(CFBridgingRelease((__bridge CFTypeRef _Nullable)(int_blk)))))((int)2);
-//            };
-//
-//            // invokes the block pointed to by 'block_t' if the expression pointed to by 'predicate_t' evaluates to true
-//            unsigned long (^predicate_block_t)(const void *, const void *) = ^ unsigned long (const void * block_t, const void * predicate_t) {
-//                return predicate_block_t() && block_t();
-//            };
+            const unsigned long (^ const __strong predicate_blk)(const unsigned long) = ^ const unsigned long (const unsigned long predicate) {
+                return predicate;
+            };
             
+            const void * (^ const __strong predicate_blk_t)(typeof(const unsigned long (^)(const unsigned long))) = ^ (typeof(const unsigned long (^)(const unsigned long)) predicate_blk) {
+                return Block_copy((const void *)CFBridgingRetain(predicate_blk));
+            };
+            
+            const void * predicate_blk_ptr = predicate_blk_t(predicate_blk);
+            const unsigned long l = ^ (const unsigned long predicate) {
+            return ^ (const void * predicate_expr) {
+                return ((typeof(const unsigned long (^)(const unsigned long)))CFBridgingRelease(predicate_expr))(predicate);
+                }(predicate_blk_ptr);
+            }(touch_property);
+            printf("l == %lu\n", l);
+
+
+            /*
+             Use the following three blocks to supply the predicate parameter before predicate_blk is passed
+             */
+            
+            const unsigned long (^ const __strong predicate_blk_x)(void) = ^ (unsigned long predicate) {
+                return ^ const unsigned long (void) {
+                    return predicate;
+                };
+            }(touch_property);
+            
+            const void * (^ const __strong predicate_blk_t_x)(typeof(const unsigned long (^)(void))) = ^ (typeof(const unsigned long (^)(void)) predicate_blk) {
+                return Block_copy((const void *)CFBridgingRetain(predicate_blk));
+            };
+
+            const void * predicate_blk_ptr_x = predicate_blk_t_x(predicate_blk_x);
+            const unsigned long l_x = ^ (const void * predicate_expr) {
+                return ((typeof(const unsigned long (^)(void)))CFBridgingRelease(predicate_expr))();
+                }(predicate_blk_ptr_x);
+            printf("l_x == %lu\n", l_x);
+
             ((active_component_bit_vector & ~BUTTON_ARC_COMPONENT_BIT_MASK) && (^ unsigned long {
                 unsigned int selected_property_bit_position = floor(log2(selected_property_bit_vector));
                 //                configure_capture_device_property(set_configuration_phase([touch phase]))((capture_device_configuration(selected_property_bit_position))(rescale(angle, 180.0, 270.0, value_min, value_max)));
