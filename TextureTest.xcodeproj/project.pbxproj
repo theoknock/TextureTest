@@ -29,6 +29,8 @@
 		B90E67D527A5C6B8004B935F /* ControlView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ControlView.m; sourceTree = "<group>"; wrapsLines = 0; };
 		B94F5B4F27A58AAF00DA42A4 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 		B98DC77D27F8967500681FBF /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
+		B9AC331627FB9A4100D436BA /* CADisplayLinkControlView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = CADisplayLinkControlView.m; path = "../Metal-Chroma-EXP/Metal-Chroma-EXP/Control/CADisplayLinkControlView.m"; sourceTree = "<group>"; };
+		B9AC331727FB9A4100D436BA /* CADisplayLinkControlView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = CADisplayLinkControlView.h; path = "../Metal-Chroma-EXP/Metal-Chroma-EXP/Control/CADisplayLinkControlView.h"; sourceTree = "<group>"; };
 		B9B73FC927EA652400B51138 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
 		B9D264C827987C38004776B5 /* CodeSnippetReview */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = CodeSnippetReview; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		B9FB8D452792DD970088F353 /* TextureTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TextureTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -74,6 +76,8 @@
 		B9FB8D3C2792DD970088F353 = {
 			isa = PBXGroup;
 			children = (
+				B9AC331727FB9A4100D436BA /* CADisplayLinkControlView.h */,
+				B9AC331627FB9A4100D436BA /* CADisplayLinkControlView.m */,
 				B9D264C827987C38004776B5 /* CodeSnippetReview */,
 				B9FB8D472792DD970088F353 /* TextureTest */,
 				B9FB8D462792DD970088F353 /* Products */,
@@ -96,8 +100,8 @@
 				B9FB8D492792DD970088F353 /* AppDelegate.m */,
 				B9FB8D4B2792DD970088F353 /* Renderer.h */,
 				B9FB8D4C2792DD970088F353 /* Renderer.m */,
-				B9FB8D4F2792DD970088F353 /* GameViewController.m */,
 				B9FB8D4E2792DD970088F353 /* GameViewController.h */,
+				B9FB8D4F2792DD970088F353 /* GameViewController.m */,
 				B90E67D427A5C6B8004B935F /* ControlView.h */,
 				B90E67D527A5C6B8004B935F /* ControlView.m */,
 				B90B097C2793070E0052879E /* Kernels.metal */,

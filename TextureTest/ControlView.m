@@ -92,7 +92,6 @@ static UICollisionBehavior * collision;
 static UIDynamicAnimator * animator;
 static UIGravityBehavior * gravity;
 static __strong const UIButton * _Nonnull buttons[5];
-//static __strong const CATextLayer * _Nonnull button_text_layers[5];
 static const UIButton * (^capture_device_configuration_control_property_button)(CaptureDeviceConfigurationControlProperty) = ^ (CaptureDeviceConfigurationControlProperty property) {
     dispatch_async(dispatch_get_main_queue(), ^{
         [buttons[property] setSelected:(selected_property_bit_vector >> property) & 1UL];
@@ -113,19 +112,17 @@ static void (^(^map)(__strong id [_Nonnull 5]))(const void * (^__strong)(unsigne
     };
 };
 
-int setBit(int x, unsigned char position) {
-    int mask = 1 << position;
-    return x | mask;
+void mask_on_position(unsigned long * x, unsigned char position) {
+    *x = (*x) | (1 << position);
 }
 
-int clearBit(int x, unsigned char position) {
-    int mask = 1 << position;
-    return x & ~mask;
+void mask_off_position(unsigned long * x, unsigned char position) {
+    unsigned long mask = 1 << position;
+    *x = (*x) & ~mask;
 }
 
-int modifyBit(int x, unsigned char position, bool newState) {
-    int mask = 1 << position;
-    int state = (int)(newState); // relies on true = 1 and false = 0
+unsigned long modifyBit(unsigned long x, unsigned char position, unsigned long state) {
+    unsigned long mask = 1 << position;
     return (x & ~mask) | (-state & mask);
 }
 
@@ -691,11 +688,123 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
 //                return TRUE_BIT;
 //            });
             
+            const float (^ const __strong float_blk)(float) = ^ float (float i) {
+                return i;
+            };
+            
+            const void * (^ const __strong float_blk_ptr)(typeof(float (^)(float))) = ^ (typeof(float (^)(float)) block) {
+                printf("const_void_blk_ptr\n");
+                return Block_copy((const void *)CFBridgingRetain(block));
+            };
+            float float_result = ((__bridge const float(^ const __strong)(float))(float_blk_ptr(CFBridgingRelease((__bridge CFTypeRef _Nullable)(float_blk)))))((float)radius);
+            printf("%.2f", float_result);
+            
+            const void * float_blk_t = float_blk_ptr((typeof(float (^)(float)))float_blk);
+            typeof(float (^)(float)) (^ const __strong float_block_ptr_float_block_value)(const void *) = ^ (const void * blk_ptr) {
+                printf("const_void_blk_ptr\n");
+                return (typeof(float (^)(float)))CFBridgingRelease((__bridge CFTypeRef _Nullable)((__bridge typeof(^{}) _Nullable)(blk_ptr)));
+            };
+            typeof(float (^)(float)) float_blk_from_ptr = float_block_ptr_float_block_value(float_blk_t);
+            float float_value = float_blk_from_ptr(radius);
+            printf("\t\t%.2f", float_value);
+        //
+        //
+        //    unsigned long (^(^evaluate_predicate)(unsigned long))(unsigned long)  = ^ (const void * predicate_block_ptr) {
+        //        return ^ (const void * (^ const __strong const_void_blk_ptr)(typeof(^{}))) {
+        //            return (^{
+        //                printf("\predicate_evaluation = %lu\n", predicate_evaluation(2));
+        //                return ^{
+        //                    return predicate_evaluation;
+        //                };
+        //            }()());
+        //        }(CFBridgingRelease(predicate_block_ptr));
+        //    };
+
+            
+//            const void * (^ const __strong const_void_blk_ptr)(const int (^ const __strong)(int)) = ^ (const int(^ const __strong blk_in)(int)) {
+//                printf("const_void_blk_ptr\n");
+//                return Block_copy((const void *)CFBridgingRetain(blk_in));
+//            };
+//            ((__bridge const int(^ const __strong)(int))(const_void_blk_ptr(CFBridgingRelease((__bridge CFTypeRef _Nullable)(int_blk)))))((int)2);
+//
+//            const void * const_void_int_blk_ptr = const_void_blk_ptr(int_blk);
+//            ^ (const void * polymorph_blk) {
+//                return ^ (const int(^ const __strong polymorph_blk_t)(int)) {
+//                    return ^ (int i) {
+//                        return polymorph_blk_t(i);
+//                    };
+//                }((__bridge const int (^)(int))((__bridge const void *)(CFBridgingRelease(polymorph_blk)))); // cast to original type
+//            }(const_void_int_blk_ptr);
+            
+            
+            // A predicate expression
+//            typedef unsigned long predicate_expr;
+//            predicate_expr expr = 1;
+////            predicate_expr (^predicate_expr_t)(predicate_expr) =
+//            ^ predicate_expr (predicate_expr expr) {
+//                return ^ predicate_expr (predicate_expr(^predicate_expression_block)(void)) {
+//                    return (^{
+//                        return ^{
+//                            return predicate_expression_block;
+//                        };
+//                    }()());
+//                }(^ predicate_expr {
+//                    return expr;
+//                });
+//            };
+//            predicate_expr expr_t = predicate_expr_t(expr);
+//
+//            printf("expr = %lu\n", expr_t);
+//            // A predicate expression, evaluated
+//            typedef unsigned long predicate_eval;
+//            // Evaluates a predicate expression
+//            typedef predicate_expr * (^predicate_expr_t)(predicate_expr);               // returns a pointer to a predicate expression
+//            typedef predicate_eval * (^predicate_eval_t)(predicate_eval);               // returns a pointer to an evaluated predicate expression
+//            typedef predicate_eval_t (^evaluate_predicate_expression_t)(predicate_expr_t);
+//
+//            // write a block that points to an init block that points to an inner return block
+//            // (for coupling the argument values and the inner return block without invoking it)
+//            static unsigned long (^(^_Nonnull touch_handler)(__strong UITouch * _Nullable))(const unsigned long (^ const (* _Nullable restrict))(void));
+//            static unsigned long (^ _Nonnull  handle_touch)(const unsigned long (^ const (* _Nullable restrict))(void));
+//            static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__strong UITouch * _Nullable))(const unsigned long (^ const (* _Nullable restrict))(void)) =
+//
+//
+//            predicate_eval (^predicate_evaluation)(predicate_eval_block);
+//            // Returns a block that evaluates a predicate expression
+//            evaluate_predicate_expression (^predicate_expression_evaluation_block)(predicate_expr) = ^ (predicate_expr expr) {
+//                return ^ predicate_eval {
+//                    return (predicate_eval)expr;
+//                };
+//            };
+//            predicate_block(1); // should do nothing
+//            predicate_block(2)(); // should return 2;
+            
+            /*
+             = ^ predicate_eval (unsigned long predicate) {
+             return (predicate_eval)predicate_expr;
+             };
+             */
+            
+            //            typedef const void * predicate_block_t;
+            //            // Returns a pointer to a block that evaluates the expression 'predicate'
+//            const void * (^predicate_block_t)(predicate_block) = ^ const void * (predicate_block predicate) {
+//                return Block_copy((const void *)CFBridgingRetain(predicate));
+//            };
+//
+//            // Invokes 'predicate_block' pointed to by 'predicate_block_t' and return the result
+//            unsigned long (^predicate)(predicate_block) = ^ const void * (predicate_block predicate) {
+//                return ((__bridge const int(^ const __strong)(int))(const_void_blk_ptr(CFBridgingRelease((__bridge CFTypeRef _Nullable)(int_blk)))))((int)2);
+//            };
+//
+//            // invokes the block pointed to by 'block_t' if the expression pointed to by 'predicate_t' evaluates to true
+//            unsigned long (^predicate_block_t)(const void *, const void *) = ^ unsigned long (const void * block_t, const void * predicate_t) {
+//                return predicate_block_t() && block_t();
+//            };
+            
             ((active_component_bit_vector & ~BUTTON_ARC_COMPONENT_BIT_MASK) && (^ unsigned long {
                 unsigned int selected_property_bit_position = floor(log2(selected_property_bit_vector));
                 //                configure_capture_device_property(set_configuration_phase([touch phase]))((capture_device_configuration(selected_property_bit_position))(rescale(angle, 180.0, 270.0, value_min, value_max)));
                 set_configuration_phase([touch phase])((capture_device_configuration(selected_property_bit_position))((value = rescale(angle, 180.0, 270.0, 0.0, 1.0))));
-                [(ControlView *)view setNeedsDisplay];
                 return TRUE_BIT;
             })());
             
@@ -833,7 +942,7 @@ unsigned long (^(^bits)(unsigned long))(unsigned long)  = ^ (unsigned long x) {
 //    CGFloat stepSize = (CGRectGetMaxX(bounds) / 100.0);
 //    CGFloat height_eighth = (CGRectGetHeight(bounds) / 8.0);
 //    CGFloat height_sixteenth = (CGRectGetHeight(bounds) / 16.0);
-//    CGFloat height_thirtyseconth = (CGRectGetHeight(bounds) / 16.0);
+//    CGFloat height_thirtysecondth = (CGRectGetHeight(bounds) / 16.0);
 //    for (int t = 0; t <= 100; t++) {
 //        CGFloat x = (CGRectGetMinX(bounds) + (stepSize * t));
 //        if (t % 10 == 0)

@@ -68,6 +68,9 @@ static dispatch_queue_t _Nonnull animator_queue() {
 #define FALSE_BIT (TRUE_BIT ^ TRUE_BIT)
 
 unsigned long active_component_bit_vector = ( 1UL << 0 |   1UL << 1 |   1UL << 2 |   1UL << 3 |   1UL << 4 );
+// Tests whether the button arc is displayed by testing whether the tick wheel is not displayed:
+//          (active_component_bit_vector ^ TICK_WHEEL_COMPONENT_BIT_MASK)
+
 
 //#define BUTTON_ARC_COMPONENT_ACTIVE ( active_component_bit_vector & BUTTON_ARC_COMPONENT_BIT_MASK )
 //#define TICK_WHEEL_COMPONENT_ACTIVE ( active_component_bit_vector ^ BUTTON_ARC_COMPONENT_BIT_MASK )
