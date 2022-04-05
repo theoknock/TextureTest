@@ -168,7 +168,7 @@ computeKernel(
               uint2                          gid        [[ thread_position_in_grid ]]
               )
 {
-    convolution3x3(inTexture, outTexture, gid, (identity + horizontal_axis_edge(-1)) - (vertical_axis_edge(-1) + identity));
+    convolution3x3(inTexture, outTexture, gid, edges(-3));// (identity + horizontal_axis_edge(-1)) - (vertical_axis_edge(-1) + identity));
     
     //    const half3 sharpen_convolution = convolution3x3(outTexture, gid, sharpen(1.0));
     //    const half3 sobel_h = convolution3x3(inTexture, gid, matrix_half3x3(3, 0, -3, 10, 0, -10, 3, 0, -3));
