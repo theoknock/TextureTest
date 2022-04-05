@@ -81,6 +81,48 @@ unsigned long highlighted_property_bit_vector = ( 0UL << 0 |   0UL << 1 |   0UL 
 unsigned long selected_property_bit_vector    = ( 0UL << 0 |   0UL << 1 |   0UL << 2 |   0UL << 3 |   0UL << 4 );
 unsigned long hidden_property_bit_vector      = ( 0UL << 0 |   0UL << 1 |   0UL << 2 |   0UL << 3 |   0UL << 4 );
 
+///*
+// Use the following three blocks to supply the predicate parameter after predicate_blk is passed
+// */
+//
+//const unsigned long (^ const __strong predicate_blk)(const unsigned long) = ^ const unsigned long (const unsigned long predicate) {
+//    return predicate;
+//};
+//
+//const void * (^ const __strong predicate_blk_t)(typeof(const unsigned long (^)(const unsigned long))) = ^ (typeof(const unsigned long (^)(const unsigned long)) predicate_blk) {
+//    return Block_copy((const void *)CFBridgingRetain(predicate_blk));
+//};
+//
+////const void * predicate_blk_ptr = predicate_blk_t(predicate_blk);
+////const unsigned long l = ^ (const unsigned long predicate) {
+////return ^ (const void * predicate_expr) {
+////    return ((typeof(const unsigned long (^)(const unsigned long)))CFBridgingRelease(predicate_expr))(predicate);
+////    }(predicate_blk_ptr);
+////}(touch_property);
+////printf("l == %lu\n", l);
+//
+//
+///*
+// Use the following three blocks to supply the predicate parameter before predicate_blk is passed
+// */
+//
+//typedef typeof(const unsigned long (^)(void)) predicate_blk_ref;
+//predicate_blk_ref (^ const __strong predicate_blk_x)(unsigned long) = ^ (unsigned long predicate) {
+//    return ^ const unsigned long {
+//        return predicate;
+//    };
+//};
+//
+//const void * (^ const __strong predicate_blk_ref_t)(typeof(const unsigned long (^)(void))) = ^ (typeof(const unsigned long (^)(void)) predicate_blk_ref) {
+//    return Block_copy((const void *)CFBridgingRetain(predicate_blk));
+//};
+//
+////const void * predicate_blk_ptr_x = predicate_blk_t_x(predicate_blk_x);
+////const unsigned long l_x = ^ (const void * predicate_expr) {
+////    return ((typeof(const unsigned long (^)(void)))CFBridgingRelease(predicate_expr))();
+////    }(predicate_blk_ptr_x);
+////printf("l_x == %lu\n", l_x);
+
 @interface ControlView : UIView <UICollisionBehaviorDelegate, UIDynamicAnimatorDelegate, UIDynamicItem>
 
 @property (strong, nonatomic) IBOutlet UILabel *stateBitVectorLabel;

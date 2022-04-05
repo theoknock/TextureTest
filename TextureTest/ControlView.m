@@ -666,40 +666,27 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
             }([touch preciseLocationInView:(ControlView *)view]);
             
             render_button_arc_component_using_block(buttons)(nil);
-//            render_button_arc_component_using_block(button_text_layers)(^ unsigned long (const id __strong _Nonnull button_arc_component) {
-//                dispatch_async(dispatch_get_main_queue(), ^{
-//                    NSMutableParagraphStyle *centerAlignedParagraphStyle = [[NSMutableParagraphStyle alloc] init];
-//                    centerAlignedParagraphStyle.alignment = NSTextAlignmentCenter;
-//                    NSDictionary *centerAlignedTextAttributes = @{NSForegroundColorAttributeName:[UIColor systemYellowColor],
-//                                                                  NSFontAttributeName:[UIFont systemFontOfSize:14.0],
-//                                                                  NSParagraphStyleAttributeName:centerAlignedParagraphStyle};
-//
-//                    NSString *valueString = [NSString stringWithFormat:@"%.2f", value];
-//                    NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:valueString attributes:centerAlignedTextAttributes];
-////                    ((CATextLayer *)button_arc_component).string = attributedString;
-//
-//                    CGSize textLayerframeSize = suggestFrameSizeWithConstraints(CGSizeMake(buttons[0].frame.size.width, 40.0), attributedString);
-//                    CGRect textLayerFrame = CGRectMake(CGRectGetMidX(buttons[0].frame) - (textLayerframeSize.width * 0.5), CGRectGetMinY(buttons[0].frame), textLayerframeSize.width, textLayerframeSize.height);
-//                    [(CATextLayer *)button_arc_component setFrame:textLayerFrame];
-//                    [[view layer] addSublayer:(CATextLayer *)button_arc_component];
-//                    [[view layer] setNeedsDisplay];
-//                    [[view layer] setNeedsDisplayOnBoundsChange:YES];
-//                });
-//                return TRUE_BIT;
-//            });
+
+            ((active_component_bit_vector & ~BUTTON_ARC_COMPONENT_BIT_MASK) && (^ unsigned long {
+                unsigned int selected_property_bit_position = floor(log2(selected_property_bit_vector));
+                //                configure_capture_device_property(set_configuration_phase([touch phase]))((capture_device_configuration(selected_property_bit_position))(rescale(angle, 180.0, 270.0, value_min, value_max)));
+                set_configuration_phase([touch phase])((capture_device_configuration(selected_property_bit_position))((value = rescale(angle, 180.0, 270.0, 0.0, 1.0))));
+                return TRUE_BIT;
+            })());
+            
             
             /*
-             Use the following three blocks to supply the predicate parameter after predicate_blk is passed
+             
              */
-            
+
             const unsigned long (^ const __strong predicate_blk)(const unsigned long) = ^ const unsigned long (const unsigned long predicate) {
                 return predicate;
             };
-            
+
             const void * (^ const __strong predicate_blk_t)(typeof(const unsigned long (^)(const unsigned long))) = ^ (typeof(const unsigned long (^)(const unsigned long)) predicate_blk) {
                 return Block_copy((const void *)CFBridgingRetain(predicate_blk));
             };
-            
+
             const void * predicate_blk_ptr = predicate_blk_t(predicate_blk);
             const unsigned long l = ^ (const unsigned long predicate) {
             return ^ (const void * predicate_expr) {
@@ -712,29 +699,31 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
             /*
              Use the following three blocks to supply the predicate parameter before predicate_blk is passed
              */
-            
-            const unsigned long (^ const __strong predicate_blk_x)(void) = ^ (unsigned long predicate) {
-                return ^ const unsigned long (void) {
+
+            typedef typeof(const unsigned long (^)(void)) predicate_blk_ref;
+            predicate_blk_ref (^ const __strong predicate_blk_x)(unsigned long) = ^ (unsigned long predicate) {
+                return ^ const unsigned long {
                     return predicate;
                 };
-            }(touch_property);
+            };
             
-            const void * (^ const __strong predicate_blk_t_x)(typeof(const unsigned long (^)(void))) = ^ (typeof(const unsigned long (^)(void)) predicate_blk) {
-                return Block_copy((const void *)CFBridgingRetain(predicate_blk));
+            predicate_blk_ref p_ref = predicate_blk_x(touch_property);
+
+            const void * (^ const __strong predicate_blk_ref_t)(typeof(const unsigned long (^)(void))) = ^ (typeof(const unsigned long (^)(void)) blk_ref) {
+                return Block_copy((const void *)CFBridgingRetain(blk_ref));
             };
 
-            const void * predicate_blk_ptr_x = predicate_blk_t_x(predicate_blk_x);
+            const void * predicate_blk_ptr_x = predicate_blk_ref_t(p_ref);
             const unsigned long l_x = ^ (const void * predicate_expr) {
                 return ((typeof(const unsigned long (^)(void)))CFBridgingRelease(predicate_expr))();
                 }(predicate_blk_ptr_x);
             printf("l_x == %lu\n", l_x);
-
-            ((active_component_bit_vector & ~BUTTON_ARC_COMPONENT_BIT_MASK) && (^ unsigned long {
-                unsigned int selected_property_bit_position = floor(log2(selected_property_bit_vector));
-                //                configure_capture_device_property(set_configuration_phase([touch phase]))((capture_device_configuration(selected_property_bit_position))(rescale(angle, 180.0, 270.0, value_min, value_max)));
-                set_configuration_phase([touch phase])((capture_device_configuration(selected_property_bit_position))((value = rescale(angle, 180.0, 270.0, 0.0, 1.0))));
-                return TRUE_BIT;
-            })());
+            
+            
+            /*
+             
+             */
+            
             
             
             ((unsigned long)0 | (unsigned long)state_setter_t) && ^ long {
