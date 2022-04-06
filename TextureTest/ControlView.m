@@ -482,7 +482,7 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
     [haptic_feedback prepare];
     
     // recursive polymorphism (a block that invokes both itself and its returning block in one call)
-    unsigned long (^(^(^render_button_arc_component_using_block)( __strong id [_Nonnull 5]))(unsigned long(^ _Nullable)(const id __strong _Nonnull)))(const id __strong _Nonnull) = ^ (__strong id obj_collection[_Nonnull 5]) {
+    unsigned long (^(^(^render_button_arc_component_using_block)(__strong id [_Nonnull 5]))(unsigned long(^ _Nullable)(const id __strong _Nonnull)))(const id __strong _Nonnull) = ^ (__strong id obj_collection[_Nonnull 5]) {
         return ^ (unsigned long(^ _Nullable invoke_a)(const id __strong _Nonnull)) {
             !((unsigned long)0 || invoke_a) && (invoke_a = ^ unsigned long (const id __strong _Nonnull button_arc_component) {
                 dispatch_async(dispatch_get_main_queue(), ^{
@@ -491,21 +491,21 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
                     [(UIButton *)button_arc_component setHidden:(hidden_property_bit_vector >> ((UIButton *)button_arc_component).tag) & 1UL];
                     (((active_component_bit_vector & BUTTON_ARC_COMPONENT_BIT_MASK) && (^ unsigned long {
                         angle_from_point(point_from_angle(rescale(((UIButton *)button_arc_component).tag, 0.0, 4.0, 180.0, 270.0)));
-                        return TRUE_BIT; }())));
+                        return TRUE_BIT;
+                    }())));
                     (((active_component_bit_vector & ~BUTTON_ARC_COMPONENT_BIT_MASK) && (^ unsigned long {
                         NSMutableParagraphStyle *centerAlignedParagraphStyle = [[NSMutableParagraphStyle alloc] init];
                         centerAlignedParagraphStyle.alignment = NSTextAlignmentCenter;
                         NSDictionary *centerAlignedTextAttributes = @{NSForegroundColorAttributeName:[UIColor systemYellowColor],
                                                                       NSFontAttributeName:[UIFont systemFontOfSize:14.0],
                                                                       NSParagraphStyleAttributeName:centerAlignedParagraphStyle};
-                        
                         NSString *valueString = [NSString stringWithFormat:@"%.2f", camera_property_value];
                         NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:valueString attributes:centerAlignedTextAttributes];
                         [(UIButton *)button_arc_component setAttributedTitle:attributedString forState:UIControlStateNormal];
                         [(UIButton *)button_arc_component sizeToFit];
-                        return TRUE_BIT; }())));
+                        return TRUE_BIT;
+                    }())));
                     [(UIButton *)button_arc_component setCenter:point_from_angle(angle)];
-                    
                 });
                 return TRUE_BIT;
             });
@@ -549,7 +549,6 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
             }
             case UITouchPhaseBegan: {
                 return ^ (unsigned long(^configuration)(unsigned long)) {
-                    
                     @try {
                         __autoreleasing NSError *error = NULL;
                         
@@ -594,17 +593,7 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
     
     static const float kExposureDurationPower = 4.f;
     static const float kExposureMinimumDuration = 1.f/1000.f;
-    
-    //    static float value_min, value_max;
-    
-    
     unsigned long (^(^(^capture_device_configuration)(CaptureDeviceConfigurationControlProperty))(float))(unsigned long)= ^ (CaptureDeviceConfigurationControlProperty property) {
-        //        value_max = fmax(0.5, fmin(rescale(radius, center_point.x, CGRectGetMidX(((ControlView *)view).bounds), 0.5, 1.0), 1.0));
-        //        value_min = (1.0 - value_max) - 0.001;
-        //        printf("value_min = %f\t\tvalue_max = %f\n", value_min, value_max);
-//        value = rescale(angle, 180.0, 270.0, 0.0, 1.0);
-//        printf("[VideoCamera.captureSession sessionPreset] == %s\n", [[VideoCamera.captureSession sessionPreset] UTF8String]);
-        
         switch (property) {
             case CaptureDeviceConfigurationControlPropertyTorchLevel: {
                 return ^ (float v) {

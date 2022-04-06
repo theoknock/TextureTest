@@ -67,21 +67,27 @@ constant matrix_half3x3 identity = matrix_half3x3(0,0,0,0,1,0,0,0,0);
 }
 
 [[stitchable]] matrix_half3x3 emboss(half coefficient) {
-    matrix_half3x3 convolution_kernel = matrix_half3x3(-2, -1, 0, -1, 1, 1, 0, 1, 2);
+    matrix_half3x3 convolution_kernel = matrix_half3x3(-2, -1, 0,
+                                                       -1,  1, 1,
+                                                        0,  1, 2);
     const matrix_half3x3 coefficient_matrix = matrix_half3x3(coefficient, coefficient, coefficient, coefficient, coefficient, coefficient, coefficient, coefficient, coefficient);
     matrix_half3x3 convolution = convolution_kernel * coefficient_matrix;
     return convolution;
 }
 
 [[stitchable]] matrix_half3x3 ridges(half coefficient) {
-    matrix_half3x3 convolution_kernel = matrix_half3x3(-1,-1,-1,-1,8,-1,-1,-1,-1);
+    matrix_half3x3 convolution_kernel = matrix_half3x3(-1, -1, -1,
+                                                       -1,  8, -1,
+                                                       -1, -1, -1);
     const matrix_half3x3 coefficient_matrix = matrix_half3x3(coefficient, coefficient, coefficient, coefficient, coefficient, coefficient, coefficient, coefficient, coefficient);
     matrix_half3x3 convolution = convolution_kernel * coefficient_matrix;
     return convolution;
 }
 
 [[stitchable]] matrix_half3x3 gaussian_blur(half coefficient) {
-    matrix_half3x3 convolution_kernel = matrix_half3x3(1,2,1,2,4,2,1,2,1);
+    matrix_half3x3 convolution_kernel = matrix_half3x3(1, 2, 1,
+                                                       2, 4, 2,
+                                                       1, 2, 1);
     const matrix_half3x3 coefficient_matrix = matrix_half3x3(coefficient, coefficient, coefficient, coefficient, coefficient, coefficient, coefficient, coefficient, coefficient);
     matrix_half3x3 convolution = convolution_kernel * coefficient_matrix;
     return convolution;
@@ -156,11 +162,7 @@ uint2 convolution3x3GID(uint2 gid, uint2 offset, int position, int index) {
     }
 }
 
-
-
-
 [[stitchable]]
-/// <#Description#>
 void convolution3x3(texture2d<half, access::read> inTexture, texture2d<half, access::write> outTexture, uint2 gid, matrix_half3x3 convolutionKernel, uint2 offset)
 {
     // To-Do: Process an array of convolution kernels, each feeding their result into the next
@@ -196,8 +198,7 @@ void convolution3x3(texture2d<half, access::read> inTexture, texture2d<half, acc
     half3 blend = resultColor_2.rgb * ((mix(mix(resultColor_2.rgb, resultColor.rgb, half3(0.4, 0.4, 0.4)),
                                             mix(resultColor_2.rgb, resultColor.rgb, half3(0.4, 0.4, 0.4)),
                                             half3(0.4, 0.4, 0.4)) * abs(resultColor_2.rgb - resultColor.rgb)));
-    half3 color =  (1.0 / alpha) * half3((1.0 - resultColor_2.rgb) * (resultColor.rgb * resultColor.a) + (1.0 - resultColor.rgb) * (resultColor_2.rgb * resultColor_2.a)
-                                         + (resultColor.a * resultColor_2.a) * blend);
+    half3 color =  (1.0 / alpha) * half3((1.0 - resultColor_2.rgb) * (resultColor.rgb * resultColor.a) + (1.0 - resultColor.rgb) * (resultColor_2.rgb * resultColor_2.a)+ (resultColor.a * resultColor_2.a) * blend);
 //    clamp((half)alpha, (half)0.0, (half)1.0);
     outTexture.write(half4(color_operator_over.rgb, alpha), gid);
 }
@@ -207,9 +208,7 @@ fragment float4
 samplingShader(RasterizerData in [[stage_in]],
                texture2d<half> colorTexture [[ texture(AAPLTextureIndexBaseColor) ]])
 {
-    constexpr sampler textureSampler (mag_filter::linear,
-                                      min_filter::linear);
-    
+    constexpr sampler textureSampler (mag_filter::linear, min_filter::linear);
     const half4 colorSample = colorTexture.sample(textureSampler, in.textureCoordinate);
     
     return float4(colorSample);

@@ -71,7 +71,6 @@ unsigned long active_component_bit_vector = ( 1UL << 0 |   1UL << 1 |   1UL << 2
 // Tests whether the button arc is displayed by testing whether the tick wheel is not displayed:
 //          (active_component_bit_vector ^ TICK_WHEEL_COMPONENT_BIT_MASK)
 
-
 //#define BUTTON_ARC_COMPONENT_ACTIVE ( active_component_bit_vector & BUTTON_ARC_COMPONENT_BIT_MASK )
 //#define TICK_WHEEL_COMPONENT_ACTIVE ( active_component_bit_vector ^ BUTTON_ARC_COMPONENT_BIT_MASK )
 //#define BUTTON_ARC_COMPONENT_INACTIVE ( active_component_bit_vector ^ BUTTON_ARC_COMPONENT_BIT_MASK )
@@ -83,9 +82,24 @@ unsigned long hidden_property_bit_vector      = ( 0UL << 0 |   0UL << 1 |   0UL 
 
 /*
  
+ Building blocks of predicated invocation and task modularization and sequencing
+ 
  */
 
-typedef typeof(const unsigned long (^)(const unsigned long)) predicate_blk_ref;
+// A conditional block that is an aggregate of boolean expressions, evaluated in succession by the functors in the chain the block traverses
+// It does not "return" until its functor(s) have returned (this ensures that any conditions it manages to remain within its purview before it passes its logic to the next block in the chain
+// It wraps around a functor (a functional unit or series of related tasks), and is invoked first and last
+// Every functor takes this block and returns this block -- and that only
+// It is used to determine whether its functor should be invoked and whether it should invoke the next
+// It passes other decision-making logic to the next block
+// It is the point on a path of execution in a chain of blocks
+// How a functor uses a conditional block:
+//      - on receiving, evaluate the aggregate of expressions to determine whether to invoke a functor(s)
+//      - use the expressions during the course of functor execution
+//      - add the evaluation (the results of the expressions it contained when received) of the expressions
+//        for use as expressions by other functors
+
+typedef typeof(const unsigned long(^)(const unsigned long)) predicate_blk_ref;
 
 predicate_blk_ref predicate_blk = ^ const unsigned long (const unsigned long predicate) {
     return predicate;
