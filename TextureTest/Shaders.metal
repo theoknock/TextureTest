@@ -160,6 +160,7 @@ uint2 convolution3x3GID(uint2 gid, uint2 offset, int position, int index) {
 
 
 [[stitchable]]
+/// <#Description#>
 void convolution3x3(texture2d<half, access::read> inTexture, texture2d<half, access::write> outTexture, uint2 gid, matrix_half3x3 convolutionKernel, uint2 offset)
 {
     // To-Do: Process an array of convolution kernels, each feeding their result into the next
@@ -169,7 +170,7 @@ void convolution3x3(texture2d<half, access::read> inTexture, texture2d<half, acc
     uint2 topTextureCoordinate[2] = {convolution3x3GID(gid, offset, 2, 0), convolution3x3GID(gid, offset, 2, 1)};
     uint2 topLeftTextureCoordinate[2] = {convolution3x3GID(gid, offset, 3, 0), convolution3x3GID(gid, offset, 3, 1)};
     uint2 topRightTextureCoordinate[2] = {convolution3x3GID(gid, offset, 4, 0), convolution3x3GID(gid, offset, 4, 1)};
-    uint2 bottomTextureCoordinate[2]= {convolution3x3GID(gid, offset, 5, 0), convolution3x3GID(gid, offset, 5, 1)};
+    uint2 bottomTextureCoordinate[2] = {convolution3x3GID(gid, offset, 5, 0), convolution3x3GID(gid, offset, 5, 1)};
     uint2 bottomLeftTextureCoordinate[2] = {convolution3x3GID(gid, offset, 6, 0), convolution3x3GID(gid, offset, 6, 1)};
     uint2 bottomRightTextureCoordinate[2] = {convolution3x3GID(gid, offset, 7, 0), convolution3x3GID(gid, offset, 7, 1)};
     half4 bottomLeftIntensity[2] = {inTexture.read(bottomLeftTextureCoordinate[0]).rgba, inTexture.read(bottomLeftTextureCoordinate[1]).rgba};
@@ -196,10 +197,9 @@ void convolution3x3(texture2d<half, access::read> inTexture, texture2d<half, acc
                                             mix(resultColor_2.rgb, resultColor.rgb, half3(0.4, 0.4, 0.4)),
                                             half3(0.4, 0.4, 0.4)) * abs(resultColor_2.rgb - resultColor.rgb)));
     half3 color =  (1.0 / alpha) * half3((1.0 - resultColor_2.rgb) * (resultColor.rgb * resultColor.a) + (1.0 - resultColor.rgb) * (resultColor_2.rgb * resultColor_2.a)
-                                               + (resultColor.a * resultColor_2.a) * blend);
-    // ((resultColor.rgb * resultColor.a) + ((resultColor_2.rgb * resultColor_2.a) * (1.0 - resultColor.a)))/alpha;
-    
-    outTexture.write(half4(color.rgb, alpha), gid);
+                                         + (resultColor.a * resultColor_2.a) * blend);
+//    clamp((half)alpha, (half)0.0, (half)1.0);
+    outTexture.write(half4(color_operator_over.rgb, alpha), gid);
 }
 
 // Fragment function
@@ -223,7 +223,7 @@ computeKernel(
               uint2                          gid        [[ thread_position_in_grid ]]
               )
 {
-    convolution3x3(inTexture, outTexture, gid, edges(.5), uint2(15, -15));
+    convolution3x3(inTexture, outTexture, gid, identity + edges(1), uint2(0,0));
 }
 
 /*

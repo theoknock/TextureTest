@@ -24,6 +24,7 @@ extern CGSize videoDimensions;
 //@property (class, strong, nonatomic, readonly) long(^captureDeviceConfigurationControlPropertyBlock)(CaptureDeviceConfigurationControlProperty, float, UITouchPhase);
 
 @property (class, nonatomic, strong, readwrite) AVCaptureDevice * captureDevice;
+@property (class, nonatomic, strong, readwrite) AVCaptureSession * captureSession;
 
 @end
 

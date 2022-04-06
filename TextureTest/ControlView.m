@@ -25,6 +25,10 @@
 @import Accelerate;
 @import CoreHaptics;
 
+static UITouchPhase touch_phase;
+static UITouchPhase * touch_phase_t = &touch_phase;
+
+
 static NSArray<NSString *> * const CaptureDeviceConfigurationControlPropertyImageKeys = @[@"CaptureDeviceConfigurationControlPropertyTorchLevel",
                                                                                           @"CaptureDeviceConfigurationControlPropertyLensPosition",
                                                                                           @"CaptureDeviceConfigurationControlPropertyExposureDuration",
@@ -91,6 +95,17 @@ static UISnapBehavior * snap[5];
 static UICollisionBehavior * collision;
 static UIDynamicAnimator * animator;
 static UIGravityBehavior * gravity;
+
+static NSArray<NSString *> * const CaptureDeviceConfigurationSymbols = @[@"lock", @"lock", @"lock.fill", @"lock.open", @"lock"];
+static __strong const UIImage * _Nonnull capture_device_configuration_state_symbols[4];
+static const UIImage * _Nonnull (^capture_device_configuration_state_symbol)(UITouchPhase) = ^ const UIImage * _Nonnull (UITouchPhase phase) {
+    const UIImage * image = capture_device_configuration_state_symbols[phase];
+//    NSLog(@"%@\n", [image description]);
+    return image;
+};
+
+
+
 static __strong const UIButton * _Nonnull buttons[5];
 static const UIButton * (^capture_device_configuration_control_property_button)(CaptureDeviceConfigurationControlProperty) = ^ (CaptureDeviceConfigurationControlProperty property) {
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -275,6 +290,28 @@ static unsigned long (^(^integrate)(unsigned long))(unsigned long (^ __strong )(
 //    };
 //};
 
+static UIImage * _Nonnull (^image_string)(NSString * _Nonnull, UIColor * _Nullable, CGFloat) = ^ (NSString * _Nonnull string, UIColor * _Nullable color, CGFloat font_size) {
+    
+    NSMutableParagraphStyle *centerAlignedParagraphStyle = [[NSMutableParagraphStyle alloc] init];
+    centerAlignedParagraphStyle.alignment                = NSTextAlignmentCenter;
+    NSDictionary *centerAlignedTextAttributes            = @{NSForegroundColorAttributeName : (!color) ? [UIColor redColor] : color,
+                                                             NSParagraphStyleAttributeName  : centerAlignedParagraphStyle,
+                                                             NSFontAttributeName            : [UIFont systemFontOfSize:font_size weight:UIFontWeightBlack],
+                                                             NSStrokeColorAttributeName     : [UIColor blackColor],
+                                                             NSStrokeWidthAttributeName     : [NSNumber numberWithFloat:-2.0]
+    };
+    
+    CGSize textSize = [((!string) ? @"㊏" : string) sizeWithAttributes:centerAlignedTextAttributes];
+    UIGraphicsBeginImageContextWithOptions(textSize, NO, 0);
+    [string drawAtPoint:CGPointZero withAttributes:centerAlignedTextAttributes];
+    
+    CGContextSetShouldAntialias(UIGraphicsGetCurrentContext(), YES);
+    CGContextSetShadow(UIGraphicsGetCurrentContext(), CGSizeZero, font_size);
+    UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    
+    return image;
+};
 
 typedef float (^Step)(int);
 static Step (^stepper)(int, float) = ^ (int count, float start) {
@@ -346,7 +383,7 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
     // To-Do: This should be set to the nearest sector on the tick wheel, the number of which varies according to the radius
     //        (minimum radius = 90 sectors; maximum radius = the number of ticks that span 90 degrees when spaced equally to the 90-tick spacing for the minimum radius)
     //        --- How to display non-rounded values set in higher radii in lower = compute the value at the largest radii; then, round to the scale of the lower (truncate decimal places)
-    static float value;
+    static float camera_property_value;
     
     static unsigned long (^angle_from_point)(CGPoint);
     angle_from_point = angle_from_point_init(&angle)(&center_point)(180.0, 270.0)
@@ -354,7 +391,7 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
         *result = (atan2(intersection.y - (*origin).y, intersection.x - (*origin).x)) * (min / M_PI);
         *result = (!(*result < 0.0) ?: (*result += 360.0));
         *result = fmaxf(min, fminf(*result, max));
-        value = rescale(*result, min, max, 0.0, 1.0);
+        camera_property_value = rescale(*result, min, max, 0.0, 1.0);
         return (active_component_bit_vector & BUTTON_ARC_COMPONENT_BIT_MASK);
     });
     
@@ -397,7 +434,18 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
         return TRUE_BIT;
     });
     
-    draw_tick_wheel = ^ (ControlView * view, float * restrict angle_t, float * restrict radius_t, float * restrict value_t) {
+    const dispatch_block_t capture_device_configuration_status_symbol_renderer = dispatch_block_create(DISPATCH_BLOCK_DETACHED, ^{
+        CGSize size = CGSizeMake(view.bounds.size.width / 2.0, view.bounds.size.height / 2.0);
+        UIGraphicsBeginImageContextWithOptions(size, NO, 1.0);
+        CGContextSetShouldAntialias(UIGraphicsGetCurrentContext(), YES);
+        [capture_device_configuration_state_symbol(*touch_phase_t) drawAtPoint:CGPointMake(size.width / 2.0, 0.0) blendMode:kCGBlendModeNormal alpha:1.0];
+        UIImage * blendedImage = UIGraphicsGetImageFromCurrentImageContext();
+        view.layer.contents = (__bridge id)blendedImage.CGImage;
+        UIGraphicsEndImageContext();
+    });
+    
+    draw_tick_wheel = ^ (ControlView * view, float * restrict angle_t, float * restrict radius_t, float * restrict value_t, UITouchPhase * touch_phase_t) {
+        
         return ^ (CGContextRef ctx, CGRect rect) {
             dispatch_barrier_sync(enumerator_queue(), ^{
                 ((active_component_bit_vector ^ BUTTON_ARC_COMPONENT_BIT_MASK) && ^ unsigned long (void) {
@@ -418,23 +466,8 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
                         };
                         CGContextStrokePath(ctx);
                     }
-//                    NSMutableParagraphStyle *centerAlignedParagraphStyle = [[NSMutableParagraphStyle alloc] init];
-//                    centerAlignedParagraphStyle.alignment = NSTextAlignmentCenter;
-//                    NSDictionary *centerAlignedTextAttributes = @{NSForegroundColorAttributeName:[UIColor systemYellowColor],
-//                                                                  NSFontAttributeName:[UIFont systemFontOfSize:14.0],
-//                                                                  NSParagraphStyleAttributeName:centerAlignedParagraphStyle};
-//                    int fraction_digits = rescale(radius, CGRectGetMidX(rect), center_point.x, 2, 6);
-//                    NSNumberFormatter * value_decimals = [[NSNumberFormatter alloc] init];
-//                    [value_decimals setMaximumFractionDigits:fraction_digits];
-//                    NSNumber *value_num = [[NSNumber alloc] initWithFloat:*value_t];
-//                    NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:[value_decimals stringFromNumber:value_num] attributes:centerAlignedTextAttributes];
-//                    ((CATextLayer *)value_text_layer).string = attributedString;
-//
-//                    CGSize textLayerframeSize = suggestFrameSizeWithConstraints(rect.size, attributedString);
-//                    CGRect textLayerFrame = CGRectMake(CGRectGetMidX(rect) - (textLayerframeSize.width * 0.5), CGRectGetMinY(rect), textLayerframeSize.width, textLayerframeSize.height);
-//                    [(CATextLayer *)value_text_layer setFrame:textLayerFrame];
-                    
                     UIGraphicsEndImageContext();
+                
                     return TRUE_BIT;
                 }()) || ((active_component_bit_vector & BUTTON_ARC_COMPONENT_BIT_MASK) && ^ unsigned long (void) {
                     CGContextClearRect(ctx, rect);
@@ -442,7 +475,7 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
                 }());
             });
         };
-    }((ControlView *)view, &angle, &radius, &value);
+    }((ControlView *)view, &angle, &radius, &camera_property_value, touch_phase_t);
     
     __block UISelectionFeedbackGenerator * haptic_feedback;
     haptic_feedback = [[UISelectionFeedbackGenerator alloc] init];
@@ -466,7 +499,7 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
                                                                       NSFontAttributeName:[UIFont systemFontOfSize:14.0],
                                                                       NSParagraphStyleAttributeName:centerAlignedParagraphStyle};
                         
-                        NSString *valueString = [NSString stringWithFormat:@"%.2f", value];
+                        NSString *valueString = [NSString stringWithFormat:@"%.2f", camera_property_value];
                         NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:valueString attributes:centerAlignedTextAttributes];
                         [(UIButton *)button_arc_component setAttributedTitle:attributedString forState:UIControlStateNormal];
                         [(UIButton *)button_arc_component sizeToFit];
@@ -492,19 +525,34 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
             }(invoke_a);
         };
     };
+     
+    // ((UITouchPhaseBegan | UITouchPhaseEnded) & *touch_phase_t));
+    unsigned long (^update_configuration_status_symbols)(unsigned long) = ^ (dispatch_block_t render_capture_device_configuration_status_symbol) {
+        return ^ unsigned long (unsigned long boolean_expression) {
+            return ((boolean_expression && ^ unsigned long {
+                render_capture_device_configuration_status_symbol();
+                return TRUE_BIT;
+            }()) || ^ unsigned long {
+                return TRUE_BIT;
+            }());
+        };
+    }(capture_device_configuration_status_symbol_renderer);
     
-    static unsigned long (^(^set_configuration_phase)(UITouchPhase))(unsigned long(^)(void)) = ^ (UITouchPhase phase) {
+    unsigned long (^(^set_configuration_phase)(UITouchPhase))(unsigned long(^)(unsigned long)) = ^ (UITouchPhase phase) {
+        static unsigned long lock_predicate = FALSE_BIT;
         switch (phase) {
             case UITouchPhaseMoved: {
-                return ^ (unsigned long(^configuration)(void)) {
-                    return configuration();
+                return ^ (unsigned long(^configuration)(unsigned long)) {
+                    return update_configuration_status_symbols(configuration((UITouchPhaseMoved & phase))); // Update configuration to capture the lock/unlock-configuration state and add to the predicate supplied to it
                 };
                 break;
             }
             case UITouchPhaseBegan: {
-                return ^ (unsigned long(^configuration)(void)) {
+                return ^ (unsigned long(^configuration)(unsigned long)) {
+                    
                     @try {
                         __autoreleasing NSError *error = NULL;
+                        
                         [VideoCamera.captureDevice lockForConfiguration:&error];
                         if (error) {
                             printf("Error == %s\n", [[error debugDescription] UTF8String]);
@@ -513,6 +561,8 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
                                                       reason:error.localizedDescription
                                                       userInfo:@{@"Error Code" : @(error.code)}];
                             @throw exception;
+                        } else {
+                            lock_predicate = TRUE_BIT;
                         }
                     } @catch (NSException *exception) {
                         NSLog(@"Error configuring camera:\n\t%@\n\t%@\n\t%lu",
@@ -520,22 +570,22 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
                               exception.reason,
                               ((NSNumber *)[exception.userInfo valueForKey:@"Error Code"]).unsignedIntegerValue);
                     } @finally {
-                        return configuration();
+                        return update_configuration_status_symbols(configuration((phase | UITouchPhaseBegan) & (lock_predicate)));
                     }
                 };
                 break;
             }
             case UITouchPhaseEnded: {
-                return ^ (unsigned long(^configuration)(void)) {
-                    unsigned long invocation_result = configuration();
+                return ^ (unsigned long(^configuration)(unsigned long)) {
+                    unsigned long invocation_result = configuration((UITouchPhaseEnded & phase));
                     [VideoCamera.captureDevice unlockForConfiguration];
-                    return (unsigned long)invocation_result;
+                    return update_configuration_status_symbols(invocation_result);
                 };
                 break;
             }
             default: {
-                return ^ (unsigned long(^configuration)(void)) {
-                    return (unsigned long)0;
+                return ^ (unsigned long(^configuration)(unsigned long)) {
+                    return (unsigned long)update_configuration_status_symbols((FALSE_BIT));
                 };
                 break;
             }
@@ -548,81 +598,81 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
     //    static float value_min, value_max;
     
     
-    unsigned long (^(^(^capture_device_configuration)(CaptureDeviceConfigurationControlProperty))(float))(void)= ^ (CaptureDeviceConfigurationControlProperty property) {
+    unsigned long (^(^(^capture_device_configuration)(CaptureDeviceConfigurationControlProperty))(float))(unsigned long)= ^ (CaptureDeviceConfigurationControlProperty property) {
         //        value_max = fmax(0.5, fmin(rescale(radius, center_point.x, CGRectGetMidX(((ControlView *)view).bounds), 0.5, 1.0), 1.0));
         //        value_min = (1.0 - value_max) - 0.001;
         //        printf("value_min = %f\t\tvalue_max = %f\n", value_min, value_max);
 //        value = rescale(angle, 180.0, 270.0, 0.0, 1.0);
+//        printf("[VideoCamera.captureSession sessionPreset] == %s\n", [[VideoCamera.captureSession sessionPreset] UTF8String]);
+        
         switch (property) {
             case CaptureDeviceConfigurationControlPropertyTorchLevel: {
                 return ^ (float v) {
-                    return ^{
+                    return ^ (unsigned long p) {
                         __autoreleasing NSError * error = nil;
                         if (([[NSProcessInfo processInfo] thermalState] != NSProcessInfoThermalStateCritical && [[NSProcessInfo processInfo] thermalState] != NSProcessInfoThermalStateSerious)) {
-                            if (value != 0.0)
-                                [VideoCamera.captureDevice setTorchModeOnWithLevel:value error:&error];
+                            if (camera_property_value != 0.0)
+                                [VideoCamera.captureDevice setTorchModeOnWithLevel:camera_property_value error:&error];
                             else
                                 [VideoCamera.captureDevice setTorchMode:AVCaptureTorchModeOff];
                         }
-                        return (unsigned long)1;
+                        return (unsigned long)p;
                     };
                 };
                 break;
             }
             case CaptureDeviceConfigurationControlPropertyLensPosition: {
                 return ^ (float v) {
-                    return ^{
-                        [VideoCamera.captureDevice setFocusModeLockedWithLensPosition:value completionHandler:nil];
-                        
-                        
-                        return (unsigned long)1;
+                    return ^ (unsigned long p) {
+                        [VideoCamera.captureDevice setFocusModeLockedWithLensPosition:camera_property_value completionHandler:nil];
+                        return (unsigned long)p;
                     };
                 };
                 break;
             }
             case CaptureDeviceConfigurationControlPropertyExposureDuration: {
                 return ^ (float v) {
-                    return ^{
-                        double p = pow( value, kExposureDurationPower);
+                    return ^ (unsigned long q) {
+                        double p = pow( camera_property_value, kExposureDurationPower);
                         double minDurationSeconds = MAX( CMTimeGetSeconds(VideoCamera.captureDevice.activeFormat.minExposureDuration ), kExposureMinimumDuration );
                         double maxDurationSeconds = 1.0/3.0;
                         float v_ = p * ( maxDurationSeconds - minDurationSeconds ) + minDurationSeconds;
                         [VideoCamera.captureDevice setExposureModeCustomWithDuration:CMTimeMakeWithSeconds( v_, 1000*1000*1000 )  ISO:[VideoCamera.captureDevice ISO] completionHandler:nil];
-                        return (unsigned long)1;
+                        return (unsigned long)p;
                     };
                 };
                 break;
             }
             case CaptureDeviceConfigurationControlPropertyISO: {
                 return ^ (float v) {
-                    return ^{
+                    return ^ (unsigned long p) {
                         @try {
-                            float v_ = rescale(value, 0.0, 1.0, [VideoCamera.captureDevice.activeFormat minISO], [VideoCamera.captureDevice.activeFormat maxISO]);
+                            float v_ = rescale(camera_property_value, 0.0, 1.0, [VideoCamera.captureDevice.activeFormat minISO], [VideoCamera.captureDevice.activeFormat maxISO]);
                             [VideoCamera.captureDevice setExposureModeCustomWithDuration:[VideoCamera.captureDevice exposureDuration] ISO:v_ completionHandler:nil];
                         } @catch (NSException *exception) {
                             [VideoCamera.captureDevice setExposureModeCustomWithDuration:[VideoCamera.captureDevice exposureDuration] ISO:[VideoCamera.captureDevice ISO] completionHandler:nil];
                         } @finally {
                             
                         }
-                        return (unsigned long)1;
+                        return (unsigned long)p;
                     };
                 };
                 break;
             }
             case CaptureDeviceConfigurationControlPropertyVideoZoomFactor: {
                 return ^ (float v) {
-                    return ^{
-                        float v_ = rescale(pow(value, rescale(radius, center_point.x, CGRectGetMidX(view.bounds), 5.0, 9.0)), 0.0, 1.0, [VideoCamera.captureDevice minAvailableVideoZoomFactor], [VideoCamera.captureDevice maxAvailableVideoZoomFactor]);
+                    return ^ (unsigned long p) {
+                        float v_ = rescale(pow(camera_property_value, rescale(radius, center_point.x, CGRectGetMidX(view.bounds), 5.0, 9.0)), 0.0, 1.0, [VideoCamera.captureDevice minAvailableVideoZoomFactor], [VideoCamera.captureDevice maxAvailableVideoZoomFactor]);
                         [VideoCamera.captureDevice setVideoZoomFactor:v_];
-                        return (unsigned long)1;
+                        return (unsigned long)p;
                     };
                 };
                 break;
             }
             default: {
                 return ^ (float v) {
-                    return ^{
-                        return (unsigned long)0;
+                    return ^ (unsigned long p) {
+                        return (unsigned long)p;
                     };
                 };
                 break;
@@ -648,6 +698,7 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
     __block unsigned long touch_property;
     
     return ^ (__strong UITouch * _Nullable touch) { // handle_touch:
+        touch_phase = touch.phase;
         return ^ (const unsigned long (^ const (* _Nullable restrict state_setter_t))(void)) {
             ^ (CGPoint touch_point) {
                 touch_point.x = fmaxf(CGRectGetMinX(view.bounds), fminf(touch_point.x, center_point.x));
@@ -670,7 +721,7 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
             ((active_component_bit_vector & ~BUTTON_ARC_COMPONENT_BIT_MASK) && (^ unsigned long {
                 unsigned int selected_property_bit_position = floor(log2(selected_property_bit_vector));
                 //                configure_capture_device_property(set_configuration_phase([touch phase]))((capture_device_configuration(selected_property_bit_position))(rescale(angle, 180.0, 270.0, value_min, value_max)));
-                set_configuration_phase([touch phase])((capture_device_configuration(selected_property_bit_position))((value = rescale(angle, 180.0, 270.0, 0.0, 1.0))));
+                set_configuration_phase((touch_phase = touch.phase))((capture_device_configuration(selected_property_bit_position))((camera_property_value = rescale(angle, 180.0, 270.0, 0.0, 1.0))));
                 return TRUE_BIT;
             })());
             
@@ -713,7 +764,7 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
                         }
                         return TRUE_BIT;
                     }());
-                    value = rescale(destination_angle, 180.0, 270.0, 0.0, 1.0);
+                    camera_property_value = rescale(destination_angle, 180.0, 270.0, 0.0, 1.0);
                     return destination_angle;
                 };
                 
@@ -737,7 +788,7 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
                                                                                   NSFontAttributeName:[UIFont systemFontOfSize:14.0],
                                                                                   NSParagraphStyleAttributeName:centerAlignedParagraphStyle};
                                     
-                                    NSString *valueString = [NSString stringWithFormat:@"%.2f", value];
+                                    NSString *valueString = [NSString stringWithFormat:@"%.2f", camera_property_value];
                                     NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:valueString attributes:centerAlignedTextAttributes];
                                     [(UIButton *)button setAttributedTitle:attributedString forState:UIControlStateNormal];
                                     [(UIButton *)button sizeToFit];
@@ -760,17 +811,17 @@ static unsigned long (^(^(^touch_handler_init)(const ControlView * __strong))(__
     };
 };
 
-
 // To-Do: Get bit field length using sizeof() and then subtract value returned by ctz (e.g., count trailing zeros)
 unsigned long (^(^bits)(unsigned long))(unsigned long)  = ^ (unsigned long x) {
     return ^ (unsigned long(^bit_operation)(unsigned long)) {
         return (^{
-            printf("\n%lu%lu%lu%lu%lu\n",
-                   bit_operation((x >> 0) & 1UL),
-                   bit_operation((x >> 1) & 1UL),
-                   bit_operation((x >> 2) & 1UL),
-                   bit_operation((x >> 3) & 1UL),
-                   bit_operation((x >> 4) & 1UL));
+            
+            ((x & ~TRUE_BIT) & (printf("\n%lu%lu%lu%lu%lu\n",
+                   !!bit_operation((x >> 0) & 1UL),
+                   !!bit_operation((x >> 1) & 1UL),
+                   !!bit_operation((x >> 2) & 1UL),
+                   !!bit_operation((x >> 3) & 1UL),
+                   !!bit_operation((x >> 4) & 1UL))));
             return ^{
                 return bit_operation;
             };
@@ -835,6 +886,13 @@ unsigned long (^(^bits)(unsigned long))(unsigned long)  = ^ (unsigned long x) {
 
 - (void)awakeFromNib {
     [super awakeFromNib];
+    
+    map(capture_device_configuration_state_symbols)(^ const void * (unsigned int index) {
+        const UIImage * symbol = [[UIImage alloc] init];
+        symbol = (const UIImage *)[UIImage systemImageNamed:CaptureDeviceConfigurationSymbols[index] withConfiguration:[UIImageSymbolConfiguration configurationWithPointSize:42.0]];
+        
+        return (const void *)CFBridgingRetain(symbol);
+    });
     
     CGPoint default_center_point = CGPointMake(CGRectGetMaxX(((ControlView *)self).bounds), CGRectGetMaxY(((ControlView *)self).bounds));
     float default_radius         = CGRectGetMaxX(((ControlView *)self).bounds);
@@ -926,14 +984,14 @@ unsigned long (^(^bits)(unsigned long))(unsigned long)  = ^ (unsigned long x) {
     
     //    bits(BUTTON_ARC_COMPONENT_BIT_MASK);
     //    bits(TICK_WHEEL_COMPONENT_BIT_MASK);
-    bits(active_component_bit_vector ^ TICK_WHEEL_COMPONENT_BIT_MASK);
+    unsigned long bits_return_value = bits(active_component_bit_vector ^ TICK_WHEEL_COMPONENT_BIT_MASK)(TRUE_BIT);
+    printf("bits_return_value == %lu\n", bits_return_value);
     //    bits(~selected_property_bit_vector);
     
     
     
     touch_handler = touch_handler_init((ControlView *)self);
 }
-
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
     (handle_touch = touch_handler(touches.anyObject))(nil);
 }
@@ -952,6 +1010,19 @@ unsigned long (^(^bits)(unsigned long))(unsigned long)  = ^ (unsigned long x) {
 
 - (void)drawRect:(CGRect)rect {
     (*draw_tick_wheel_ptr)(UIGraphicsGetCurrentContext(), rect);
+    
+    ^ (dispatch_block_t draw_capture_device_configuration_status_symbol) {
+        ((UITouchPhaseBegan | UITouchPhaseEnded) & *touch_phase_t) ? draw_capture_device_configuration_status_symbol()
+        : ^{ return FALSE_BIT; };
+    }(^{
+        CGSize size = CGSizeMake(rect.size.width / 2.0, rect.size.height / 2.0);
+        UIGraphicsBeginImageContextWithOptions(size, NO, 1.0);
+        CGContextSetShouldAntialias(UIGraphicsGetCurrentContext(), YES);
+        [capture_device_configuration_state_symbol(*touch_phase_t) drawAtPoint:CGPointMake(size.width / 2.0, 0.0) blendMode:kCGBlendModeNormal alpha:1.0];
+        UIImage * blendedImage = UIGraphicsGetImageFromCurrentImageContext();
+        self.layer.contents = (__bridge id)blendedImage.CGImage;
+        UIGraphicsEndImageContext();
+    });
 }
 
 //- (void)updateStateLabels {

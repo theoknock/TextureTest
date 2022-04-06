@@ -12,12 +12,17 @@
 @implementation VideoCamera
 {
     CGSize videoDimensions;
-    AVCaptureSession * captureSession;
+//    AVCaptureSession * captureSession;
 //    AVCaptureDevice * captureDevice;
     AVCaptureDeviceInput * captureInput;
     //    AVCaptureVideoPreviewLayer *previewLayer;
     AVCaptureVideoDataOutput * captureOutput;
 }
+
+static AVCaptureSession * _captureSession;
++ (AVCaptureSession *)captureSession { return _captureSession; }
++ (void)setCaptureSession:(AVCaptureSession *)captureSession { _captureSession = captureSession; }
+
 
 static AVCaptureDevice * _captureDevice;
 + (AVCaptureDevice *)captureDevice { return _captureDevice; }
@@ -160,12 +165,12 @@ dispatch_queue_t video_data_output_sample_buffer_delegate_queue;
     if (self = [super init])
     {
         video_data_output_sample_buffer_delegate_queue = dispatch_queue_create("CVPixelBufferDispatchQueue", DISPATCH_QUEUE_SERIAL_WITH_AUTORELEASE_POOL);
-        if (!captureSession) {
+        if (!VideoCamera.captureSession) {
             @try {
-                captureSession = [[AVCaptureSession alloc] init];
-                [captureSession beginConfiguration];
-                if ([captureSession canSetSessionPreset:AVCaptureSessionPreset3840x2160]) {
-                    [captureSession setSessionPreset:AVCaptureSessionPreset3840x2160];
+                VideoCamera.captureSession = [[AVCaptureSession alloc] init];
+                [VideoCamera.captureSession beginConfiguration];
+                if ([VideoCamera.captureSession canSetSessionPreset:AVCaptureSessionPreset3840x2160]) {
+                    [VideoCamera.captureSession setSessionPreset:AVCaptureSessionPreset3840x2160];
                 }
                 
                 VideoCamera.captureDevice = [AVCaptureDevice defaultDeviceWithDeviceType:AVCaptureDeviceTypeBuiltInWideAngleCamera mediaType:AVMediaTypeVideo position:AVCaptureDevicePositionBack];
@@ -195,16 +200,16 @@ dispatch_queue_t video_data_output_sample_buffer_delegate_queue;
                 
                 __autoreleasing NSError * error;
                 captureInput = [AVCaptureDeviceInput deviceInputWithDevice:VideoCamera.captureDevice error:&error];
-                if ([captureSession canAddInput:captureInput])
-                    [captureSession addInput:captureInput];
+                if ([VideoCamera.captureSession canAddInput:captureInput])
+                    [VideoCamera.captureSession addInput:captureInput];
                 
                 captureOutput = [[AVCaptureVideoDataOutput alloc] init];
                 [captureOutput setAlwaysDiscardsLateVideoFrames:TRUE];
                 [captureOutput setVideoSettings:@{(id)kCVPixelBufferPixelFormatTypeKey:@(kCVPixelFormatType_32BGRA)}];
                 [captureOutput setSampleBufferDelegate:videoOutputDelegate queue:video_data_output_sample_buffer_delegate_queue];
                 
-                if ([captureSession canAddOutput:captureOutput])
-                    [captureSession addOutput:captureOutput];
+                if ([VideoCamera.captureSession canAddOutput:captureOutput])
+                    [VideoCamera.captureSession addOutput:captureOutput];
                 
                 //            AVCaptureVideoOrientation __block preferredVideoOrientation = AVCaptureVideoOrientationPortrait;
                 //            UIInterfaceOrientation interfaceOrientation = [[[[UIApplication sharedApplication] windows] firstObject] windowScene].interfaceOrientation;
@@ -224,12 +229,12 @@ dispatch_queue_t video_data_output_sample_buffer_delegate_queue;
                     [videoDataCaptureConnection setVideoScaleAndCropFactor:1.0];
                 }
                 
-                if ([captureSession canAddConnection:videoDataCaptureConnection])
-                    [captureSession addConnection:videoDataCaptureConnection];
+                if ([VideoCamera.captureSession canAddConnection:videoDataCaptureConnection])
+                    [VideoCamera.captureSession addConnection:videoDataCaptureConnection];
                 
-                [captureSession commitConfiguration];
+                [VideoCamera.captureSession commitConfiguration];
                 
-                [captureSession startRunning];
+                [VideoCamera.captureSession startRunning];
                 
             } @catch (NSException *exception) {
                 NSLog(@"Camera setup error: %@", exception.description);
@@ -307,7 +312,42 @@ dispatch_queue_t video_data_output_sample_buffer_delegate_queue;
     return self;
 }
 
+//func configureCameraForHighestFrameRate(device: AVCaptureDevice) {
+//    
+//    var bestFormat: AVCaptureDevice.Format?
+//    var bestFrameRateRange: AVFrameRateRange?
+//
+//    for format in device.formats {
+//        for range in format.videoSupportedFrameRateRanges {
+//            if range.maxFrameRate > bestFrameRateRange?.maxFrameRate ?? 0 {
+//                bestFormat = format
+//                bestFrameRateRange = range
+//            }
+//        }
+//    }
+//    
+//    if let bestFormat = bestFormat,
+//       let bestFrameRateRange = bestFrameRateRange {
+//        do {
+//            try device.lockForConfiguration()
+//            
+//            // Set the device's active format.
+//            device.activeFormat = bestFormat
+//            
+//            // Set the device's min/max frame duration.
+//            let duration = bestFrameRateRange.minFrameDuration
+//            device.activeVideoMinFrameDuration = duration
+//            device.activeVideoMaxFrameDuration = duration
+//            
+//            device.unlockForConfiguration()
+//        } catch {
+//            // Handle error.
+//        }
+//    }
+//}
+
 - (void)setCaptureDeviceConfigurationControlPropertyUsingBlock:(void(^)(AVCaptureDevice *))captureDeviceConfigurationControlPropertyBlock {
+    printf("AVCaptureSession sessionPreset == %lu\n", [VideoCamera.captureSession sessionPreset]);
     @try {
         __autoreleasing NSError *error = NULL;
         [VideoCamera.captureDevice lockForConfiguration:&error];

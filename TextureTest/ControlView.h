@@ -125,6 +125,31 @@ unsigned long (^evaluate_predicate_blk_x)(const void * _Nonnull) = ^ (const void
     return ((typeof(const unsigned long (^)(void)))CFBridgingRelease(predicate_expr))();
 };
 
+/* A block that invokes a nested block that is not required to return a value
+   (e.g., to return a predicate expression that determines — in conjunction with other expressions –
+ whether the nested block should be invoked; usually it is the last inner block that is required to supply a return value and,
+ in all cases, any block that returns the defined type must execute completely before it can do so.
+ */
+
+//unsigned long (^(^predicate_function_blk)(predicate_blk_ref))(unsigned long)  = ^ (predicate_blk_ref predicate_blk) {
+//    return ^ (unsigned long(^bit_operation)(unsigned long)) {
+//        return (^{
+//            printf("\n%lu%lu%lu%lu%lu\n",
+//                   bit_operation((x >> 0) & 1UL),
+//                   bit_operation((x >> 1) & 1UL),
+//                   bit_operation((x >> 2) & 1UL),
+//                   bit_operation((x >> 3) & 1UL),
+//                   bit_operation((x >> 4) & 1UL));
+//            return ^{
+//                return bit_operation;
+//            };
+//        }()());
+//    }(^ unsigned long (unsigned long bit) {
+//        return bit;
+//    });
+//};
+
+
 
 @interface ControlView : UIView <UICollisionBehaviorDelegate, UIDynamicAnimatorDelegate, UIDynamicItem>
 
