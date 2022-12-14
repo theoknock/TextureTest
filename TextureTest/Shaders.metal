@@ -203,49 +203,53 @@ void convolution3x3(texture2d<half, access::read> inTexture, texture2d<half, acc
     outTexture.write(half4(color_operator_over.rgb, alpha), gid);
 }
 
-[[stitchable]]
-half4 gaussian_distribution(half4 std_dev, half4 mean, half4 variance, half4 texture)
-{
-//    texture = (exp(-((pow((texture - mean), 2.f) / pow(2.f * variance, 2.f)))));
-//    texture = (1.f / (std_dev * sqrt(2.f * M_PI_H))) * (exp(-((pow((texture - mean), 2.f) / pow(2.f * variance, 2.f)))));
-    texture = 1.0 / (1.0 + exp(-1 * variance) * (texture- (texture / 2.f)));
-    return texture;
-}
-
-
-[[stitchable]]
-void convolution3x3_exploratorium(texture2d<half, access::read> inTexture, texture2d<half, access::write> outTexture, uint2 gid, matrix_half3x3 convolutionKernel, uint2 offset)
-{
-    uint2 leftTextureCoordinate[2] = {convolution3x3GID(gid, offset, 0, 0), convolution3x3GID(gid, offset, 0, 1)};
-    uint2 rightTextureCoordinate[2] = {convolution3x3GID(gid, offset, 1, 0), convolution3x3GID(gid, offset, 1, 1)};
-    uint2 topTextureCoordinate[2] = {convolution3x3GID(gid, offset, 2, 0), convolution3x3GID(gid, offset, 2, 1)};
-    uint2 topLeftTextureCoordinate[2] = {convolution3x3GID(gid, offset, 3, 0), convolution3x3GID(gid, offset, 3, 1)};
-    uint2 topRightTextureCoordinate[2] = {convolution3x3GID(gid, offset, 4, 0), convolution3x3GID(gid, offset, 4, 1)};
-    uint2 bottomTextureCoordinate[2] = {convolution3x3GID(gid, offset, 5, 0), convolution3x3GID(gid, offset, 5, 1)};
-    uint2 bottomLeftTextureCoordinate[2] = {convolution3x3GID(gid, offset, 6, 0), convolution3x3GID(gid, offset, 6, 1)};
-    uint2 bottomRightTextureCoordinate[2] = {convolution3x3GID(gid, offset, 7, 0), convolution3x3GID(gid, offset, 7, 1)};
-    half4 bottomLeftIntensity[2] = {inTexture.read(bottomLeftTextureCoordinate[0]).r, inTexture.read(bottomLeftTextureCoordinate[1]).rgba};
-    half4 topRightIntensity[2] = {inTexture.read(topRightTextureCoordinate[0]).r, inTexture.read(topRightTextureCoordinate[1]).rgba};
-    half4 topLeftIntensity[2] = {inTexture.read(topLeftTextureCoordinate[0]).r, inTexture.read(topLeftTextureCoordinate[1]).rgba};
-    half4 bottomRightIntensity[2] = {inTexture.read(bottomRightTextureCoordinate[0]).r, inTexture.read(bottomRightTextureCoordinate[1]).rgba};
-    half4 leftIntensity[2] = {inTexture.read(leftTextureCoordinate[0]).r, inTexture.read(leftTextureCoordinate[1]).rgba};
-    half4 rightIntensity[2] = {inTexture.read(rightTextureCoordinate[0]).r, inTexture.read(rightTextureCoordinate[1]).rgba};
-    half4 bottomIntensity[2] = {inTexture.read(bottomTextureCoordinate[0]).r, inTexture.read(bottomTextureCoordinate[1]).rgba};
-    half4 topIntensity[2] = {inTexture.read(topTextureCoordinate[0]).r, inTexture.read(topTextureCoordinate[1]).rgba};
-
-    half mean = median3(inTexture.read(topTextureCoordinate[0]).r, inTexture.read(topTextureCoordinate[0]).g, inTexture.read(topTextureCoordinate[0]).b);
-    half std_dev = 1.f;//inTexture.read(topTextureCoordinate[0]).b;
-    half variance = mean; //sqrt(std_dev);
-    half4 resultColor = gaussian_distribution(std_dev, mean, variance, topLeftIntensity[0]) + gaussian_distribution(std_dev, mean, variance, topIntensity[0]) + gaussian_distribution(std_dev, mean, variance, topRightIntensity[0]);
-    resultColor += gaussian_distribution(std_dev, mean, variance, leftIntensity[0]) + gaussian_distribution(std_dev, mean, variance, inTexture.read(gid).rgba) + gaussian_distribution(std_dev, mean, variance, rightIntensity[0]);
-    resultColor += gaussian_distribution(std_dev, mean, variance, bottomLeftIntensity[0]) + gaussian_distribution(std_dev, mean, variance, bottomIntensity[0]) + gaussian_distribution(std_dev, mean, variance, bottomRightIntensity[0]);
-    half4 inputImageTexture = inTexture.read(gid);
-    outTexture.write(fabs(half4(inputImageTexture.rgb + (inputImageTexture.rgb - median3(resultColor.r, resultColor.g, resultColor.b)), 1.0)), gid);
-}
-
 float scale(float val_old, float min_old, float max_old, float min_new, float max_new) {
     return min_new + ((((val_old - min_old) * (max_new - min_new))) / (max_old - min_old));
 }
+
+[[stitchable]]
+float gaussian_distribution(float mean, float standard_deviation, float texture)
+{
+    float numerator = pow(texture - mean, 2.0);
+    float variance = mean * (1.f - mean);
+//    variance = scale(variance, -variance, variance + variance, 0.0, 1.0);
+    float denominator = (2.f * pow(variance, 2.f) / (pow(standard_deviation, 2.f) - 1.f));
+    texture = (exp(-(numerator / denominator)));
+//    texture = (exp(-((pow((texture - mean), 2.f) / pow(2.f * variance, 2.f)))));
+//    texture = (1.f / (std_dev * sqrt(2.f * M_PI_H))) * (exp(-((pow((texture - mean), 2.f) / pow(2.f * variance, 2.f)))));
+//    texture = 1.0 / (1.0 + exp(-1 * variance) * (texture- (texture / 2.f)));
+    return texture;
+}
+
+//[[stitchable]]
+//void convolution3x3_exploratorium(texture2d<half, access::read> inTexture, texture2d<half, access::write> outTexture, uint2 gid, matrix_half3x3 convolutionKernel, uint2 offset)
+//{
+//    uint2 leftTextureCoordinate[2] = {convolution3x3GID(gid, offset, 0, 0), convolution3x3GID(gid, offset, 0, 1)};
+//    uint2 rightTextureCoordinate[2] = {convolution3x3GID(gid, offset, 1, 0), convolution3x3GID(gid, offset, 1, 1)};
+//    uint2 topTextureCoordinate[2] = {convolution3x3GID(gid, offset, 2, 0), convolution3x3GID(gid, offset, 2, 1)};
+//    uint2 topLeftTextureCoordinate[2] = {convolution3x3GID(gid, offset, 3, 0), convolution3x3GID(gid, offset, 3, 1)};
+//    uint2 topRightTextureCoordinate[2] = {convolution3x3GID(gid, offset, 4, 0), convolution3x3GID(gid, offset, 4, 1)};
+//    uint2 bottomTextureCoordinate[2] = {convolution3x3GID(gid, offset, 5, 0), convolution3x3GID(gid, offset, 5, 1)};
+//    uint2 bottomLeftTextureCoordinate[2] = {convolution3x3GID(gid, offset, 6, 0), convolution3x3GID(gid, offset, 6, 1)};
+//    uint2 bottomRightTextureCoordinate[2] = {convolution3x3GID(gid, offset, 7, 0), convolution3x3GID(gid, offset, 7, 1)};
+//    half4 bottomLeftIntensity[2] = {inTexture.read(bottomLeftTextureCoordinate[0]).r, inTexture.read(bottomLeftTextureCoordinate[1]).rgba};
+//    half4 topRightIntensity[2] = {inTexture.read(topRightTextureCoordinate[0]).r, inTexture.read(topRightTextureCoordinate[1]).rgba};
+//    half4 topLeftIntensity[2] = {inTexture.read(topLeftTextureCoordinate[0]).r, inTexture.read(topLeftTextureCoordinate[1]).rgba};
+//    half4 bottomRightIntensity[2] = {inTexture.read(bottomRightTextureCoordinate[0]).r, inTexture.read(bottomRightTextureCoordinate[1]).rgba};
+//    half4 leftIntensity[2] = {inTexture.read(leftTextureCoordinate[0]).r, inTexture.read(leftTextureCoordinate[1]).rgba};
+//    half4 rightIntensity[2] = {inTexture.read(rightTextureCoordinate[0]).r, inTexture.read(rightTextureCoordinate[1]).rgba};
+//    half4 bottomIntensity[2] = {inTexture.read(bottomTextureCoordinate[0]).r, inTexture.read(bottomTextureCoordinate[1]).rgba};
+//    half4 topIntensity[2] = {inTexture.read(topTextureCoordinate[0]).r, inTexture.read(topTextureCoordinate[1]).rgba};
+//
+//    half mean = median3(inTexture.read(topTextureCoordinate[0]).r, inTexture.read(topTextureCoordinate[0]).g, inTexture.read(topTextureCoordinate[0]).b);
+//    half std_dev = 1.f;//inTexture.read(topTextureCoordinate[0]).b;
+//    half variance = mean; //sqrt(std_dev);
+//    half4 resultColor = gaussian_distribution(std_dev, mean, variance, topLeftIntensity[0]) + gaussian_distribution(std_dev, mean, variance, topIntensity[0]) + gaussian_distribution(std_dev, mean, variance, topRightIntensity[0]);
+//    resultColor += gaussian_distribution(std_dev, mean, variance, leftIntensity[0]) + gaussian_distribution(std_dev, mean, variance, inTexture.read(gid).rgba) + gaussian_distribution(std_dev, mean, variance, rightIntensity[0]);
+//    resultColor += gaussian_distribution(std_dev, mean, variance, bottomLeftIntensity[0]) + gaussian_distribution(std_dev, mean, variance, bottomIntensity[0]) + gaussian_distribution(std_dev, mean, variance, bottomRightIntensity[0]);
+//    half4 inputImageTexture = inTexture.read(gid);
+//    outTexture.write(fabs(half4(inputImageTexture.rgb + (inputImageTexture.rgb - median3(resultColor.r, resultColor.g, resultColor.b)), 1.0)), gid);
+//}
 
 // Fragment function
 fragment float4
@@ -268,14 +272,11 @@ computeKernel(
               )
 {
     half4 inputImageTexture = inTexture.read(gid);
-    float grayscale = dot(inputImageTexture.rgb, kRec709Luma);
-//    *m = 0.5;
     float mean = m->gaussian_mean;
-    float numerator = pow(grayscale - mean, 2.0);
-    float variance = mean * (1.f - mean);
-    float denominator = 2.f * pow(variance, 2.f);
-    grayscale = 1.0 - fabs(grayscale - scale(exp(-(numerator / denominator)), mean, mean + mean, 0.0, 1.0));
-    outTexture.write(fabs(half4(inputImageTexture.rrr + grayscale, 1.f + grayscale)), gid);
+    float standard_deviation = m->standard_deviation;
+    float grayscale = float(median3(inputImageTexture.r, inputImageTexture.g, inputImageTexture.b));
+    grayscale = gaussian_distribution(mean, standard_deviation, grayscale);
+    outTexture.write(half4(grayscale, grayscale, grayscale, 1.0 - grayscale), gid);
 }
 
 //    float convolution_parameters = 1.f;//.inTexture.read(gid).r;
