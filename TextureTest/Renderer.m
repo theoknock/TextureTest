@@ -352,7 +352,7 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
         // Load the functions from the library.
         NSArray<id<MTLFunction>> * functions = @[
             [defaultLibrary newFunctionWithName:@"gaussian_distribution"],
-            [defaultLibrary newFunctionWithName:@"convolution3x3_exploratorium"],
+            /*[defaultLibrary newFunctionWithName:@"convolution3x3_exploratorium"],*/
             [defaultLibrary newFunctionWithName:@"convolution3x3GID"],
             [defaultLibrary newFunctionWithName:@"convolution3x3GIDOffset"],
             [defaultLibrary newFunctionWithName:@"convolution3x3"],
@@ -435,7 +435,9 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
         [descriptorP setUsage:MTLTextureUsageShaderWrite | MTLTextureUsageShaderRead | MTLTextureUsageRenderTarget];
         _colorMapPrev = [_device newTextureWithDescriptor:descriptorP];
         
-        fs = (FilterSettings){ .gaussian_mean = *gaussian_mean_t };
+        fs = (FilterSettings){ .gaussian_mean = *gaussian_mean_t,
+                .standard_deviation = *standard_deviation_t
+        };
         
         // Create a vertex buffer, and initialize it with the quadVertices array
         filter_settings_buffer = [_device newBufferWithBytes:&fs
@@ -457,24 +459,24 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
 
 - (IBAction)gaussianMeanChanged:(UISlider *)sender {
     dispatch_async(dispatch_get_main_queue(), ^{
-//        printf("sender.value == %f\n", sender.value);
-//        printf("before: gaussian_mean == %f\n", *gaussian_mean_t);
         *gaussian_mean_t = sender.value;
-//        printf("after: gaussian_mean == %f\n", *gaussian_mean_t);
-        self->fs.gaussian_mean = sender.value;
+    });
+}
+
+- (IBAction)standardDeviationChanged:(UISlider *)sender {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        *standard_deviation_t = sender.value;
     });
 }
 
 /// Called whenever the view needs to render a frame
 - (void)drawInMTKView:(nonnull MTKView *)view
 {
-    
     @autoreleasepool {
-//        *gaussian_mean_t = _gaussianMeanSlider.value;
         self->fs.gaussian_mean = gaussian_mean;
+        self->fs.standard_deviation = standard_deviation;
         FilterSettings * gm = filter_settings_buffer.contents;
         *gm = fs;
-        printf("gaussian_mean == %f\n", self->fs.gaussian_mean);
         
         __block id<MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
         commandBuffer.label = @"MyCommand";
