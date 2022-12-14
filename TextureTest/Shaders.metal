@@ -263,17 +263,19 @@ computeKernel(
               texture2d<half, access::read>  inTexture  [[ texture(0) ]],
               texture2d<half, access::write> outTexture [[ texture(1) ]],
               texture2d<half, access::read>  inTextureP [[ texture(2) ]],
+              device FilterSettings *m [[ buffer(3) ]],
               uint2                          gid        [[ thread_position_in_grid ]]
               )
 {
     half4 inputImageTexture = inTexture.read(gid);
-    float grayscale = median3(inputImageTexture.r, inputImageTexture.g, inputImageTexture.b);
-    float mean = 0.111115;
+    float grayscale = dot(inputImageTexture.rgb, kRec709Luma);
+//    *m = 0.5;
+    float mean = m->gaussian_mean;
     float numerator = pow(grayscale - mean, 2.0);
     float variance = mean * (1.f - mean);
     float denominator = 2.f * pow(variance, 2.f);
-    grayscale = 1.0 - fabs(grayscale - scale(exp(-(numerator / denominator)), -1.3, 1.7, 0.0, 1.0));
-    outTexture.write(fabs(half4(grayscale, grayscale, grayscale, 1.0)), gid);
+    grayscale = 1.0 - fabs(grayscale - scale(exp(-(numerator / denominator)), mean, mean + mean, 0.0, 1.0));
+    outTexture.write(fabs(half4(inputImageTexture.rrr + grayscale, 1.f + grayscale)), gid);
 }
 
 //    float convolution_parameters = 1.f;//.inTexture.read(gid).r;

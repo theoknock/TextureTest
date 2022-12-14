@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="20037" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="8fT-nS-tse">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="21507" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="8fT-nS-tse">
     <device id="retina6_1" orientation="portrait" appearance="light"/>
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="20020"/>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="21505"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="System colors in document resources" minToolsVersion="11.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
@@ -17,7 +18,7 @@
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <subviews>
                             <mtkView contentMode="scaleAspectFit" colorPixelFormat="BGRA8Unorm_sRGB" depthStencilPixelFormat="Depth32Float" preferredFramesPerSecond="30" paused="YES" enableSetNeedsDisplay="YES" translatesAutoresizingMaskIntoConstraints="NO" id="JsS-qo-bbp">
-                                <rect key="frame" x="0.0" y="44" width="414" height="852"/>
+                                <rect key="frame" x="0.0" y="48" width="414" height="848"/>
                             </mtkView>
                             <view opaque="NO" contentMode="scaleAspectFit" translatesAutoresizingMaskIntoConstraints="NO" id="7uW-EJ-Fip" customClass="ControlView">
                                 <rect key="frame" x="20" y="488" width="374" height="374"/>
@@ -158,13 +159,22 @@
                                     <outlet property="stateBitVectorLabel" destination="fgo-Sg-ng7" id="ULg-vR-HyM"/>
                                 </connections>
                             </view>
+                            <slider opaque="NO" contentMode="scaleToFill" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" value="0.5" minValue="0.0" maxValue="1" translatesAutoresizingMaskIntoConstraints="NO" id="TyK-Hf-stA">
+                                <rect key="frame" x="-316" y="319" width="418" height="31"/>
+                                <connections>
+                                    <action selector="gaussianMeanChanged:" destination="U3M-cT-8WM" eventType="valueChanged" id="DBm-DG-uu8"/>
+                                </connections>
+                            </slider>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="Zni-1Q-DHl"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                         <constraints>
                             <constraint firstItem="7uW-EJ-Fip" firstAttribute="leading" secondItem="PlH-bq-DWk" secondAttribute="leadingMargin" id="1J3-Bw-aHw"/>
+                            <constraint firstItem="TyK-Hf-stA" firstAttribute="centerX" secondItem="Zni-1Q-DHl" secondAttribute="centerX" id="3JL-8u-dO5"/>
                             <constraint firstItem="JsS-qo-bbp" firstAttribute="bottom" secondItem="PlH-bq-DWk" secondAttribute="bottom" id="40C-JU-c5Y"/>
                             <constraint firstItem="7uW-EJ-Fip" firstAttribute="bottom" secondItem="Zni-1Q-DHl" secondAttribute="bottom" id="7ky-se-m8G"/>
+                            <constraint firstItem="TyK-Hf-stA" firstAttribute="top" secondItem="Zni-1Q-DHl" secondAttribute="top" id="NUd-g0-XXT"/>
+                            <constraint firstItem="TyK-Hf-stA" firstAttribute="width" secondItem="PlH-bq-DWk" secondAttribute="width" id="PyF-jp-zEm"/>
                             <constraint firstItem="JsS-qo-bbp" firstAttribute="leading" secondItem="PlH-bq-DWk" secondAttribute="leading" id="fmf-Yg-5WF"/>
                             <constraint firstItem="7uW-EJ-Fip" firstAttribute="top" relation="greaterThanOrEqual" secondItem="PlH-bq-DWk" secondAttribute="centerY" id="mA4-Cd-ZzS"/>
                             <constraint firstItem="JsS-qo-bbp" firstAttribute="top" secondItem="Zni-1Q-DHl" secondAttribute="top" id="nVs-68-sVv"/>
@@ -178,6 +188,11 @@
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="9Zl-oq-CZx" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+                <customObject id="U3M-cT-8WM" customClass="Renderer">
+                    <connections>
+                        <outlet property="gaussianMeanSlider" destination="TyK-Hf-stA" id="Zga-gQ-N7o"/>
+                    </connections>
+                </customObject>
             </objects>
             <point key="canvasLocation" x="-78.260869565217391" y="-549.10714285714278"/>
         </scene>

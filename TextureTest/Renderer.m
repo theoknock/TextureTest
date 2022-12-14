@@ -50,6 +50,10 @@
     // The current size of the view.
     vector_uint2 _viewportSize;
     
+    // Filter settings
+    id<MTLBuffer> filter_settings_buffer;
+    FilterSettings fs;
+    
 }
 
 //-(nonnull instancetype)initWithMetalKitView:(nonnull MTKView *)view;
@@ -431,7 +435,13 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
         [descriptorP setUsage:MTLTextureUsageShaderWrite | MTLTextureUsageShaderRead | MTLTextureUsageRenderTarget];
         _colorMapPrev = [_device newTextureWithDescriptor:descriptorP];
         
+        fs = (FilterSettings){ .gaussian_mean = *gaussian_mean_t };
         
+        // Create a vertex buffer, and initialize it with the quadVertices array
+        filter_settings_buffer = [_device newBufferWithBytes:&fs
+                                         length:sizeof(fs)
+                                        options:MTLResourceStorageModeShared];
+         
         _commandQueue = [_device newCommandQueue];
     }
     
@@ -445,10 +455,26 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
     _viewportSize.y = size.height;
 }
 
+- (IBAction)gaussianMeanChanged:(UISlider *)sender {
+    dispatch_async(dispatch_get_main_queue(), ^{
+//        printf("sender.value == %f\n", sender.value);
+//        printf("before: gaussian_mean == %f\n", *gaussian_mean_t);
+        *gaussian_mean_t = sender.value;
+//        printf("after: gaussian_mean == %f\n", *gaussian_mean_t);
+        self->fs.gaussian_mean = sender.value;
+    });
+}
+
 /// Called whenever the view needs to render a frame
 - (void)drawInMTKView:(nonnull MTKView *)view
 {
+    
     @autoreleasepool {
+//        *gaussian_mean_t = _gaussianMeanSlider.value;
+        self->fs.gaussian_mean = gaussian_mean;
+        FilterSettings * gm = filter_settings_buffer.contents;
+        *gm = fs;
+        printf("gaussian_mean == %f\n", self->fs.gaussian_mean);
         
         __block id<MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
         commandBuffer.label = @"MyCommand";
@@ -463,6 +489,7 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
         [computeEncoder setTexture:compute_texture_p atIndex:1];
         [computeEncoder setTexture:_colorMapPrev
                            atIndex:2];
+            [computeEncoder setBuffer:filter_settings_buffer offset:0 atIndex:3];
         [computeEncoder dispatchThreadgroups:_threadgroupsPerGrid
                        threadsPerThreadgroup:_threadsPerThreadgroup];
         [computeEncoder endEncoding];

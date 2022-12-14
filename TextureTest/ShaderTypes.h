@@ -75,6 +75,10 @@ typedef struct
     vector_float2 textureCoordinate;
 } AAPLVertex;
 
+typedef struct
+{
+    float gaussian_mean;
+} FilterSettings;
 
 #endif /* ShaderTypes_h */
 

@@ -16,7 +16,7 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-
+    
     self.mtkView.backgroundColor = UIColor.blackColor;
     [self.mtkView setDevice:self.mtkView.preferredDevice];
     [self.mtkView setFramebufferOnly:FALSE];
