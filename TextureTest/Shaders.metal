@@ -19,6 +19,7 @@ struct RasterizerData
 };
 
 // Vertex Function
+// Vertex Function
 vertex RasterizerData
 vertexShader(uint vertexID [[ vertex_id ]],
              constant AAPLVertex *vertexArray [[ buffer(AAPLVertexInputIndexVertices) ]],
@@ -207,19 +208,19 @@ float scale(float val_old, float min_old, float max_old, float min_new, float ma
     return min_new + ((((val_old - min_old) * (max_new - min_new))) / (max_old - min_old));
 }
 
-[[stitchable]]
-float gaussian_distribution(float mean, float standard_deviation, float texture)
-{
-    float numerator = pow(texture - mean, 2.0);
-    float variance = mean * (1.f - mean);
-//    variance = scale(variance, -variance, variance + variance, 0.0, 1.0);
-    float denominator = (2.f * pow(variance, 2.f) / (pow(standard_deviation, 2.f) - 1.f));
-    texture = (exp(-(numerator / denominator)));
-//    texture = (exp(-((pow((texture - mean), 2.f) / pow(2.f * variance, 2.f)))));
-//    texture = (1.f / (std_dev * sqrt(2.f * M_PI_H))) * (exp(-((pow((texture - mean), 2.f) / pow(2.f * variance, 2.f)))));
-//    texture = 1.0 / (1.0 + exp(-1 * variance) * (texture- (texture / 2.f)));
-    return texture;
-}
+//[[stitchable]]
+//float gaussian_distribution(float mean, float standard_deviation, float texture)
+//{
+//    float numerator = pow(texture - mean, 2.0);
+//    float variance = mean * (1.f - mean);
+////    variance = scale(variance, -variance, variance + variance, 0.0, 1.0);
+//    float denominator = (2.f * pow(variance, 2.f) / (pow(standard_deviation, 2.f) - 1.f));
+//    texture = (exp(-(numerator / denominator)));
+////    texture = (exp(-((pow((texture - mean), 2.f) / pow(2.f * variance, 2.f)))));
+////    texture = (1.f / (std_dev * sqrt(2.f * M_PI_H))) * (exp(-((pow((texture - mean), 2.f) / pow(2.f * variance, 2.f)))));
+////    texture = 1.0 / (1.0 + exp(-1 * variance) * (texture- (texture / 2.f)));
+//    return texture;
+//}
 
 //[[stitchable]]
 //void convolution3x3_exploratorium(texture2d<half, access::read> inTexture, texture2d<half, access::write> outTexture, uint2 gid, matrix_half3x3 convolutionKernel, uint2 offset)
@@ -262,22 +263,35 @@ samplingShader(RasterizerData in [[stage_in]],
     return float4(colorSample);
 }
 
+[[stitchable]]
+float gaussian_distribution(float mean, float standard_deviation, float texture)
+{
+    ({
+        float variance = fabs(sin(M_PI_F * mean));
+        float offset = (0.5 * variance) * standard_deviation;
+        texture = (texture >= (mean - offset) && texture <= (mean + offset)) ? texture : 0.f; //scale(texture, 0.f, 1.f, (mean - offset), (mean + offset)) : 0.f;
+        // To-Do: Contrast stretch
+        texture = scale(texture, 0.f, 1.f, (mean - offset), (mean + offset));
+    });
+    return texture;
+}
+
 kernel void
 computeKernel(
               texture2d<half, access::read>  inTexture  [[ texture(0) ]],
               texture2d<half, access::write> outTexture [[ texture(1) ]],
               texture2d<half, access::read>  inTextureP [[ texture(2) ]],
-              device FilterSettings *m [[ buffer(3) ]],
+              device FilterSettings *m [[ buffer(3) ]], // should probably be buffer(0)...
               uint2                          gid        [[ thread_position_in_grid ]]
               )
 {
     half4 inputImageTexture = inTexture.read(gid);
-    float mean = m->gaussian_mean;
-    float standard_deviation = m->standard_deviation;
-    float grayscale = float(median3(gaussian_distribution(mean, standard_deviation, inputImageTexture.r),
-                                    gaussian_distribution(mean, standard_deviation, inputImageTexture.g),
-                                    gaussian_distribution(mean, standard_deviation, inputImageTexture.b)));
-    outTexture.write(half4(grayscale, grayscale, grayscale, 1.0 - grayscale), gid);
+    float mean = m->narrow_band_param[0];
+    float standard_deviation = m->narrow_band_param[1];
+    float grayscale = gaussian_distribution(mean, standard_deviation, float(median3(inputImageTexture.r,
+                                    inputImageTexture.g,
+                                    inputImageTexture.b)));
+    outTexture.write(half4(grayscale, grayscale, grayscale, (1.f - grayscale)), gid);
 }
 
 //    float convolution_parameters = 1.f;//.inTexture.read(gid).r;

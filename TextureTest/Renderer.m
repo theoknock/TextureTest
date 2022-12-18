@@ -261,11 +261,25 @@ gridSize = _gridSize,
 threadgroupsPerGrid = _threadgroupsPerGrid,
 threadsPerThreadgroup = _threadsPerThreadgroup;
 
+- (IBAction)sliderValueChanged:(UISlider *)sender {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        *narrow_band_param_t[[sender tag]] = [sender value];
+    });
+}
+
 - (nonnull instancetype)initWithMetalKitView:(nonnull MTKView *)mtkView
 {
     self = [super init];
     if(self)
     {
+        [self.gaussianMeanSlider setMinimumValue:0.f];
+        [self.gaussianMeanSlider setValue:0.5f];
+        [self.gaussianMeanSlider setMaximumValue:1.f];
+        
+        [self.standardDeviationSlider setMinimumValue:0.f];
+        [self.standardDeviationSlider setValue:0.5f];
+        [self.standardDeviationSlider setMaximumValue:1.f];
+        
         _device = mtkView.device;
         mtkView.depthStencilPixelFormat = MTLPixelFormatDepth32Float_Stencil8;
         mtkView.colorPixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
@@ -421,7 +435,7 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
         
         MTLTextureDescriptor * descriptor = [MTLTextureDescriptor
                                              texture2DDescriptorWithPixelFormat:mtkView.colorPixelFormat
-                                             width:2160
+                                             width:2282
                                              height:1284
                                              mipmapped:FALSE];
         [descriptor setUsage:MTLTextureUsageShaderWrite | MTLTextureUsageShaderRead | MTLTextureUsageRenderTarget | MTLTextureUsageUnknown];
@@ -435,8 +449,9 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
         [descriptorP setUsage:MTLTextureUsageShaderWrite | MTLTextureUsageShaderRead | MTLTextureUsageRenderTarget];
         _colorMapPrev = [_device newTextureWithDescriptor:descriptorP];
         
-        fs = (FilterSettings){ .gaussian_mean = *gaussian_mean_t,
-                .standard_deviation = *standard_deviation_t
+        fs = (FilterSettings){
+            .narrow_band_param[0] = narrow_band_param[0],
+            .narrow_band_param[1] = narrow_band_param[1]
         };
         
         // Create a vertex buffer, and initialize it with the quadVertices array
@@ -457,24 +472,16 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
     _viewportSize.y = size.height;
 }
 
-- (IBAction)gaussianMeanChanged:(UISlider *)sender {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        *gaussian_mean_t = sender.value;
-    });
-}
-
-- (IBAction)standardDeviationChanged:(UISlider *)sender {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        *standard_deviation_t = sender.value;
-    });
+float scale(float val_old, float min_old, float max_old, float min_new, float max_new) {
+    return min_new + ((((val_old - min_old) * (max_new - min_new))) / (max_old - min_old));
 }
 
 /// Called whenever the view needs to render a frame
 - (void)drawInMTKView:(nonnull MTKView *)view
 {
     @autoreleasepool {
-        self->fs.gaussian_mean = gaussian_mean;
-        self->fs.standard_deviation = standard_deviation;
+        self->fs.narrow_band_param[0] = narrow_band_param[0];
+        self->fs.narrow_band_param[1] = narrow_band_param[1];
         FilterSettings * gm = filter_settings_buffer.contents;
         *gm = fs;
         

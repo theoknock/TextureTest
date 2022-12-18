@@ -77,8 +77,7 @@ typedef struct
 
 typedef struct
 {
-    float gaussian_mean;
-    float standard_deviation;
+    float narrow_band_param[2];
 } FilterSettings;
 
 #endif /* ShaderTypes_h */
