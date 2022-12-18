@@ -262,9 +262,8 @@ threadgroupsPerGrid = _threadgroupsPerGrid,
 threadsPerThreadgroup = _threadsPerThreadgroup;
 
 - (IBAction)sliderValueChanged:(UISlider *)sender {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        *narrow_band_param_t[[sender tag]] = [sender value];
-    });
+    float value = sender.value;
+    (*narrow_band_param_t)[sender.tag] = value;
 }
 
 - (nonnull instancetype)initWithMetalKitView:(nonnull MTKView *)mtkView
@@ -450,8 +449,8 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
         _colorMapPrev = [_device newTextureWithDescriptor:descriptorP];
         
         fs = (FilterSettings){
-            .narrow_band_param[0] = narrow_band_param[0],
-            .narrow_band_param[1] = narrow_band_param[1]
+            .narrow_band_param[0] = *narrow_band_param_t[0],
+            .narrow_band_param[1] = *narrow_band_param_t[1]
         };
         
         // Create a vertex buffer, and initialize it with the quadVertices array
@@ -480,10 +479,10 @@ float scale(float val_old, float min_old, float max_old, float min_new, float ma
 - (void)drawInMTKView:(nonnull MTKView *)view
 {
     @autoreleasepool {
-        self->fs.narrow_band_param[0] = narrow_band_param[0];
-        self->fs.narrow_band_param[1] = narrow_band_param[1];
+        self->fs.narrow_band_param[0] = (*narrow_band_param_t)[0];
+        self->fs.narrow_band_param[1] = (*narrow_band_param_t)[1];
         FilterSettings * gm = filter_settings_buffer.contents;
-        *gm = fs;
+        *gm = self->fs;
         
         __block id<MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
         commandBuffer.label = @"MyCommand";

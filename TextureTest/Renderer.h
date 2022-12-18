@@ -10,13 +10,13 @@
 #import "VideoCamera.h"
 @import UIKit;
 
-static float narrow_band_param[2] = {0.5f, 1.f};
-static typeof(narrow_band_param) * _Nonnull narrow_band_param_t = &narrow_band_param;
+static float narrow_band_param[] = {0.5f, 1.f};
+static typeof(narrow_band_param) * narrow_band_param_t = &narrow_band_param;
 
 @interface Renderer : NSObject <MTKViewDelegate, AVCaptureVideoDataOutputSampleBufferDelegate>
 
 -(nonnull instancetype)initWithMetalKitView:(nonnull MTKView *)view;
-- (IBAction)sliderValueChanged:(UISlider *)sender;
+//- (IBAction)sliderValueChanged:(UISlider *)sender;
 
 @property (weak, nonatomic) IBOutlet UISlider *gaussianMeanSlider;
 @property (weak, nonatomic) IBOutlet UISlider *standardDeviationSlider;

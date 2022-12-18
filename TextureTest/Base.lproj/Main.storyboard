@@ -160,21 +160,15 @@
                                 </connections>
                             </view>
                             <slider opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" value="0.5" minValue="0.0" maxValue="1" translatesAutoresizingMaskIntoConstraints="NO" id="TyK-Hf-stA" userLabel="Gaussian Mean">
-                                <rect key="frame" x="-2" y="48" width="418" height="31"/>
+                                <rect key="frame" x="18.5" y="48" width="377" height="31"/>
                                 <connections>
-                                    <action selector="sliderValueChanged:" destination="U3M-cT-8WM" eventType="valueChanged" id="twZ-bi-Z1C"/>
+                                    <action selector="sliderValueChanged:" destination="U3M-cT-8WM" eventType="valueChanged" id="aWB-ds-YV3"/>
                                 </connections>
                             </slider>
                             <slider opaque="NO" tag="1" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" value="1" minValue="0.0" maxValue="1" translatesAutoresizingMaskIntoConstraints="NO" id="SfK-Qa-U9E" userLabel="Standard Deviation">
-                                <rect key="frame" x="-2" y="78" width="418" height="31"/>
+                                <rect key="frame" x="18.5" y="78" width="377" height="31"/>
                                 <connections>
-                                    <action selector="sliderValueChanged:" destination="U3M-cT-8WM" eventType="valueChanged" id="bcf-MU-HeX"/>
-                                </connections>
-                            </slider>
-                            <slider opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" value="6" minValue="1" maxValue="12" translatesAutoresizingMaskIntoConstraints="NO" id="SfK-Qa-U9E" userLabel="Standard Deviation">
-                                <rect key="frame" x="-2" y="78" width="418" height="31"/>
-                                <connections>
-                                    <action selector="standardDeviationChanged:" destination="U3M-cT-8WM" eventType="valueChanged" id="DK9-BR-cq0"/>
+                                    <action selector="sliderValueChanged:" destination="U3M-cT-8WM" eventType="valueChanged" id="tqQ-oa-bRh"/>
                                 </connections>
                             </slider>
                         </subviews>
@@ -187,7 +181,7 @@
                             <constraint firstItem="SfK-Qa-U9E" firstAttribute="top" secondItem="TyK-Hf-stA" secondAttribute="bottom" id="4SJ-JA-zb1"/>
                             <constraint firstItem="7uW-EJ-Fip" firstAttribute="bottom" secondItem="Zni-1Q-DHl" secondAttribute="bottom" id="7ky-se-m8G"/>
                             <constraint firstItem="TyK-Hf-stA" firstAttribute="top" secondItem="Zni-1Q-DHl" secondAttribute="top" id="NUd-g0-XXT"/>
-                            <constraint firstItem="TyK-Hf-stA" firstAttribute="width" secondItem="PlH-bq-DWk" secondAttribute="width" id="PyF-jp-zEm"/>
+                            <constraint firstItem="TyK-Hf-stA" firstAttribute="width" secondItem="Zni-1Q-DHl" secondAttribute="width" multiplier="0.9" id="PyF-jp-zEm"/>
                             <constraint firstItem="SfK-Qa-U9E" firstAttribute="centerX" secondItem="TyK-Hf-stA" secondAttribute="centerX" id="bjS-cu-uZw"/>
                             <constraint firstItem="SfK-Qa-U9E" firstAttribute="width" secondItem="TyK-Hf-stA" secondAttribute="width" id="byC-a4-6Kn"/>
                             <constraint firstItem="JsS-qo-bbp" firstAttribute="leading" secondItem="PlH-bq-DWk" secondAttribute="leading" id="fmf-Yg-5WF"/>
