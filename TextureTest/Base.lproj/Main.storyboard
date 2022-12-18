@@ -171,6 +171,12 @@
                                     <action selector="sliderValueChanged:" destination="U3M-cT-8WM" eventType="valueChanged" id="bcf-MU-HeX"/>
                                 </connections>
                             </slider>
+                            <slider opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" value="6" minValue="1" maxValue="12" translatesAutoresizingMaskIntoConstraints="NO" id="SfK-Qa-U9E" userLabel="Standard Deviation">
+                                <rect key="frame" x="-2" y="78" width="418" height="31"/>
+                                <connections>
+                                    <action selector="standardDeviationChanged:" destination="U3M-cT-8WM" eventType="valueChanged" id="DK9-BR-cq0"/>
+                                </connections>
+                            </slider>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="Zni-1Q-DHl"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>

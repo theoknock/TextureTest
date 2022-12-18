@@ -208,6 +208,20 @@ float scale(float val_old, float min_old, float max_old, float min_new, float ma
     return min_new + ((((val_old - min_old) * (max_new - min_new))) / (max_old - min_old));
 }
 
+[[stitchable]]
+float gaussian_distribution(float mean, float standard_deviation, float texture)
+{
+    float numerator = pow(texture - mean, 2.0);
+    float variance = mean * (1.f - mean);
+//    variance = scale(variance, -variance, variance + variance, 0.0, 1.0);
+    float denominator = (2.f * pow(variance, 2.f) / (pow(standard_deviation, 2.f) - 1.f));
+    texture = (exp(-(numerator / denominator)));
+//    texture = (exp(-((pow((texture - mean), 2.f) / pow(2.f * variance, 2.f)))));
+//    texture = (1.f / (std_dev * sqrt(2.f * M_PI_H))) * (exp(-((pow((texture - mean), 2.f) / pow(2.f * variance, 2.f)))));
+//    texture = 1.0 / (1.0 + exp(-1 * variance) * (texture- (texture / 2.f)));
+    return texture;
+}
+
 //[[stitchable]]
 //float gaussian_distribution(float mean, float standard_deviation, float texture)
 //{
