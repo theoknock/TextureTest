@@ -264,6 +264,10 @@ threadsPerThreadgroup = _threadsPerThreadgroup;
 - (IBAction)sliderValueChanged:(UISlider *)sender {
     float value = sender.value;
     (*narrow_band_param_t)[sender.tag] = value;
+    
+    float variance = ((2.f * 0.5f) / M_PI) * (asinf(sinf(((2.f * M_PI) / 2.f) * (*narrow_band_param_t)[0])));
+//    (scale((*narrow_band_param_t)[0], -1.f, 1.f, -0.5f, 0.5f)); //fabs(sinf(M_PI * ((*narrow_band_param_t)[0])) / 2.f);//    float offset = sinf(M_PI * variance) * (*narrow_band_param_t)[1]; //(variance * 0.5) * (*narrow_band_param_t)[1];
+    printf("mean == %f\tstandard deviation == %f\tvariance == %f\t\n", (*narrow_band_param_t)[0], (*narrow_band_param_t)[1], variance);
 }
 
 - (nonnull instancetype)initWithMetalKitView:(nonnull MTKView *)mtkView

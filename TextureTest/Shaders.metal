@@ -281,9 +281,8 @@ samplingShader(RasterizerData in [[stage_in]],
 float gaussian_distribution(float mean, float standard_deviation, float texture)
 {
     ({
-        float variance = fabs(sin(M_PI_F * mean)) * 0.5f;
-        float offset = (variance * mean) * standard_deviation;
-        texture = (texture >= (mean - offset) && texture <= (mean + offset)) ? texture : 1.f - texture; //scale(texture, 0.f, 1.f, (mean - offset), (mean + offset)) : 0.f;
+        float variance = ((2.f * 0.5f) / M_PI_F) * (asin(sin(((2.f * M_PI_F) / 2.f) * mean)));
+        float offset = (variance * 0.5f) * standard_deviation;
         texture = scale(texture, (mean - offset), (mean + offset), 0.f, 1.f);
     });
     return texture;
@@ -298,13 +297,11 @@ computeKernel(
               uint2                          gid        [[ thread_position_in_grid ]]
               )
 {
-    half4 inputImageTextureP = fabs(inTexture.read(gid) - fabs(inTextureP.read(gid) - inTexture.read(gid)));
+    half4 inputImageTextureP = fabs(inTexture.read(gid));// - fabs(inTextureP.read(gid)));
     float mean = m->narrow_band_param[0];
     float standard_deviation = m->narrow_band_param[1];
-    float grayscale = fabs(gaussian_distribution(mean, standard_deviation, float(median3(inputImageTextureP.r,
-                                    inputImageTextureP.g,
-                                    inputImageTextureP.b))));
-    outTexture.write(half4(grayscale, grayscale, grayscale, (1.0 - grayscale)), gid);
+    float grayscale = fabs(gaussian_distribution(mean, standard_deviation, float(median3(inputImageTextureP.r, inputImageTextureP.g, inputImageTextureP.b))));
+    outTexture.write(half4(grayscale, grayscale, grayscale, 1.0 - grayscale), gid);
 }
 
 //    float convolution_parameters = 1.f;//.inTexture.read(gid).r;
